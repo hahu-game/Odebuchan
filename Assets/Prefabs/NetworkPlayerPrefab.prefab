@@ -49,7 +49,8 @@ MonoBehaviour:
   ObjectInterest: 1
   Flags: 262145
   NestedObjects: []
-  NetworkedBehaviours: []
+  NetworkedBehaviours:
+  - {fileID: 980123375128306242}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &980123375128306242
 MonoBehaviour:
@@ -63,3 +64,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a94549010c2de7e4ca2e40ec8219d6c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayer
+  _PlayerName:
+    _length: 0
+    _data:
+      Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
