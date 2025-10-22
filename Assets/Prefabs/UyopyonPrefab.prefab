@@ -53,6 +53,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 4794285624160416315}
+  - {fileID: 7060737734134121739}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &4794285624160416315
 MonoBehaviour:
@@ -83,6 +84,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91d6a1cc313e8cc4594cfb76d82093a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UyopyonState
+  _Weight: 10
+  _Energy: 50
+  _CurrentStatus: 0
 --- !u!1 &5190345782381095660
 GameObject:
   m_ObjectHideFlags: 0
