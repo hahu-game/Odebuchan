@@ -18,7 +18,7 @@ public class NetworkPlayer : NetworkBehaviour
 
         if (Object.HasInputAuthority)
         {
-            string localName = PlayerPrefs.GetString(TitleScreenManager.PLAYER_NAME_KEY, "ÉQÉXÉgÇ§Å[Ç“ÇÂÇÒ");
+            string localName = PlayerPrefs.GetString(TitleScreenManager.PLAYER_NAME_KEY, "guest");
             PlayerName = localName;
         }
 

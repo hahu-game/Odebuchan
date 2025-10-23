@@ -5,22 +5,32 @@ using UnityEngine.SceneManagement;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq; // ActivePlayers.Count()を使うために必要
 
 /// <summary>
 /// Photon Fusionの接続開始、切断、イベントコールバックを処理する。
-/// INetworkRunnerCallbacksを実装し、Fusionのイベントを受け取る。
+/// INetworkRunnerCallbacksのメソッドは明示的なインターフェイス実装として定義し、Unity警告を回避する。
 /// </summary>
 public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
     private NetworkRunner _runner;
     private bool _started = false;
-
-    // NOTE: 2.0.7ではNetworkSceneManagerDefaultから取得できない場合があるため、
-    // NetworkPlayerプレハブをインスペクターで直接アサインすることを推奨します。
     public NetworkObject playerPrefab;
 
+    // 【テスト用】Playボタンで自動起動するロジック
+    private void Start()
+    {
+        if (Application.isEditor && !_started)
+        {
+            Debug.Log("【テストモード】ホストとして自動起動します。");
+            // StartGameがasyncなので、タスクとして実行
+            _ = StartGame(Fusion.GameMode.Shared, "DEV_TEST_SESSION");
+        }
+    }
+    // 【テスト完了後】本番に戻す際は上記の Start() メソッドを削除すること
+
     /// <summary>
-    /// ネットワーク接続を開始する。TitleScreenManagerから呼び出される。
+    /// ネットワーク接続を開始する。（async Task に変更）
     /// </summary>
     public async Task StartGame(GameMode mode, string sessionName)
     {
@@ -30,53 +40,66 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         _runner = GetComponent<NetworkRunner>() ?? gameObject.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
 
-        // NetworkSceneManagerDefaultがアタッチされていることを確認
         var sceneManager = GetComponent<NetworkSceneManagerDefault>();
 
-        // StartGameArgsの設定
         var startGameArgs = new StartGameArgs
         {
             GameMode = mode,
             SessionName = sessionName,
             SceneManager = sceneManager,
             PlayerCount = 2,
-            // 2.0.7ではSceneプロパティにはSceneRef（またはnull）を設定する必要があり、
-            // intのビルドインデックスを渡す必要がないため、ここではコメントアウトします。
-            // シーンロードは接続成功後に明示的に行います。
-            // Scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex), 
         };
 
-        // 接続処理を開始
         var result = await _runner.StartGame(startGameArgs);
 
         if (result.Ok)
         {
-            // 接続成功。ホスト（P1）はゲームシーンへの遷移を処理する
-            if (_runner.IsSharedModeMasterClient)
-            {
-                // NOTE: シーン名を直接渡します。UnityのBuild Settingsに登録されたシーン名に置き換えてください。
-                const string GAME_SCENE_NAME = "GameScene";
-                // LoadSceneはSceneRefまたはシーン名を引数に取ります
-                await _runner.LoadScene(GAME_SCENE_NAME);
-            }
+            // 【重要修正】接続成功しても即座にシーン遷移しない
+            // ホストはマッチング完了（OnPlayerJoined）までタイトル画面に留まる
         }
         else
         {
             Debug.LogError($"Fusion接続失敗: {result.ShutdownReason}");
             _started = false;
+            // 失敗時、TitleScreenManagerに通知してUIを戻す
+            TitleScreenManager.Instance?.HideMatchingUI();
         }
+    }
+
+    /// <summary>
+    /// 接続をシャットダウンし、TitleScreenManagerから呼ばれる
+    /// </summary>
+    public void ShutdownRunner()
+    {
+        if (_runner != null && _started)
+        {
+            _runner.Shutdown();
+            _started = false;
+        }
+        // UIの非表示はTitleScreenManager側で行う
     }
 
     // ========== INetworkRunnerCallbacks の Fusion 2.0.7 完全な実装 ==========
 
     void INetworkRunnerCallbacks.OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        Debug.Log($"プレイヤーが参加しました: PlayerRef={player}");
-
-        // ホスト（P1）は、参加したプレイヤーに対応するNetworkPlayerオブジェクトをスポーンする
+        // 1. NetworkPlayerのスポーン（ホスト/サーバーでのみ実行）
         if (runner.IsSharedModeMasterClient && playerPrefab != null)
         {
             runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
+        }
+
+        // 2. 【重要修正】2人目のプレイヤー参加を検知し、シーン遷移を開始する
+        if (runner.IsSharedModeMasterClient && runner.ActivePlayers.Count() == 2)
+        {
+            Debug.Log("マッチング完了！2人目が参加しました。ゲームシーンへ遷移します。");
+
+            // タイトル画面のUIを非表示にする
+            TitleScreenManager.Instance?.HideMatchingUI();
+
+            // シーンロードを非同期で開始
+            const string GAME_SCENE_NAME = "GameScene";
+            _ = runner.LoadScene(GAME_SCENE_NAME); // Taskとして実行
         }
     }
 
@@ -133,7 +156,20 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     void INetworkRunnerCallbacks.OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
 
-    void INetworkRunnerCallbacks.OnSceneLoadDone(NetworkRunner runner) { }
+    void INetworkRunnerCallbacks.OnSceneLoadDone(NetworkRunner runner)
+    {
+        if (runner.IsServer)
+        {
+            if (runner.ActivePlayers.Count() == 2)
+            {
+                Debug.Log("P2 (クライアント) がゲームシーンへのロードを完了し、ゲームに参加しました！");
+            }
+            else if (runner.ActivePlayers.Count() == 1)
+            {
+                Debug.Log("ホスト自身のゲームシーンロードが完了しました。");
+            }
+        }
+    }
 
     void INetworkRunnerCallbacks.OnSceneLoadStart(NetworkRunner runner) { }
 
