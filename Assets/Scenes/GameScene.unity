@@ -151,6 +151,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03d0622ff96103040ba0c18df960a9ad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIController
+  myNameText: {fileID: 0}
+  myWeightText: {fileID: 0}
+  myEnergyText: {fileID: 0}
+  opponentNameText: {fileID: 0}
+  opponentWeightText: {fileID: 0}
+  opponentEnergyText: {fileID: 0}
 --- !u!114 &163093076
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -446,10 +452,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: taberu
+  m_text: "\u305F\u3079\u308B"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9a7e30b28b6872a4b8f2b7f854ca6f9c, type: 2}
+  m_sharedMaterial: {fileID: 2841178944091878136, guid: 9a7e30b28b6872a4b8f2b7f854ca6f9c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -580,6 +586,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f640db310f6354ba4177d9f8b5cdab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  uyopyonPrefab: {fileID: 0}
 --- !u!4 &1779711841
 Transform:
   m_ObjectHideFlags: 0
