@@ -34,8 +34,12 @@ public class TitleScreenManager : MonoBehaviour
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;
 
+        //プレイヤーネームのデフォルトリセット。
+        //デバッグ完了後、この行は削除またはコメントアウトしてください。
+        //PlayerPrefs.DeleteKey(PLAYER_NAME_KEY);
+
         // プレイヤー名のロード
-        playerNameInputField.text = PlayerPrefs.GetString(PLAYER_NAME_KEY, "guest");
+        playerNameInputField.text = PlayerPrefs.GetString(PLAYER_NAME_KEY, "ゲストうーぴょん");
 
         // 初期状態ではマッチングUIを非表示にしておく
         SetMatchingUIActive(false);
@@ -180,7 +184,7 @@ public class TitleScreenManager : MonoBehaviour
         string playerName = playerNameInputField.text;
         if (string.IsNullOrEmpty(playerName))
         {
-            playerName = "guest dayo";
+            playerName = "野良うーぴょん";
         }
         PlayerPrefs.SetString(PLAYER_NAME_KEY, playerName);
         PlayerPrefs.Save();

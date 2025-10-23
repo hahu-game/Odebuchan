@@ -24,7 +24,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         {
             Debug.Log("【テストモード】ホストとして自動起動します。");
             // StartGameがasyncなので、タスクとして実行
-            _ = StartGame(Fusion.GameMode.Shared, "DEV_TEST_SESSION");
+            _ = StartGame(Fusion.GameMode.Shared,"RANDOM_POOL_UYOPYON");
         }
     }
     // 【テスト完了後】本番に戻す際は上記の Start() メソッドを削除すること
@@ -97,9 +97,22 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             // タイトル画面のUIを非表示にする
             TitleScreenManager.Instance?.HideMatchingUI();
 
-            // シーンロードを非同期で開始
+            // WebGL接続が安定するまで1秒間待機する (非同期実行のためブロックしない)
+            _ = DelayedSceneLoad(runner);
+        }
+    }
+
+    // 【新規追加メソッド】
+    private async Task DelayedSceneLoad(NetworkRunner runner)
+    {
+        // WebGLクライアントとの接続が完全に安定するまで、1000ミリ秒 (1秒) 待機
+        await Task.Delay(1000);
+
+        if (runner != null)
+        {
             const string GAME_SCENE_NAME = "GameScene";
-            _ = runner.LoadScene(GAME_SCENE_NAME); // Taskとして実行
+            // シーンロードを非同期で開始
+            await runner.LoadScene(GAME_SCENE_NAME);
         }
     }
 
