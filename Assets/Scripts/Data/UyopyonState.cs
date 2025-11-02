@@ -2,72 +2,262 @@ using Fusion;
 using UnityEngine;
 
 /// <summary>
-/// ���[�҂��̃A�o�^�[�ł���A�琬�X�e�[�^�X���l�b�g���[�N��������B
+/// プレイヤーのアバターであるうーぴょんのステータスをネットワーク同期する
 /// </summary>
+// Trigger recompilation
 public class UyopyonState : NetworkBehaviour
 {
-    // [Networked(OnChanged = ...)] ���폜
+    // === 既存プロパティ ===
     [Networked]
     public PlayerRef OwnerPlayer { get; set; }
 
     [Networked]
-    public int Weight { get; set; } = 10; // �����l
+    public int Weight { get; set; }
 
     [Networked]
-    public int Energy { get; set; } = 50; // �����l
+    public int Energy { get; set; }
 
     [Networked]
     public byte CurrentStatus { get; set; } = 0;
 
+    // === 新規追加プロパティ ===
+
+    /// <summary>
+    /// 状態異常フラグ（4種類）
+    /// [0] = SleepApnea (睡眠時無呼吸症候群)
+    /// [1] = Diabetes (糖尿病)
+    /// [2] = BackPain (腰痛)
+    /// [3] = Heatstroke (熱中症)
+    /// </summary>
+    [Networked, Capacity(4)]
+    public NetworkArray<byte> StatusAilments { get; }
+
+    /// <summary>
+    /// あそぶによる重さバフ（永久バフ）
+    /// </summary>
+    [Networked]
+    public int PlayBuffWeight { get; set; } = 0;
+
+    /// <summary>
+    /// あそぶによる元気バフ（永久バフ）
+    /// </summary>
+    [Networked]
+    public int PlayBuffEnergy { get; set; } = 0;
+
+    /// <summary>
+    /// べんきょうの連続回数（べんきょう以外を選択するとリセット）
+    /// </summary>
+    [Networked]
+    public int StudyCombo { get; set; } = 0;
+
+    /// <summary>
+    /// 選択した特殊能力の名前（進化後に設定）
+    /// </summary>
+    [Networked]
+    public NetworkString<_16> SpecialAbilityName { get; set; }
+
+    /// <summary>
+    /// 進化済みフラグ（重さ200kgで進化）
+    /// </summary>
+    [Networked]
+    public bool HasEvolved { get; set; } = false;
+
+    /// <summary>
+    /// ビジュアルタイプ（"UyopyonBaby" or "UyopyonChild"）
+    /// </summary>
+    [Networked]
+    public NetworkString<_16> VisualType { get; set; }
+
+    /// <summary>
+    /// きんとれ使用後のバフ倍率（デフォルト1.0、きんとれ後1.5）
+    /// </summary>
+    [Networked]
+    public float BuffMultiplier { get; set; } = 1.0f;
+
+    // === 変更検知用の前回値 ===
     private int _lastWeight;
     private int _lastEnergy;
+    private int _lastPlayBuffWeight;
+    private int _lastPlayBuffEnergy;
+    private bool _lastHasEvolved;
+    private string _lastVisualType;
+    private byte[] _lastStatusAilments = new byte[4];
 
+    /// <summary>
+    /// スポーン時の初期化処理
+    /// </summary>
     public override void Spawned()
     {
-        // UIController�ɂ��̃I�u�W�F�N�g�̎Q�Ƃ�o�^
+        // UIControllerにこのオブジェクトの参照を登録
         if (UIController.Instance != null)
         {
             UIController.Instance.RegisterUyopyon(this);
         }
 
-        // �����l��ݒ�
+        // GameParametersから初期値を設定（ホストのみ）
+        if (Object.HasStateAuthority)
+        {
+            InitializeValues();
+        }
+
+        // 前回値を初期化
         _lastWeight = Weight;
         _lastEnergy = Energy;
+        _lastPlayBuffWeight = PlayBuffWeight;
+        _lastPlayBuffEnergy = PlayBuffEnergy;
+        _lastHasEvolved = HasEvolved;
+        _lastVisualType = VisualType.ToString();
+        for (int i = 0; i < 4; i++)
+        {
+            _lastStatusAilments[i] = StatusAilments[i];
+        }
 
-        // UI�̏����\�����g���K�[
-        UpdateDisplay(Weight, Energy);
+        // UI の初期表示をトリガー
+        UpdateDisplay();
     }
 
     /// <summary>
-    /// �S�N���C�A���g�Ŏ��s����郌���_�����O�����B�f�[�^�̕ύX���`�F�b�N����B
+    /// 初期値を設定する（ホストのみ実行）
+    /// GameParametersから初期値を取得する（必須）
+    /// </summary>
+    private void InitializeValues()
+    {
+        if (GameManager.Instance != null && GameManager.Instance.gameParams != null)
+        {
+            Weight = GameManager.Instance.gameParams.InitialWeight;
+            Energy = GameManager.Instance.gameParams.InitialEnergy;
+        }
+        else
+        {
+            Debug.LogWarning("GameParameters is not set! Weight and Energy will remain at default (0).");
+        }
+        VisualType = "UyopyonBaby";
+    }
+
+    /// <summary>
+    /// 全クライアントで毎フレーム実行されるレンダリング処理
+    /// データの変更を検知してUI更新を行う
     /// </summary>
     public override void Render()
     {
-        // Weight�̕ύX���`�F�b�N
+        // Weight の変更をチェック
         if (_lastWeight != Weight)
         {
-            UIController.Instance.UpdateWeightDisplay(OwnerPlayer, Weight);
+            UIController.Instance?.UpdateWeightDisplay(OwnerPlayer, Weight);
             _lastWeight = Weight;
         }
 
-        // Energy�̕ύX���`�F�b�N
+        // Energy の変更をチェック
         if (_lastEnergy != Energy)
         {
-            UIController.Instance.UpdateEnergyDisplay(OwnerPlayer, Energy);
+            UIController.Instance?.UpdateEnergyDisplay(OwnerPlayer, Energy);
             _lastEnergy = Energy;
+        }
+
+        // PlayBuffWeight の変更をチェック
+        if (_lastPlayBuffWeight != PlayBuffWeight)
+        {
+            UIController.Instance?.UpdatePlayBuffDisplay(OwnerPlayer, PlayBuffWeight, PlayBuffEnergy);
+            _lastPlayBuffWeight = PlayBuffWeight;
+        }
+
+        // PlayBuffEnergy の変更をチェック
+        if (_lastPlayBuffEnergy != PlayBuffEnergy)
+        {
+            UIController.Instance?.UpdatePlayBuffDisplay(OwnerPlayer, PlayBuffWeight, PlayBuffEnergy);
+            _lastPlayBuffEnergy = PlayBuffEnergy;
+        }
+
+        // HasEvolved の変更をチェック
+        if (_lastHasEvolved != HasEvolved)
+        {
+            UIController.Instance?.UpdateEvolutionDisplay(OwnerPlayer, HasEvolved, SpecialAbilityName.ToString());
+            _lastHasEvolved = HasEvolved;
+        }
+
+        // VisualType の変更をチェック
+        string currentVisualType = VisualType.ToString();
+        if (_lastVisualType != currentVisualType)
+        {
+            UIController.Instance?.UpdateUyopyonVisual(OwnerPlayer, currentVisualType);
+            _lastVisualType = currentVisualType;
+        }
+
+        // StatusAilments の変更をチェック
+        bool statusChanged = false;
+        for (int i = 0; i < 4; i++)
+        {
+            if (_lastStatusAilments[i] != StatusAilments[i])
+            {
+                statusChanged = true;
+                _lastStatusAilments[i] = StatusAilments[i];
+            }
+        }
+        if (statusChanged)
+        {
+            byte[] ailments = new byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                ailments[i] = StatusAilments[i];
+            }
+            UIController.Instance?.UpdateStatusAilmentDisplay(OwnerPlayer, ailments);
         }
     }
 
     /// <summary>
-    /// UIController�ɒʒm���ĕ\�����X�V����w���p�[���\�b�h�iSpawned�ł̏����\���p�j
+    /// UIController に通知して表示を更新する補助メソッド（Spawned での初期表示用）
     /// </summary>
-    private void UpdateDisplay(int weight, int energy)
+    private void UpdateDisplay()
     {
         if (UIController.Instance != null)
         {
-            UIController.Instance.UpdateWeightDisplay(OwnerPlayer, weight);
-            UIController.Instance.UpdateEnergyDisplay(OwnerPlayer, energy);
+            UIController.Instance.UpdateWeightDisplay(OwnerPlayer, Weight);
+            UIController.Instance.UpdateEnergyDisplay(OwnerPlayer, Energy);
+            UIController.Instance?.UpdatePlayBuffDisplay(OwnerPlayer, PlayBuffWeight, PlayBuffEnergy);
+            UIController.Instance?.UpdateEvolutionDisplay(OwnerPlayer, HasEvolved, SpecialAbilityName.ToString());
+            UIController.Instance?.UpdateUyopyonVisual(OwnerPlayer, VisualType.ToString());
+
+            byte[] ailments = new byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                ailments[i] = StatusAilments[i];
+            }
+            UIController.Instance?.UpdateStatusAilmentDisplay(OwnerPlayer, ailments);
         }
     }
 
+    // === ヘルパーメソッド ===
+
+    /// <summary>
+    /// 特定の状態異常を持っているかチェック
+    /// </summary>
+    public bool HasStatusAilment(StatusAilment ailment)
+    {
+        return StatusAilments[(int)ailment] == 1;
+    }
+
+    /// <summary>
+    /// 状態異常を設定
+    /// </summary>
+    public void SetStatusAilment(StatusAilment ailment, bool value)
+    {
+        if (Object.HasStateAuthority)
+        {
+            StatusAilments.Set((int)ailment, (byte)(value ? 1 : 0));
+        }
+    }
+
+    /// <summary>
+    /// 全ての状態異常をクリア（つういん実行時に使用）
+    /// </summary>
+    public void ClearAllStatusAilments()
+    {
+        if (Object.HasStateAuthority)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                StatusAilments.Set(i, 0);
+            }
+        }
+    }
 }

@@ -4,17 +4,20 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// ƒQ[ƒ€‘S‘Ì‚Ìis‚ğŠÇ—‚·‚éiƒzƒXƒg‚Ì‚İ‚ªƒƒWƒbƒN‚ğÀsjB
-/// 2‘Ì‚ÌUyopyonStateƒIƒuƒWƒFƒNƒg‚ğPlayerRef‚ÅŠÇ—‚·‚éB
+/// ã‚²ãƒ¼ãƒ å…¨ä½“ã®é€²è¡Œã‚’ç®¡ç†ã™ã‚‹ï¼ˆãƒ›ã‚¹ãƒˆã®ã¿ãŒãƒ­ã‚¸ãƒƒã‚¯ã‚’å®Ÿè¡Œï¼‰ã€‚
+/// 2ã¤ã®UyopyonStateã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’PlayerRefã§ç®¡ç†ã™ã‚‹ã€‚
 /// </summary>
 public class GameManager : NetworkBehaviour
 {
-    // ƒVƒ“ƒOƒ‹ƒgƒ“ƒpƒ^[ƒ“iƒV[ƒ““à‚É1‚Âj
+    // ã‚·ãƒ³ã‚°ãƒ«ãƒˆãƒ³ãƒ‘ã‚¿ãƒ¼ãƒ³ï¼ˆã‚·ãƒ¼ãƒ³å†…ã«1ã¤ï¼‰
     public static GameManager Instance { get; private set; }
 
-    public NetworkObject uyopyonPrefab; // UnityƒGƒfƒBƒ^‚ÅUyopyonState‚ğ‚ÂƒvƒŒƒnƒu‚ğƒAƒTƒCƒ“
+    public NetworkObject uyopyonPrefab; // Unityã‚¨ãƒ‡ã‚£ã‚¿ã§UyopyonStateãƒ—ãƒªãƒãƒ–ã‚’ã‚¢ã‚µã‚¤ãƒ³
 
-    // ƒvƒŒƒCƒ„[ID‚Æ‘Î‰‚·‚éUyopyonState‚ÌQÆ‚ğ•Û
+    // TODO: ãƒ•ã‚§ãƒ¼ã‚º2ã§æ­£å¼å®Ÿè£…äºˆå®š - GameParametersã¸ã®å‚ç…§
+    public GameParameters gameParams;
+
+    // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼IDã¨å¯¾å¿œã™ã‚‹UyopyonStateã®å‚ç…§ã‚’ä¿æŒ
     private Dictionary<PlayerRef, UyopyonState> _playerStates = new Dictionary<PlayerRef, UyopyonState>();
 
     [Networked]
@@ -29,31 +32,31 @@ public class GameManager : NetworkBehaviour
         else
         {
             Instance = this;
-            // ƒV[ƒ“‚ğ‚Ü‚½‚®ê‡ADontDestroyOnLoad(gameObject); ‚ğ’Ç‰Á
+            // ã‚·ãƒ¼ãƒ³ã‚’è·¨ãå ´åˆã¯ã€DontDestroyOnLoad(gameObject); ã‚’è¿½åŠ 
         }
     }
 
     /// <summary>
-    /// NetworkPlayer.Spawned()‚©‚çŒÄ‚Î‚ê‚éBƒzƒXƒg‘¤‚Å‚Ì‚İÀsB
-    /// Q‰ÁƒvƒŒƒCƒ„[‚É‘Î‰‚·‚é‚¤[‚Ò‚å‚ñƒIƒuƒWƒFƒNƒg‚ğ¶¬‚·‚éB
+    /// NetworkPlayer.Spawned()ã‹ã‚‰å‘¼ã°ã‚Œã‚‹ã€‚ãƒ›ã‚¹ãƒˆå´ã§ã®ã¿å®Ÿè¡Œã€‚
+    /// å„ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã«å¯¾å¿œã™ã‚‹ã†ãƒ¼ã´ã‚‡ã‚“ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆã™ã‚‹ã€‚
     /// </summary>
-    //[Server] // ƒzƒXƒg‚Å‚Ì‚İÀs‚³‚ê‚é‚±‚Æ‚ğ•ÛØ
+    //[Server] // ãƒ›ã‚¹ãƒˆã§ã®ã¿å®Ÿè¡Œã™ã‚‹ã“ã¨ã‚’ä¿è¨¼
     public void SpawnUyopyon(PlayerRef player, string playerName)
     {
         if (_playerStates.ContainsKey(player)) return;
 
-        // ƒvƒŒƒCƒ„[‚ÌInput Authority‚ğw’è‚µ‚ÄA‚¤[‚Ò‚å‚ñƒIƒuƒWƒFƒNƒg‚ğ¶¬
+        // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®Input Authorityã‚’æŒ‡å®šã—ã¦ã€ã†ãƒ¼ã´ã‚‡ã‚“ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ç”Ÿæˆ
         NetworkObject newUyopyon = Runner.Spawn(
             uyopyonPrefab,
-            position: Vector3.zero + new Vector3(player.PlayerId * 3, 0, 0), // P1‚ÆP2‚ÅˆÊ’u‚ğ‚¸‚ç‚·
+            position: Vector3.zero + new Vector3(player.PlayerId * 3, 0, 0), // P1ã¨P2ã§ä½ç½®ã‚’ãšã‚‰ã™
             rotation: Quaternion.identity,
-            inputAuthority: player // “ü—ÍŒ ‚ğ‚±‚ÌƒvƒŒƒCƒ„[‚É“n‚·
+            inputAuthority: player // å…¥åŠ›æ¨©é™ã‚’ã“ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã«æ¸¡ã™
         );
 
         if (newUyopyon.TryGetBehaviour<UyopyonState>(out var state))
         {
             state.OwnerPlayer = player;
-            _playerStates.Add(player, state); // «‘‚É’Ç‰Á
+            _playerStates.Add(player, state); // è¾æ›¸ã«è¿½åŠ 
 
             Debug.Log($"Uyopyon spawned for Player {player}. Total: {_playerStates.Count}");
         }

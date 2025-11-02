@@ -4,18 +4,18 @@ using TMPro;
 using System.Collections.Generic;
 
 /// <summary>
-/// ƒQ[ƒ€“à‚Ì‚·‚×‚Ä‚ÌUI—v‘f‚ğŠÇ—‚µAƒlƒbƒgƒ[ƒN‚©‚ç‚Ì“¯Šúƒf[ƒ^‚ÉŠî‚Ã‚¢‚Ä•\¦‚ğXV‚·‚éB
+/// ã‚²ãƒ¼ãƒ å†…ã®å…¨ã¦ã®UIè¦ç´ ã‚’ç®¡ç†ã—ã€ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯åŒæœŸã•ã‚ŒãŸãƒ‡ãƒ¼ã‚¿ã«åŸºã¥ã„ã¦è¡¨ç¤ºã‚’æ›´æ–°ã™ã‚‹ã€‚
 /// </summary>
 public class UIController : MonoBehaviour
 {
     public static UIController Instance { get; private set; }
 
-    // === ©•ª‚ÌUI—v‘f ===
+    // === è‡ªåˆ†ã®UIè¦ç´  ===
     public TextMeshProUGUI myNameText;
     public TextMeshProUGUI myWeightText;
     public TextMeshProUGUI myEnergyText;
 
-    // === ‘Šè‚ÌUI—v‘f ===
+    // === ç›¸æ‰‹ã®UIè¦ç´  ===
     public TextMeshProUGUI opponentNameText;
     public TextMeshProUGUI opponentWeightText;
     public TextMeshProUGUI opponentEnergyText;
@@ -37,7 +37,7 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
-    /// UyopyonState.Spawned()‚©‚çŒÄ‚Î‚êA‚¤[‚Ò‚å‚ñ‚ÌQÆ‚ğ“o˜^‚·‚é
+    /// UyopyonState.Spawned()ã‹ã‚‰å‘¼ã°ã‚Œã€ã†ãƒ¼ã´ã‚‡ã‚“ã®å‚ç…§ã‚’ç™»éŒ²ã™ã‚‹
     /// </summary>
     public void RegisterUyopyon(UyopyonState uyopyon)
     {
@@ -45,27 +45,27 @@ public class UIController : MonoBehaviour
         {
             _uyopyons.Add(uyopyon.OwnerPlayer, uyopyon);
 
-            // ‰‰ñ•\¦‚ÌXV‚ğ‹­§ÀsiOnChanged‚ªŒÄ‚Î‚ê‚È‚¢‰Šú’l‚Ìİ’è‚É‘Î‰j
+            // åˆæœŸè¡¨ç¤ºã®æ›´æ–°ã‚’æ˜ç¤ºçš„ã«å®Ÿè¡Œï¼ˆOnChangedãŒå‘¼ã°ã‚Œãªã„åˆå›å€¤ã®è¨­å®šã«å¯¾å¿œï¼‰
             UpdateWeightDisplay(uyopyon.OwnerPlayer, uyopyon.Weight);
             UpdateEnergyDisplay(uyopyon.OwnerPlayer, uyopyon.Energy);
         }
     }
 
-    // === ƒvƒŒƒCƒ„[–¼XViNetworkPlayer‚©‚çŒÄ‚Î‚ê‚éj ===
+    // === ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼åæ›´æ–°ï¼ˆNetworkPlayerã‹ã‚‰å‘¼ã°ã‚Œã‚‹ï¼‰ ===
     public void UpdateMyName(string newName) => myNameText.text = newName;
     public void UpdateOpponentName(string newName) => opponentNameText.text = newName;
 
-    // === ƒXƒe[ƒ^ƒXXViUyopyonState‚©‚çŒÄ‚Î‚ê‚éj ===
+    // === ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹æ›´æ–°ï¼ˆUyopyonStateã‹ã‚‰å‘¼ã°ã‚Œã‚‹ï¼‰ ===
 
     public void UpdateWeightDisplay(PlayerRef player, int weight)
     {
         if (player == _localPlayerRef)
         {
-            myWeightText.text = $"d‚³: {weight}";
+            myWeightText.text = $"é‡ã•: {weight}";
         }
         else
         {
-            opponentWeightText.text = $"d‚³: {weight}";
+            opponentWeightText.text = $"é‡ã•: {weight}";
         }
     }
 
@@ -73,13 +73,25 @@ public class UIController : MonoBehaviour
     {
         if (player == _localPlayerRef)
         {
-            myEnergyText.text = $"Œ³‹C: {energy}%";
+            myEnergyText.text = $"å…ƒæ°—: {energy}%";
         }
         else
         {
-            opponentEnergyText.text = $"Œ³‹C: {energy}%";
+            opponentEnergyText.text = $"å…ƒæ°—: {energy}%";
         }
     }
 
-    // ... ‚»‚Ì‘¼Aƒ‰ƒEƒ“ƒh•\¦AƒƒbƒZ[ƒW•\¦‚È‚Ç‚Ìƒƒ\ƒbƒh ...
+    // TODO: ãƒ•ã‚§ãƒ¼ã‚º3ã§å®Ÿè£…äºˆå®š - ã‚ãã¶ãƒãƒ•ã®è¡¨ç¤º
+    public void UpdatePlayBuffDisplay(PlayerRef player, int buffWeight, int buffEnergy) { }
+
+    // TODO: ãƒ•ã‚§ãƒ¼ã‚º7ã§å®Ÿè£…äºˆå®š - é€²åŒ–çŠ¶æ…‹ã®è¡¨ç¤º
+    public void UpdateEvolutionDisplay(PlayerRef player, bool hasEvolved, string abilityName) { }
+
+    // TODO: ãƒ•ã‚§ãƒ¼ã‚º9ã§å®Ÿè£…äºˆå®š - ãƒ“ã‚¸ãƒ¥ã‚¢ãƒ«å¤‰æ›´
+    public void UpdateUyopyonVisual(PlayerRef player, string visualType) { }
+
+    // TODO: ãƒ•ã‚§ãƒ¼ã‚º6ã§å®Ÿè£…äºˆå®š - çŠ¶æ…‹ç•°å¸¸ã‚¢ã‚¤ã‚³ãƒ³è¡¨ç¤º
+    public void UpdateStatusAilmentDisplay(PlayerRef player, byte[] ailments) { }
+
+    // ... ãã®ä»–ã€ãƒ©ã‚¦ãƒ³ãƒ‰è¡¨ç¤ºã€ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸è¡¨ç¤ºãªã©ã®ãƒ¡ã‚½ãƒƒãƒ‰ ...
 }
