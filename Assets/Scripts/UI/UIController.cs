@@ -93,5 +93,19 @@ public class UIController : MonoBehaviour
     // TODO: フェーズ6で実装予定 - 状態異常アイコン表示
     public void UpdateStatusAilmentDisplay(PlayerRef player, byte[] ailments) { }
 
+    // TODO: フェーズ3.4で実装予定 - ブラックアウトパネルの表示
+    public void ShowBlackout(string text, float duration)
+    {
+        Debug.Log($"[UIController] ブラックアウト表示（未実装）: {text}");
+        // 実装は3.4で行う予定
+    }
+
+    // TODO: フェーズ3.4で実装予定 - ログメッセージの追加
+    public void AddLog(string message)
+    {
+        Debug.Log($"[UIController] ログ追加（未実装）: {message}");
+        // 実装は3.4で行う予定
+    }
+
     // ... その他、ラウンド表示、メッセージ表示などのメソッド ...
 }
