@@ -5,26 +5,27 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// ƒ^ƒCƒgƒ‹‰æ–Ê‚ÌUI‘€ì‚ğŠÇ—‚µAƒlƒbƒgƒ[ƒNÚ‘±‚ğŠJn‚·‚éB
+/// ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ã®UIã‚’ç®¡ç†ã—ã€ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯æ¥ç¶šã‚’é–‹å§‹ã™ã‚‹ã€‚
 /// </summary>
 public class TitleScreenManager : MonoBehaviour
 {
     public NetworkRunnerHandler runnerHandlerPrefab;
 
-    // Inspector‚Å TMP_InputField ‚ğƒAƒTƒCƒ“
+    // Inspectorã§TMP_InputFieldã‚’ã‚¢ã‚µã‚¤ãƒ³
     public TMP_InputField playerNameInputField;
     public TMP_InputField sessionNameInputField;
 
-    // === V‚µ‚­’Ç‰Á‚³‚ê‚½UIQÆ ===
-    // Inspector‚ÅŠeGameObject/Component‚ğƒAƒTƒCƒ“
-    public GameObject matchingOverlayPanel; // ƒ}ƒbƒ`ƒ“ƒO’†‚Ìƒpƒlƒ‹‘S‘Ì
-    public Button cancelButton;             // ƒLƒƒƒ“ƒZƒ‹ƒ{ƒ^ƒ“
-    public Button randomMatchButton;        // ƒ‰ƒ“ƒ_ƒ€ƒ}ƒbƒ`ƒ{ƒ^ƒ“
-    public Button friendMatchButton;        // ƒtƒŒƒ“ƒhƒ}ƒbƒ`ƒ{ƒ^ƒ“
+    // === æ–°ã—ãè¿½åŠ ã•ã‚ŒãŸUIå‚ç…§ ===
+    // Inspectorã§GameObject/Componentã‚’ã‚¢ã‚µã‚¤ãƒ³
+    public GameObject matchingOverlayPanel; // ãƒãƒƒãƒãƒ³ã‚°ä¸­ã®ãƒ‘ãƒãƒ«å…¨ä½“
+    public Button cancelButton;             // ã‚­ãƒ£ãƒ³ã‚»ãƒ«ãƒœã‚¿ãƒ³
+    public Button randomMatchButton;        // ãƒ©ãƒ³ãƒ€ãƒ ãƒãƒƒãƒãƒœã‚¿ãƒ³
+    public Button friendMatchButton;        // ãƒ•ãƒ¬ãƒ³ãƒ‰ãƒãƒƒãƒãƒœã‚¿ãƒ³
+    public TextMeshProUGUI errorMessageText; // ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸è¡¨ç¤ºç”¨ãƒ†ã‚­ã‚¹ãƒˆï¼ˆãƒ•ãƒ¬ãƒ³ãƒ‰ãƒãƒƒãƒãƒœã‚¿ãƒ³ã®ä¸Šï¼‰
 
     public const string PLAYER_NAME_KEY = "UyopyonPlayerName";
 
-    // ƒVƒ“ƒOƒ‹ƒgƒ“iNetworkRunnerHandler‚©‚çUI§Œä‚ğŒÄ‚Ño‚·‚½‚ßj
+    // ã‚·ãƒ³ã‚°ãƒ«ãƒˆãƒ³ï¼ˆNetworkRunnerHandlerã‹ã‚‰UIåˆ¶å¾¡ã‚’å‘¼ã³å‡ºã™ãŸã‚ï¼‰
     public static TitleScreenManager Instance { get; private set; }
 
     private NetworkRunnerHandler _activeRunnerHandlerInstance;
@@ -34,29 +35,36 @@ public class TitleScreenManager : MonoBehaviour
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;
 
-        //ƒvƒŒƒCƒ„[ƒl[ƒ€‚ÌƒfƒtƒHƒ‹ƒgƒŠƒZƒbƒgB
-        //ƒfƒoƒbƒOŠ®—¹ŒãA‚±‚Ìs‚Ííœ‚Ü‚½‚ÍƒRƒƒ“ƒgƒAƒEƒg‚µ‚Ä‚­‚¾‚³‚¢B
+        //ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãƒãƒ¼ãƒ ã®ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆãƒªã‚»ãƒƒãƒˆã€‚
+        //ãƒ‡ãƒãƒƒã‚°å®Œäº†å¾Œã€ã“ã®è¡Œã¯å‰Šé™¤ã¾ãŸã¯ã‚³ãƒ¡ãƒ³ãƒˆã‚¢ã‚¦ãƒˆã—ã¦ãã ã•ã„ã€‚
         //PlayerPrefs.DeleteKey(PLAYER_NAME_KEY);
 
-        // ƒvƒŒƒCƒ„[–¼‚Ìƒ[ƒh
-        playerNameInputField.text = PlayerPrefs.GetString(PLAYER_NAME_KEY, "ƒQƒXƒg‚¤[‚Ò‚å‚ñ");
+        // ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼åã®ãƒ­ãƒ¼ãƒ‰ï¼ˆãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã¯ç©ºæ¬„ï¼‰
+        playerNameInputField.text = PlayerPrefs.GetString(PLAYER_NAME_KEY, "");
 
-        // ‰Šúó‘Ô‚Å‚Íƒ}ƒbƒ`ƒ“ƒOUI‚ğ”ñ•\¦‚É‚µ‚Ä‚¨‚­
+        // åˆæœŸçŠ¶æ…‹ã§ã¯ãƒãƒƒãƒãƒ³ã‚°UIã‚’éè¡¨ç¤ºã«ã—ã¦ãŠã
         SetMatchingUIActive(false);
+
+        // ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’éè¡¨ç¤ºã«ã—ã€Raycast Targetã‚’ã‚ªãƒ•ã«ã™ã‚‹
+        if (errorMessageText != null)
+        {
+            errorMessageText.raycastTarget = false; // ã‚¯ãƒªãƒƒã‚¯ã‚’ãƒ–ãƒ­ãƒƒã‚¯ã—ãªã„ã‚ˆã†ã«ã™ã‚‹
+        }
+        HideErrorMessage();
     }
 
     /// <summary>
-    /// ƒ}ƒbƒ`ƒ“ƒOUI‚Ì•\¦‚ğØ‚è‘Ö‚¦A‘¼‚Ìƒ{ƒ^ƒ“‚ÆƒCƒ“ƒvƒbƒgƒtƒB[ƒ‹ƒh‚ğ‘€ì•s‰Â‚É‚·‚é
+    /// ãƒãƒƒãƒãƒ³ã‚°UIã®è¡¨ç¤ºã‚’åˆ‡ã‚Šæ›¿ãˆã€ä»–ã®ãƒœã‚¿ãƒ³ã¨ã‚¤ãƒ³ãƒ—ãƒƒãƒˆãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã‚’æ“ä½œä¸å¯ã«ã™ã‚‹
     /// </summary>
     private void SetMatchingUIActive(bool isActive)
     {
-        // 1. ƒI[ƒo[ƒŒƒCƒpƒlƒ‹‚Ì•\¦/”ñ•\¦‚ğØ‚è‘Ö‚¦
+        // 1. ã‚ªãƒ¼ãƒãƒ¼ãƒ¬ã‚¤ãƒ‘ãƒãƒ«ã®è¡¨ç¤º/éè¡¨ç¤ºã‚’åˆ‡ã‚Šæ›¿ãˆ
         if (matchingOverlayPanel != null)
         {
             matchingOverlayPanel.SetActive(isActive);
         }
 
-        // 2. ‘¼‚Ìƒ{ƒ^ƒ“‚ÆƒCƒ“ƒvƒbƒgƒtƒB[ƒ‹ƒh‚Ì‘€ì‚ğ§Œä
+        // 2. ä»–ã®ãƒœã‚¿ãƒ³ã¨ã‚¤ãƒ³ãƒ—ãƒƒãƒˆãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã®æ“ä½œã‚’åˆ¶å¾¡
         if (randomMatchButton != null)
         {
             randomMatchButton.interactable = !isActive;
@@ -77,16 +85,16 @@ public class TitleScreenManager : MonoBehaviour
     }
 
     /// <summary>
-    /// NetworkRunnerHandler‚©‚çŒÄ‚Î‚êAUI‚ğ’Êíó‘Ô‚É–ß‚·
+    /// NetworkRunnerHandlerã‹ã‚‰å‘¼ã°ã‚Œã€UIã‚’é€šå¸¸çŠ¶æ…‹ã«æˆ»ã™
     /// </summary>
     public void HideMatchingUI()
     {
-        // Ú‘±¬Œ÷‚Ü‚½‚Í¸”sAØ’f‚ÉŒÄ‚Î‚ê‚é
+        // æ¥ç¶šæˆåŠŸã¾ãŸã¯å¤±æ•—ã€åˆ‡æ–­æ™‚ã«å‘¼ã°ã‚Œã‚‹
         SetMatchingUIActive(false);
     }
 
     // ------------------------------------------------------------------
-    // ƒ{ƒ^ƒ“ƒNƒŠƒbƒNˆ—
+    // ãƒœã‚¿ãƒ³ã‚¯ãƒªãƒƒã‚¯å‡¦ç†
     // ------------------------------------------------------------------
 
     public async void OnRandomMatchClicked()
@@ -96,27 +104,30 @@ public class TitleScreenManager : MonoBehaviour
         SavePlayerName();
         SetMatchingUIActive(true);
 
-        // _activeRunnerHandlerInstance ‚ğg—p
+        // _activeRunnerHandlerInstanceã‚’ä½¿ç”¨
         await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, "RANDOM_POOL_UYOPYON");
     }
 
     public async void OnFriendMatchClicked()
     {
-        // yC³‰ÓŠz: NetworkRunnerHandler‚Ì—LŒø«‚ğƒ`ƒFƒbƒN‚µAÄæ“¾‚·‚é
-        if (!CheckAndRestoreRunnerHandler()) return;
-
-        SavePlayerName();
+        // ã€ä¿®æ­£ç®‡æ‰€ã€‘: åˆè¨€è‘‰ã®å…¥åŠ›ãƒã‚§ãƒƒã‚¯ã‚’å…ˆã«è¡Œã†
         string sessionName = sessionNameInputField.text;
 
         if (string.IsNullOrWhiteSpace(sessionName))
         {
-            Debug.LogError("ƒtƒŒƒ“ƒhƒ}ƒbƒ`‚É‚Í‡Œ¾—tiƒZƒbƒVƒ‡ƒ“–¼j‚Ì“ü—Í‚ª•K—v‚Å‚·B");
-            return;
+            Debug.LogWarning("ãƒ•ãƒ¬ãƒ³ãƒ‰ãƒãƒƒãƒã«ã¯åˆè¨€è‘‰ï¼ˆã‚»ãƒƒã‚·ãƒ§ãƒ³åï¼‰ã®å…¥åŠ›ãŒå¿…è¦ã§ã™ã€‚");
+            // ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’3ç§’é–“è¡¨ç¤º
+            ShowErrorMessage("åˆè¨€è‘‰ã‚’å…¥åŠ›ã—ã¦ãã ã•ã„ã€‚", 3f);
+            return; // ã“ã“ã§å‡¦ç†ã‚’çµ‚äº†ã—ã€ç”»é¢ãŒå›ºã¾ã‚‰ãªã„ã‚ˆã†ã«ã™ã‚‹
         }
 
-        SetMatchingUIActive(true); // ƒ}ƒbƒ`ƒ“ƒOUI‚ğ•\¦‚µA‘¼‚ğ‘€ì•s‰Â‚É‚·‚é
+        // NetworkRunnerHandlerã®æœ‰åŠ¹æ€§ã‚’ãƒã‚§ãƒƒã‚¯ã—ã€å†å–å¾—ã™ã‚‹
+        if (!CheckAndRestoreRunnerHandler()) return;
 
-        // ƒ}ƒbƒ`ƒ“ƒO‚ª¬Œ÷/¸”s‚·‚é‚Ü‚Å‚±‚Ìƒƒ\ƒbƒh‚ÍƒuƒƒbƒN‚³‚ê‚éi‘Ò‹@‚·‚éj
+        SavePlayerName();
+        SetMatchingUIActive(true); // ãƒãƒƒãƒãƒ³ã‚°UIã‚’è¡¨ç¤ºã—ã€ä»–ã‚’æ“ä½œä¸å¯ã«ã™ã‚‹
+
+        // ãƒãƒƒãƒãƒ³ã‚°ãŒæˆåŠŸ/å¤±æ•—ã™ã‚‹ã¾ã§ã“ã®ãƒ¡ã‚½ãƒƒãƒ‰ã¯ãƒ–ãƒ­ãƒƒã‚¯ã•ã‚Œã‚‹ï¼ˆå¾…æ©Ÿã™ã‚‹ï¼‰
         await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, sessionName);
     }
 
@@ -127,54 +138,54 @@ public class TitleScreenManager : MonoBehaviour
             _activeRunnerHandlerInstance.ShutdownRunner();
         }
 
-        // ƒCƒ“ƒXƒ^ƒ“ƒX‚Í ShutdownRunner/OnShutdown ‚Å”j‰ó‚³‚ê‚é‚Ì‚ÅA
-        // QÆ‚ğƒNƒŠƒA
+        // ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã¯ShutdownRunner/OnShutdownã§ç ´å£Šã•ã‚Œã‚‹ã®ã§ã€
+        // å‚ç…§ã‚’ã‚¯ãƒªã‚¢
         _activeRunnerHandlerInstance = null;
 
         HideMatchingUI();
     }
 
     // ------------------------------------------------------------------
-    // ƒwƒ‹ƒp[ƒƒ\ƒbƒh
+    // ãƒ˜ãƒ«ãƒ‘ãƒ¼ãƒ¡ã‚½ãƒƒãƒ‰
     // ------------------------------------------------------------------
 
     /// <summary>
-    /// Œ»İƒAƒNƒeƒBƒu‚È NetworkRunnerHandler ƒCƒ“ƒXƒ^ƒ“ƒX‚ª—LŒø‚©ƒ`ƒFƒbƒN‚µA
-    /// –³Œø‚Å‚ ‚ê‚ÎƒvƒŒƒnƒu‚©‚çV‹K¶¬‚·‚éB
+    /// ç¾åœ¨ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ãªNetworkRunnerHandlerã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãŒæœ‰åŠ¹ã‹ãƒã‚§ãƒƒã‚¯ã—ã€
+    /// ç„¡åŠ¹ã§ã‚ã‚Œã°ãƒ—ãƒ¬ãƒãƒ–ã‹ã‚‰æ–°è¦ç”Ÿæˆã™ã‚‹ã€‚
     /// </summary>
-    /// <returns>ƒAƒNƒeƒBƒu‚ÈƒCƒ“ƒXƒ^ƒ“ƒX‚ª—LŒø‚Å‚ ‚ê‚Î true</returns>
+    /// <returns>ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ãªã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãŒæœ‰åŠ¹ã§ã‚ã‚Œã°true</returns>
     private bool CheckAndRestoreRunnerHandler()
     {
-        // 1. ƒAƒNƒeƒBƒu‚ÈƒCƒ“ƒXƒ^ƒ“ƒX‚ªŠù‚É‘¶İ‚µA—LŒø‚©ƒ`ƒFƒbƒN
-        // UnityƒIƒuƒWƒFƒNƒg‚Ìnullƒ`ƒFƒbƒNi”j‰ó‚³‚ê‚Ä‚¢‚È‚¢‚©ƒ`ƒFƒbƒNj
+        // 1. ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ãªã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãŒæ—¢ã«å­˜åœ¨ã—ã€æœ‰åŠ¹ã‹ãƒã‚§ãƒƒã‚¯
+        // Unityã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®nullãƒã‚§ãƒƒã‚¯ï¼ˆç ´å£Šã•ã‚Œã¦ã„ãªã„ã‹ãƒã‚§ãƒƒã‚¯ï¼‰
         if (_activeRunnerHandlerInstance != null)
         {
             return true;
         }
 
-        // 2. ƒvƒŒƒnƒu‚ªƒAƒTƒCƒ“‚³‚ê‚Ä‚¢‚é‚©ƒ`ƒFƒbƒN
+        // 2. ãƒ—ãƒ¬ãƒãƒ–ãŒã‚¢ã‚µã‚¤ãƒ³ã•ã‚Œã¦ã„ã‚‹ã‹ãƒã‚§ãƒƒã‚¯
         if (runnerHandlerPrefab == null)
         {
-            Debug.LogError("FATAL ERROR: NetworkRunnerHandler Prefab‚ªTitleScreenManager‚ÉƒAƒTƒCƒ“‚³‚ê‚Ä‚¢‚Ü‚¹‚ñB");
+            Debug.LogError("FATAL ERROR: NetworkRunnerHandler PrefabãŒTitleScreenManagerã«ã‚¢ã‚µã‚¤ãƒ³ã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚");
             SetMatchingUIActive(false);
             return false;
         }
 
-        // 3. ƒCƒ“ƒXƒ^ƒ“ƒX‚ª”j‰ó‚³‚ê‚Ä‚¢‚½‚½‚ßAƒvƒŒƒnƒu‚©‚çV‹K¶¬
-        Debug.Log("NetworkRunnerHandler‚ª”j‰ó‚³‚ê‚½‚½‚ßAƒvƒŒƒnƒu‚©‚çV‹K¶¬‚µ‚Ü‚·B");
+        // 3. ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãŒç ´å£Šã•ã‚Œã¦ã„ãŸãŸã‚ã€ãƒ—ãƒ¬ãƒãƒ–ã‹ã‚‰æ–°è¦ç”Ÿæˆ
+        Debug.Log("NetworkRunnerHandlerãŒç ´å£Šã•ã‚ŒãŸãŸã‚ã€ãƒ—ãƒ¬ãƒãƒ–ã‹ã‚‰æ–°è¦ç”Ÿæˆã—ã¾ã™ã€‚");
 
-        // Instantiate‚ÅƒvƒŒƒnƒu‚©‚çV‚µ‚¢ƒCƒ“ƒXƒ^ƒ“ƒX‚ğ¶¬
+        // Instantiateã§ãƒ—ãƒ¬ãƒãƒ–ã‹ã‚‰æ–°ã—ã„ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ç”Ÿæˆ
         _activeRunnerHandlerInstance = Instantiate(runnerHandlerPrefab);
         _activeRunnerHandlerInstance.gameObject.name = "NetworkRunner_Instance";
 
-        // ¶¬‚É¬Œ÷
+        // ç”Ÿæˆã«æˆåŠŸ
         if (_activeRunnerHandlerInstance != null)
         {
             return true;
         }
 
-        // ÅI“I‚ÈƒGƒ‰[
-        Debug.LogError("NetworkRunnerHandler‚Ì¶¬‚É¸”s‚µ‚Ü‚µ‚½B2‰ñ–Ú‚Ìƒ}ƒbƒ`ƒ“ƒO‚ğŠJn‚Å‚«‚Ü‚¹‚ñB");
+        // æœ€çµ‚çš„ãªã‚¨ãƒ©ãƒ¼
+        Debug.LogError("NetworkRunnerHandlerã®ç”Ÿæˆã«å¤±æ•—ã—ã¾ã—ãŸã€‚2å›ç›®ã®ãƒãƒƒãƒãƒ³ã‚°ã‚’é–‹å§‹ã§ãã¾ã›ã‚“ã€‚");
         SetMatchingUIActive(false);
         return false;
     }
@@ -184,9 +195,49 @@ public class TitleScreenManager : MonoBehaviour
         string playerName = playerNameInputField.text;
         if (string.IsNullOrEmpty(playerName))
         {
-            playerName = "–ì—Ç‚¤[‚Ò‚å‚ñ";
+            playerName = "é‡è‰¯ã†ãƒ¼ã´ã‚‡ã‚“";
         }
         PlayerPrefs.SetString(PLAYER_NAME_KEY, playerName);
         PlayerPrefs.Save();
+    }
+
+    // ------------------------------------------------------------------
+    // ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸è¡¨ç¤º
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’æŒ‡å®šç§’æ•°ã ã‘è¡¨ç¤ºã™ã‚‹
+    /// </summary>
+    private async void ShowErrorMessage(string message, float duration)
+    {
+        if (errorMessageText == null)
+        {
+            Debug.LogWarning("errorMessageText ãŒè¨­å®šã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚Inspectorã§è¨­å®šã—ã¦ãã ã•ã„ã€‚");
+            return;
+        }
+
+        // Raycast Targetã‚’ã‚ªãƒ•ã«ã—ã¦ã€ã‚¯ãƒªãƒƒã‚¯ã‚’ãƒ–ãƒ­ãƒƒã‚¯ã—ãªã„ã‚ˆã†ã«ã™ã‚‹
+        errorMessageText.raycastTarget = false;
+
+        // ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’è¨­å®šã—ã¦è¡¨ç¤º
+        errorMessageText.text = message;
+        errorMessageText.gameObject.SetActive(true);
+
+        // æŒ‡å®šç§’æ•°å¾…æ©Ÿ
+        await Task.Delay((int)(duration * 1000));
+
+        // ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’éè¡¨ç¤ºã«ã™ã‚‹
+        HideErrorMessage();
+    }
+
+    /// <summary>
+    /// ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’éè¡¨ç¤ºã«ã™ã‚‹
+    /// </summary>
+    private void HideErrorMessage()
+    {
+        if (errorMessageText != null)
+        {
+            errorMessageText.gameObject.SetActive(false);
+        }
     }
 }

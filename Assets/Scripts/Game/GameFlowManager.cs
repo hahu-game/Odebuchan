@@ -75,6 +75,8 @@ public class GameFlowManager : NetworkBehaviour
 
     public override void Spawned()
     {
+        Debug.Log($"[GameFlowManager] Spawned called. HasStateAuthority={Object.HasStateAuthority}, _gameStarted={_gameStarted}");
+
         // TurnProcessorの自動取得（Inspectorで設定されていない場合）
         if (turnProcessor == null)
         {
@@ -89,7 +91,18 @@ public class GameFlowManager : NetworkBehaviour
         if (Object.HasStateAuthority && !_gameStarted)
         {
             _gameStarted = true;
+            Debug.Log("[GameFlowManager] ホストとしてゲーム開始処理を開始します");
             _ = StartGame();
+        }
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        // 5秒ごとに現在のステータスをログ出力（デバッグ用）
+        // Fusion 2.0では、デフォルトのTickRateは60
+        if (Object.HasStateAuthority && Runner.Tick % (60 * 5) == 0)
+        {
+            Debug.Log($"[GameFlowManager][定期チェック] Day={CurrentDay}, Phase={CurrentPhase}, Object.IsValid={Object.IsValid}");
         }
     }
 
@@ -98,7 +111,8 @@ public class GameFlowManager : NetworkBehaviour
     /// </summary>
     private async Task StartGame()
     {
-        Debug.Log("ゲーム開始処理を実行します");
+        Debug.Log("[GameFlowManager] StartGame() 開始");
+        Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}, HasStateAuthority={Object?.HasStateAuthority}");
 
         // 特殊能力6種から3種をランダム選出
         SelectRandomSpecialAbilities();
@@ -107,12 +121,15 @@ public class GameFlowManager : NetworkBehaviour
         RPC_ShowBlackout("ゲームスタート！");
 
         // 1秒待機
+        Debug.Log($"[GameFlowManager] ブラックアウト待機開始: {gameParams.BlackoutDuration}秒");
         await Task.Delay((int)(gameParams.BlackoutDuration * 1000));
+        Debug.Log("[GameFlowManager] ブラックアウト待機終了");
 
         // ログエリアに「ゲームスタート！」を追加
         RPC_AddLog("ゲームスタート！");
 
         // 準備フェーズへ移行
+        Debug.Log("[GameFlowManager] StartGame() 完了、準備フェーズへ移行します");
         await StartPreparationPhase();
     }
 
@@ -157,30 +174,39 @@ public class GameFlowManager : NetworkBehaviour
     {
         try
         {
+            Debug.Log($"[GameFlowManager] ========== StartPreparationPhase() 開始 ==========");
+            Debug.Log($"[GameFlowManager] CurrentDay={CurrentDay}, CurrentPhase={CurrentPhase}");
+            Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}, HasStateAuthority={Object?.HasStateAuthority}");
+
             if (!Object || !Object.IsValid)
             {
-                Debug.LogWarning($"[GameFlowManager] 準備フェーズ開始前: Object無効 (Object={Object}, IsValid={Object?.IsValid})");
+                Debug.LogError($"[GameFlowManager] 準備フェーズ開始前: Object無効 (Object={Object}, IsValid={Object?.IsValid})");
                 return;
             }
 
             CurrentPhase = GamePhase.Preparation;
-            Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズを開始します");
+            Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズを開始しました (CurrentPhase={CurrentPhase})");
 
             // この段階では、次のフェーズへの遷移のみ実装
+            Debug.Log("[GameFlowManager] 準備フェーズ: 1秒待機開始");
             await Task.Delay(1000);
+            Debug.Log("[GameFlowManager] 準備フェーズ: 1秒待機終了");
 
+            Debug.Log($"[GameFlowManager] 待機後チェック: Object={Object}, IsValid={Object?.IsValid}");
             if (!Object || !Object.IsValid)
             {
-                Debug.LogWarning($"[GameFlowManager] 準備フェーズ待機後: Object無効 (Object={Object}, IsValid={Object?.IsValid})");
+                Debug.LogError($"[GameFlowManager] 準備フェーズ待機後: Object無効 (Object={Object}, IsValid={Object?.IsValid})");
                 return;
             }
 
-            Debug.Log($"[GameFlowManager] 準備フェーズ終了、選択フェーズへ遷移します");
+            Debug.Log($"[GameFlowManager] 準備フェーズ終了、選択フェーズへ遷移します (CurrentDay={CurrentDay})");
             await StartSelectionPhase();
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[GameFlowManager] 準備フェーズでエラー発生: {e.Message}\n{e.StackTrace}");
+            Debug.LogError($"[GameFlowManager] 準備フェーズでエラー発生: {e.GetType().Name}");
+            Debug.LogError($"[GameFlowManager] Message: {e.Message}");
+            Debug.LogError($"[GameFlowManager] StackTrace: {e.StackTrace}");
         }
     }
 
@@ -191,22 +217,39 @@ public class GameFlowManager : NetworkBehaviour
     {
         try
         {
-            if (!Object || !Object.IsValid) return;
+            Debug.Log($"[GameFlowManager] ========== StartSelectionPhase() 開始 ==========");
+            Debug.Log($"[GameFlowManager] CurrentDay={CurrentDay}, CurrentPhase={CurrentPhase}");
+            Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}");
+
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogError($"[GameFlowManager] 選択フェーズ開始前: Object無効");
+                return;
+            }
 
             CurrentPhase = GamePhase.Selection;
-            Debug.Log("[GameFlowManager] 選択フェーズを開始します");
+            Debug.Log($"[GameFlowManager] 選択フェーズを開始しました (CurrentPhase={CurrentPhase})");
 
             // この段階では、次のフェーズへの遷移のみ実装
+            Debug.Log("[GameFlowManager] 選択フェーズ: 3秒待機開始");
             await Task.Delay(3000);
+            Debug.Log("[GameFlowManager] 選択フェーズ: 3秒待機終了");
 
-            if (!Object || !Object.IsValid) return;
+            Debug.Log($"[GameFlowManager] 待機後チェック: Object={Object}, IsValid={Object?.IsValid}");
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogError($"[GameFlowManager] 選択フェーズ待機後: Object無効");
+                return;
+            }
 
-            Debug.Log("[GameFlowManager] 選択フェーズ終了、実行フェーズへ遷移します");
+            Debug.Log($"[GameFlowManager] 選択フェーズ終了、実行フェーズへ遷移します (CurrentDay={CurrentDay})");
             await StartExecutionPhase();
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[GameFlowManager] 選択フェーズでエラー発生: {e.Message}\n{e.StackTrace}");
+            Debug.LogError($"[GameFlowManager] 選択フェーズでエラー発生: {e.GetType().Name}");
+            Debug.LogError($"[GameFlowManager] Message: {e.Message}");
+            Debug.LogError($"[GameFlowManager] StackTrace: {e.StackTrace}");
         }
     }
 
@@ -217,25 +260,45 @@ public class GameFlowManager : NetworkBehaviour
     {
         try
         {
-            if (!Object || !Object.IsValid) return;
+            Debug.Log($"[GameFlowManager] ========== StartExecutionPhase() 開始 ==========");
+            Debug.Log($"[GameFlowManager] CurrentDay={CurrentDay}, CurrentPhase={CurrentPhase}");
+            Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}");
+
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogError($"[GameFlowManager] 実行フェーズ開始前: Object無効");
+                return;
+            }
 
             CurrentPhase = GamePhase.Execution;
-            Debug.Log("[GameFlowManager] 実行フェーズを開始します");
+            Debug.Log($"[GameFlowManager] 実行フェーズを開始しました (CurrentPhase={CurrentPhase})");
 
             // この段階では、次のフェーズへの遷移のみ実装
+            Debug.Log("[GameFlowManager] 実行フェーズ: 3秒待機開始");
             await Task.Delay(3000);
+            Debug.Log("[GameFlowManager] 実行フェーズ: 3秒待機終了");
 
-            if (!Object || !Object.IsValid) return;
+            Debug.Log($"[GameFlowManager] 待機後チェック: Object={Object}, IsValid={Object?.IsValid}");
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogError($"[GameFlowManager] 実行フェーズ待機後: Object無効");
+                return;
+            }
 
-            Debug.Log("[GameFlowManager] 実行フェーズ終了、次の日へ");
+            Debug.Log($"[GameFlowManager] 実行フェーズ終了、次の日へ (現在: {CurrentDay}日目)");
 
             // 次の日へ
             CurrentDay++;
+            Debug.Log($"[GameFlowManager] CurrentDay を {CurrentDay} にインクリメントしました");
+            Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズへ遷移します");
+
             await StartPreparationPhase();
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[GameFlowManager] 実行フェーズでエラー発生: {e.Message}\n{e.StackTrace}");
+            Debug.LogError($"[GameFlowManager] 実行フェーズでエラー発生: {e.GetType().Name}");
+            Debug.LogError($"[GameFlowManager] Message: {e.Message}");
+            Debug.LogError($"[GameFlowManager] StackTrace: {e.StackTrace}");
         }
     }
 
