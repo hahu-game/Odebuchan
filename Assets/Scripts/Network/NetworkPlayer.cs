@@ -2,19 +2,27 @@ using Fusion;
 using UnityEngine;
 
 /// <summary>
-/// ƒlƒbƒgƒ[ƒNã‚ÅQ‰ÁƒvƒŒƒCƒ„[‚ğ•\Œ»‚·‚éƒIƒuƒWƒFƒNƒgB
+/// ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯ä¸Šã§å‚åŠ ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’è¡¨ç¾ã™ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã€‚
 /// </summary>
 public class NetworkPlayer : NetworkBehaviour
 {
     [Networked]
     public NetworkString<_16> PlayerName { get; set; }
 
+    /// <summary>
+    /// ã“ã®NetworkPlayerã®æ‰€æœ‰è€…ã¨ãªã‚‹PlayerRef
+    /// NetworkRunnerHandlerã§ã‚¹ãƒãƒ¼ãƒ³å¾Œã«è¨­å®šã•ã‚Œã‚‹
+    /// </summary>
+    [Networked]
+    public PlayerRef OwnerPlayerRef { get; set; }
+
     private PlayerRef MyPlayerRef;
-    private string _lastPlayerName; // ‘O‰ñ‚Ì–¼‘O‚ğ•Û
+    private string _lastPlayerName; // å‰å›ã®åå‰ã‚’ä¿æŒ
 
     public override void Spawned()
     {
-        MyPlayerRef = Object.InputAuthority;
+        // OwnerPlayerRefãŒè¨­å®šã•ã‚Œã¦ã„ã‚‹å ´åˆã¯ãã‚Œã‚’ä½¿ç”¨ã€æœªè¨­å®šã®å ´åˆã¯InputAuthorityã‚’ä½¿ç”¨
+        MyPlayerRef = OwnerPlayerRef.IsValid ? OwnerPlayerRef : Object.InputAuthority;
 
         if (Object.HasInputAuthority)
         {
@@ -22,32 +30,32 @@ public class NetworkPlayer : NetworkBehaviour
             PlayerName = localName;
         }
 
-        if (Runner.IsServer)
+        if (Runner.IsSharedModeMasterClient)
         {
             GameManager.Instance.SpawnUyopyon(MyPlayerRef, PlayerName.ToString());
         }
 
-        // ‰Šú’l‚ğİ’è
+        // åˆæœŸå€¤ã‚’è¨­å®š
         _lastPlayerName = PlayerName.ToString();
     }
 
     /// <summary>
-    /// ‘SƒNƒ‰ƒCƒAƒ“ƒg‚ÅÀs‚³‚ê‚éƒŒƒ“ƒ_ƒŠƒ“ƒOˆ—Bƒf[ƒ^‚Ì•ÏX‚ğƒ`ƒFƒbƒN‚·‚éB
+    /// å…¨ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã§å®Ÿè¡Œã•ã‚Œã‚‹ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°å‡¦ç†ã€‚ãƒ‡ãƒ¼ã‚¿ã®å¤‰æ›´ã‚’ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã€‚
     /// </summary>
     public override void Render()
     {
         string currentName = PlayerName.ToString();
 
-        // –¼‘O‚ª•ÏX‚³‚ê‚½ê‡
+        // åå‰ãŒå¤‰æ›´ã•ã‚ŒãŸå ´åˆ
         if (_lastPlayerName != currentName)
         {
             UpdatePlayerNameUI(currentName);
-            _lastPlayerName = currentName; // ’l‚ğXV
+            _lastPlayerName = currentName; // å€¤ã‚’æ›´æ–°
         }
     }
 
     /// <summary>
-    /// UIController‚É’Ê’m‚µ‚Ä–¼‘O‚ğXV‚·‚éiRender()‚©‚çŒÄ‚Î‚ê‚éj
+    /// UIControllerã«é€šçŸ¥ã—ã¦åå‰ã‚’æ›´æ–°ã™ã‚‹(Render()ã‹ã‚‰å‘¼ã°ã‚Œã‚‹)
     /// </summary>
     private void UpdatePlayerNameUI(string newName)
     {

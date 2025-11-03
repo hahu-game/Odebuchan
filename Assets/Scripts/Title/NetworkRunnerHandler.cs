@@ -5,11 +5,11 @@ using UnityEngine.SceneManagement;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq; // ActivePlayers.Count()‚ğg‚¤‚½‚ß‚É•K—v
+using System.Linq; // ActivePlayers.Count()ã‚’ä½¿ã†ãŸã‚ã«å¿…è¦
 
 /// <summary>
-/// Photon Fusion‚ÌÚ‘±ŠJnAØ’fAƒCƒxƒ“ƒgƒR[ƒ‹ƒoƒbƒN‚ğˆ—‚·‚éB
-/// INetworkRunnerCallbacks‚Ìƒƒ\ƒbƒh‚Í–¾¦“I‚ÈƒCƒ“ƒ^[ƒtƒFƒCƒXÀ‘•‚Æ‚µ‚Ä’è‹`‚µAUnityŒx‚ğ‰ñ”ğ‚·‚éB
+/// Photon Fusionã®æ¥ç¶šé–‹å§‹ã€åˆ‡æ–­ã€ã‚¤ãƒ™ãƒ³ãƒˆã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã‚’ç®¡ç†ã™ã‚‹ã€‚
+/// INetworkRunnerCallbacksã®ãƒ¡ã‚½ãƒƒãƒ‰ã¯æ˜ç¤ºçš„ãªã‚¤ãƒ³ã‚¿ãƒ¼ãƒ•ã‚§ãƒ¼ã‚¹å®Ÿè£…ã¨ã—ã¦å®šç¾©ã—ã€UnityçµŒç”±ã§å‘¼ã°ã‚Œã‚‹ã€‚
 /// </summary>
 public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
@@ -17,20 +17,20 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     private bool _started = false;
     public NetworkObject playerPrefab;
 
-    // yƒeƒXƒg—pzPlayƒ{ƒ^ƒ“‚Å©“®‹N“®‚·‚éƒƒWƒbƒN
+    // ã€ãƒ†ã‚¹ãƒˆç”¨ã€‘Playãƒœã‚¿ãƒ³ã§è‡ªå‹•èµ·å‹•ã™ã‚‹ãƒ­ã‚¸ãƒƒã‚¯
     private void Start()
     {
         if (Application.isEditor && !_started)
         {
-            Debug.Log("yƒeƒXƒgƒ‚[ƒhzƒzƒXƒg‚Æ‚µ‚Ä©“®‹N“®‚µ‚Ü‚·B");
-            // StartGame‚ªasync‚È‚Ì‚ÅAƒ^ƒXƒN‚Æ‚µ‚ÄÀs
+            Debug.Log("ã€ãƒ†ã‚¹ãƒˆãƒ¢ãƒ¼ãƒ‰ã€‘ãƒ›ã‚¹ãƒˆã¨ã—ã¦è‡ªå‹•èµ·å‹•ã—ã¾ã™ã€‚");
+            // StartGameã¯asyncãªã®ã§ã€ã‚¿ã‚¹ã‚¯ã¨ã—ã¦å®Ÿè¡Œ
             _ = StartGame(Fusion.GameMode.Shared,"RANDOM_POOL_UYOPYON");
         }
     }
-    // yƒeƒXƒgŠ®—¹Œãz–{”Ô‚É–ß‚·Û‚Íã‹L‚Ì Start() ƒƒ\ƒbƒh‚ğíœ‚·‚é‚±‚Æ
+    // ã€ãƒ†ã‚¹ãƒˆçµ‚äº†å¾Œã€‘æœ¬ç•ªã«æˆ»ã™éš›ã¯ä¸Šè¨˜ Start() ãƒ¡ã‚½ãƒƒãƒ‰ã‚’å‰Šé™¤ã™ã‚‹ã“ã¨
 
     /// <summary>
-    /// ƒlƒbƒgƒ[ƒNÚ‘±‚ğŠJn‚·‚éBiasync Task ‚É•ÏXj
+    /// ãƒãƒƒãƒˆãƒ¯ãƒ¼ã‚¯æ¥ç¶šã‚’é–‹å§‹ã™ã‚‹ã€‚(async Task ã«å¤‰æ›´)
     /// </summary>
     public async Task StartGame(GameMode mode, string sessionName)
     {
@@ -54,20 +54,20 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
         if (result.Ok)
         {
-            // yd—vC³zÚ‘±¬Œ÷‚µ‚Ä‚à‘¦À‚ÉƒV[ƒ“‘JˆÚ‚µ‚È‚¢
-            // ƒzƒXƒg‚Íƒ}ƒbƒ`ƒ“ƒOŠ®—¹iOnPlayerJoinedj‚Ü‚Åƒ^ƒCƒgƒ‹‰æ–Ê‚É—¯‚Ü‚é
+            // ã€é‡è¦ãƒ¡ãƒ¢ã€‘æ¥ç¶šãŒæˆåŠŸã—ã¦ã‚‚å³åº§ã«ã‚·ãƒ¼ãƒ³é·ç§»ã—ãªã„
+            // ãƒ›ã‚¹ãƒˆã¯ãƒãƒƒãƒãƒ³ã‚°å®Œäº†(OnPlayerJoined)ã¾ã§ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ã«ç•™ã¾ã‚‹
         }
         else
         {
-            Debug.LogError($"FusionÚ‘±¸”s: {result.ShutdownReason}");
+            Debug.LogError($"Fusionæ¥ç¶šå¤±æ•—: {result.ShutdownReason}");
             _started = false;
-            // ¸”sATitleScreenManager‚É’Ê’m‚µ‚ÄUI‚ğ–ß‚·
+            // å¤±æ•—æ™‚ã€TitleScreenManagerã«é€šçŸ¥ã—ã¦UIã‚’æˆ»ã™
             TitleScreenManager.Instance?.HideMatchingUI();
         }
     }
 
     /// <summary>
-    /// Ú‘±‚ğƒVƒƒƒbƒgƒ_ƒEƒ“‚µATitleScreenManager‚©‚çŒÄ‚Î‚ê‚é
+    /// æ¥ç¶šã‚’ã‚·ãƒ£ãƒƒãƒˆãƒ€ã‚¦ãƒ³ã—ã€TitleScreenManagerã‹ã‚‰å‘¼ã°ã‚Œã‚‹
     /// </summary>
     public void ShutdownRunner()
     {
@@ -76,77 +76,73 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             _runner.Shutdown();
             _started = false;
         }
-        // UI‚Ì”ñ•\¦‚ÍTitleScreenManager‘¤‚Ås‚¤
+        // UIã®éè¡¨ç¤ºã¯TitleScreenManagerå´ã§è¡Œã†
     }
 
-    // ========== INetworkRunnerCallbacks ‚Ì Fusion 2.0.7 Š®‘S‚ÈÀ‘• ==========
+    // ========== INetworkRunnerCallbacks ã® Fusion 2.0.7 å®Œå…¨ãªå®Ÿè£… ==========
 
     void INetworkRunnerCallbacks.OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        // 1. NetworkPlayer‚ÌƒXƒ|[ƒ“iƒzƒXƒg/ƒT[ƒo[‚Å‚Ì‚İÀsj
-        if (runner.IsSharedModeMasterClient && playerPrefab != null)
-        {
-            runner.Spawn(playerPrefab, Vector3.zero, Quaternion.identity, player);
-        }
+        Debug.Log($"ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒå‚åŠ ã—ã¾ã—ãŸ: PlayerRef={player}");
 
-        // 2. yd—vC³z2l–Ú‚ÌƒvƒŒƒCƒ„[Q‰Á‚ğŒŸ’m‚µAƒV[ƒ“‘JˆÚ‚ğŠJn‚·‚é
+        // ã€é‡è¦ã€‘2äººç›®ã®ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒå‚åŠ ã—ãŸã‚‰ã€ã‚·ãƒ¼ãƒ³é·ç§»ã‚’é–‹å§‹ã™ã‚‹
         if (runner.IsSharedModeMasterClient && runner.ActivePlayers.Count() == 2)
         {
-            Debug.Log("ƒ}ƒbƒ`ƒ“ƒOŠ®—¹I2l–Ú‚ªQ‰Á‚µ‚Ü‚µ‚½BƒQ[ƒ€ƒV[ƒ“‚Ö‘JˆÚ‚µ‚Ü‚·B");
+            Debug.Log("ãƒãƒƒãƒãƒ³ã‚°å®Œäº†ï¼2äººç›®ãŒå‚åŠ ã—ã¾ã—ãŸã€‚ã‚²ãƒ¼ãƒ ã‚·ãƒ¼ãƒ³ã¸é·ç§»ã—ã¾ã™ã€‚");
 
-            // ƒ^ƒCƒgƒ‹‰æ–Ê‚ÌUI‚ğ”ñ•\¦‚É‚·‚é
+            // ã‚¿ã‚¤ãƒˆãƒ«ç”»é¢ã®UIã‚’éè¡¨ç¤ºã«ã™ã‚‹
             TitleScreenManager.Instance?.HideMatchingUI();
 
-            // WebGLÚ‘±‚ªˆÀ’è‚·‚é‚Ü‚Å1•bŠÔ‘Ò‹@‚·‚é (”ñ“¯ŠúÀs‚Ì‚½‚ßƒuƒƒbƒN‚µ‚È‚¢)
+            // WebGLæ¥ç¶šã‚’å®‰å®šã™ã‚‹ã¾ã§1ç§’é–“å¾…æ©Ÿã™ã‚‹ (éåŒæœŸå®Ÿè¡Œã®ãŸã‚ãƒ–ãƒ­ãƒƒã‚¯ã—ãªã„)
             _ = DelayedSceneLoad(runner);
         }
     }
 
-    // yV‹K’Ç‰Áƒƒ\ƒbƒhz
+    // ã€æ–°è¦è¿½åŠ ãƒ¡ã‚½ãƒƒãƒ‰ã€‘
     private async Task DelayedSceneLoad(NetworkRunner runner)
     {
-        // WebGLƒNƒ‰ƒCƒAƒ“ƒg‚Æ‚ÌÚ‘±‚ªŠ®‘S‚ÉˆÀ’è‚·‚é‚Ü‚ÅA1000ƒ~ƒŠ•b (1•b) ‘Ò‹@
+        // WebGLã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã¨ã®æ¥ç¶šãŒå®Œå…¨ã«å®‰å®šã™ã‚‹ã¾ã§ã€1000ãƒŸãƒªç§’ (1ç§’) å¾…æ©Ÿ
         await Task.Delay(1000);
 
         if (runner != null)
         {
             const string GAME_SCENE_NAME = "GameScene";
-            // ƒV[ƒ“ƒ[ƒh‚ğ”ñ“¯Šú‚ÅŠJn
+            // ã‚·ãƒ¼ãƒ³ãƒ­ãƒ¼ãƒ‰ã‚’éåŒæœŸã§é–‹å§‹
             await runner.LoadScene(GAME_SCENE_NAME);
         }
     }
 
     void INetworkRunnerCallbacks.OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
-        Debug.Log($"ƒvƒŒƒCƒ„[‚ª‘Şo‚µ‚Ü‚µ‚½: PlayerRef={player}");
+        Debug.Log($"ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒé€€å‡ºã—ã¾ã—ãŸ: PlayerRef={player}");
     }
 
     void INetworkRunnerCallbacks.OnInput(NetworkRunner runner, NetworkInput input)
     {
-        // PlayerInputController‚Åˆ—‚·‚é‚½‚ßA‚±‚±‚Å‚Í‰½‚à‚µ‚È‚¢
+        // PlayerInputControllerã§å‡¦ç†ã™ã‚‹ãŸã‚ã€ã“ã“ã§ã¯ä½•ã‚‚ã—ãªã„
     }
 
     void INetworkRunnerCallbacks.OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
 
     void INetworkRunnerCallbacks.OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
-        Debug.Log($"ƒVƒƒƒbƒgƒ_ƒEƒ“: {shutdownReason}");
+        Debug.Log($"ã‚·ãƒ£ãƒƒãƒˆãƒ€ã‚¦ãƒ³: {shutdownReason}");
         _started = false;
     }
 
-    // Œx‚ªo‚Ä‚¢‚½ƒƒ\ƒbƒh‚ÌC³
+    // ä»¥å‰ã¯ç„¡ã‹ã£ãŸãƒ¡ã‚½ãƒƒãƒ‰ã®è¿½åŠ 
     void INetworkRunnerCallbacks.OnConnectedToServer(NetworkRunner runner)
     {
-        Debug.Log("ƒT[ƒo[‚ÉÚ‘±‚µ‚Ü‚µ‚½");
+        Debug.Log("ã‚µãƒ¼ãƒãƒ¼ã«æ¥ç¶šã—ã¾ã—ãŸ");
     }
 
-    // Œx‚ªo‚Ä‚¢‚½ƒƒ\ƒbƒh‚ÌC³
+    // ä»¥å‰ã¯ç„¡ã‹ã£ãŸãƒ¡ã‚½ãƒƒãƒ‰ã®è¿½åŠ 
     void INetworkRunnerCallbacks.OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
-        Debug.Log($"ƒT[ƒo[‚©‚çØ’f‚³‚ê‚Ü‚µ‚½: {reason}");
+        Debug.Log($"ã‚µãƒ¼ãƒãƒ¼ã‹ã‚‰åˆ‡æ–­ã•ã‚Œã¾ã—ãŸ: {reason}");
     }
 
-    // ˆÈ‰º‚Ìƒƒ\ƒbƒh‚à‚·‚×‚Ä–¾¦“I‚ÈÀ‘•‚É•ÏX‚µ‚Ü‚·
+    // ä»¥ä¸‹ã®ãƒ¡ã‚½ãƒƒãƒ‰ã¯ã™ã¹ã¦æ˜ç¤ºçš„ãªå®Ÿè£…ã«å¤‰æ›´ã—ã¾ã™
     void INetworkRunnerCallbacks.OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)
     {
         request.Accept();
@@ -154,7 +150,7 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     void INetworkRunnerCallbacks.OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason)
     {
-        Debug.LogError($"Ú‘±¸”s: {reason}");
+        Debug.LogError($"æ¥ç¶šå¤±æ•—: {reason}");
     }
 
     void INetworkRunnerCallbacks.OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
@@ -171,16 +167,55 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     void INetworkRunnerCallbacks.OnSceneLoadDone(NetworkRunner runner)
     {
-        if (runner.IsServer)
+        Debug.Log($"[NetworkRunnerHandler] OnSceneLoadDoneå‘¼ã³å‡ºã—ã€‚IsSharedModeMasterClient={runner.IsSharedModeMasterClient}");
+
+        if (runner.IsSharedModeMasterClient)
         {
-            if (runner.ActivePlayers.Count() == 2)
+            Debug.Log($"OnSceneLoadDone: ã‚·ãƒ¼ãƒ³ãƒ­ãƒ¼ãƒ‰å®Œäº†ã€‚ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼æ•°={runner.ActivePlayers.Count()}");
+
+            // GameSceneã«é·ç§»ã—ãŸå¾Œã€å…¨ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®NetworkPlayerã‚’ã‚¹ãƒãƒ¼ãƒ³
+            string currentSceneName = SceneManager.GetActiveScene().name;
+            Debug.Log($"[NetworkRunnerHandler] ç¾åœ¨ã®ã‚·ãƒ¼ãƒ³: {currentSceneName}");
+
+            if (currentSceneName == "GameScene")
             {
-                Debug.Log("P2 (ƒNƒ‰ƒCƒAƒ“ƒg) ‚ªƒQ[ƒ€ƒV[ƒ“‚Ö‚Ìƒ[ƒh‚ğŠ®—¹‚µAƒQ[ƒ€‚ÉQ‰Á‚µ‚Ü‚µ‚½I");
+                Debug.Log($"[NetworkRunnerHandler] GameSceneã§NetworkPlayerã‚’ã‚¹ãƒãƒ¼ãƒ³ã—ã¾ã™ã€‚");
+                foreach (var player in runner.ActivePlayers)
+                {
+                    if (playerPrefab != null)
+                    {
+                        var networkPlayerObj = runner.Spawn(
+                            playerPrefab,
+                            Vector3.zero,
+                            Quaternion.identity,
+                            player,
+                            // OnBeforeSpawned ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã§OwnerPlayerRefã‚’äº‹å‰ã«è¨­å®š
+                            (runner, obj) =>
+                            {
+                                if (obj.TryGetBehaviour<NetworkPlayer>(out var np))
+                                {
+                                    np.OwnerPlayerRef = player;
+                                    Debug.Log($"[NetworkRunnerHandler] OnBeforeSpawned: OwnerPlayerRef={player} ã‚’è¨­å®š");
+                                }
+                            }
+                        );
+
+                        Debug.Log($"[NetworkRunnerHandler] NetworkPlayerã‚’ã‚¹ãƒãƒ¼ãƒ³ã—ã¾ã—ãŸ: PlayerRef={player}");
+                    }
+                    else
+                    {
+                        Debug.LogError("[NetworkRunnerHandler] playerPrefabãŒnullã§ã™ï¼");
+                    }
+                }
             }
-            else if (runner.ActivePlayers.Count() == 1)
+            else
             {
-                Debug.Log("ƒzƒXƒg©g‚ÌƒQ[ƒ€ƒV[ƒ“ƒ[ƒh‚ªŠ®—¹‚µ‚Ü‚µ‚½B");
+                Debug.Log($"[NetworkRunnerHandler] GameSceneä»¥å¤–ã®ã‚·ãƒ¼ãƒ³ã®ãŸã‚ã€ã‚¹ã‚­ãƒƒãƒ—ã—ã¾ã™ã€‚");
             }
+        }
+        else
+        {
+            Debug.Log($"[NetworkRunnerHandler] ã‚¯ãƒ©ã‚¤ã‚¢ãƒ³ãƒˆã®ãŸã‚ã€ã‚¹ãƒãƒ¼ãƒ³å‡¦ç†ã‚’ã‚¹ã‚­ãƒƒãƒ—ã—ã¾ã™ã€‚");
         }
     }
 

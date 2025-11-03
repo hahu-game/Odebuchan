@@ -88,6 +88,9 @@ public class UyopyonState : NetworkBehaviour
     /// </summary>
     public override void Spawned()
     {
+        // InputAuthorityから所有者を設定
+        OwnerPlayer = Object.InputAuthority;
+
         // UIControllerにこのオブジェクトの参照を登録
         if (UIController.Instance != null)
         {
