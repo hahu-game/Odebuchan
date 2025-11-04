@@ -23,7 +23,25 @@ public class TitleScreenManager : MonoBehaviour
     public Button friendMatchButton;        // フレンドマッチボタン
     public TextMeshProUGUI errorMessageText; // エラーメッセージ表示用テキスト（フレンドマッチボタンの上）
 
-    public const string PLAYER_NAME_KEY = "UyopyonPlayerName";
+    // PlayerPrefsのキーを取得（ParrelSync対応）
+    public static string GetPlayerNameKey()
+    {
+        // ParrelSyncのクローンかどうかを判定
+        // ParrelSyncはプロジェクトパスに"_clone_"を含む
+        string projectPath = UnityEngine.Application.dataPath;
+        if (projectPath.Contains("_clone_"))
+        {
+            // クローン番号を抽出してキーに追加
+            int cloneIndex = projectPath.IndexOf("_clone_");
+            int endIndex = projectPath.IndexOf("\\", cloneIndex);
+            if (endIndex == -1) endIndex = projectPath.Length;
+            string cloneSuffix = projectPath.Substring(cloneIndex, endIndex - cloneIndex);
+            return "UyopyonPlayerName" + cloneSuffix;
+        }
+        return "UyopyonPlayerName";
+    }
+
+    public const string PLAYER_NAME_KEY = "UyopyonPlayerName"; // 互換性のため残すが、GetPlayerNameKey()を使用すること
 
     // シングルトン（NetworkRunnerHandlerからUI制御を呼び出すため）
     public static TitleScreenManager Instance { get; private set; }
@@ -37,10 +55,10 @@ public class TitleScreenManager : MonoBehaviour
 
         //プレイヤーネームのデフォルトリセット。
         //デバッグ完了後、この行は削除またはコメントアウトしてください。
-        //PlayerPrefs.DeleteKey(PLAYER_NAME_KEY);
+        //PlayerPrefs.DeleteKey(GetPlayerNameKey());
 
         // プレイヤー名のロード（デフォルトは空欄）
-        playerNameInputField.text = PlayerPrefs.GetString(PLAYER_NAME_KEY, "");
+        playerNameInputField.text = PlayerPrefs.GetString(GetPlayerNameKey(), "");
 
         // 初期状態ではマッチングUIを非表示にしておく
         SetMatchingUIActive(false);
@@ -197,7 +215,7 @@ public class TitleScreenManager : MonoBehaviour
         {
             playerName = "野良うーぴょん";
         }
-        PlayerPrefs.SetString(PLAYER_NAME_KEY, playerName);
+        PlayerPrefs.SetString(GetPlayerNameKey(), playerName);
         PlayerPrefs.Save();
     }
 
