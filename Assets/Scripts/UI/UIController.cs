@@ -20,6 +20,16 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI opponentWeightText;
     public TextMeshProUGUI opponentEnergyText;
 
+    // === 行動選択ボタン（3.1で追加） ===
+    public UnityEngine.UI.Button eatButton;      // たべるボタン
+    public UnityEngine.UI.Button sleepButton;    // ねむるボタン
+    public UnityEngine.UI.Button playButton;     // あそぶボタン
+    public UnityEngine.UI.Button clinicButton;   // つういんボタン
+
+    // === 確定・クリアボタン（3.1で追加） ===
+    public UnityEngine.UI.Button fixButton;      // 確定ボタン
+    public UnityEngine.UI.Button clearButton;    // クリアボタン
+
     private Dictionary<PlayerRef, UyopyonState> _uyopyons = new Dictionary<PlayerRef, UyopyonState>();
     private PlayerRef _localPlayerRef;
 
@@ -105,6 +115,62 @@ public class UIController : MonoBehaviour
     {
         Debug.Log($"[UIController] ログ追加（未実装）: {message}");
         // 実装は3.4で行う予定
+    }
+
+    // === 3.1で追加: 行動選択ボタンのイベントハンドラー ===
+
+    /// <summary>
+    /// 「たべる」ボタンがクリックされた時の処理（スタブ）
+    /// </summary>
+    public void OnEatButtonClicked()
+    {
+        Debug.Log("[UIController] たべるボタンがクリックされました（処理は未実装）");
+        // TODO: 3.2で実装予定
+    }
+
+    /// <summary>
+    /// 「ねむる」ボタンがクリックされた時の処理（スタブ）
+    /// </summary>
+    public void OnSleepButtonClicked()
+    {
+        Debug.Log("[UIController] ねむるボタンがクリックされました（処理は未実装）");
+        // TODO: 3.2で実装予定
+    }
+
+    /// <summary>
+    /// 「あそぶ」ボタンがクリックされた時の処理（スタブ）
+    /// </summary>
+    public void OnPlayButtonClicked()
+    {
+        Debug.Log("[UIController] あそぶボタンがクリックされました（処理は未実装）");
+        // TODO: 3.2で実装予定
+    }
+
+    /// <summary>
+    /// 「つういん」ボタンがクリックされた時の処理（スタブ）
+    /// </summary>
+    public void OnClinicButtonClicked()
+    {
+        Debug.Log("[UIController] つういんボタンがクリックされました（処理は未実装）");
+        // TODO: 3.2で実装予定
+    }
+
+    /// <summary>
+    /// 「確定」ボタンがクリックされた時の処理（スタブ）
+    /// </summary>
+    public void OnFixButtonClicked()
+    {
+        Debug.Log("[UIController] 確定ボタンがクリックされました（処理は未実装）");
+        // TODO: 3.2で実装予定
+    }
+
+    /// <summary>
+    /// 「クリア」ボタンがクリックされた時の処理（スタブ）
+    /// </summary>
+    public void OnClearButtonClicked()
+    {
+        Debug.Log("[UIController] クリアボタンがクリックされました（処理は未実装）");
+        // TODO: 3.2で実装予定
     }
 
     // ... その他、ラウンド表示、メッセージ表示などのメソッド ...

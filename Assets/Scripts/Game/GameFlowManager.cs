@@ -114,6 +114,10 @@ public class GameFlowManager : NetworkBehaviour
         Debug.Log("[GameFlowManager] StartGame() 開始");
         Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}, HasStateAuthority={Object?.HasStateAuthority}");
 
+        // 明示的な初期化（再開・リトライ時の堅牢性向上）
+        CurrentDay = 1;
+        CurrentPhase = GamePhase.Preparation;
+
         // 特殊能力6種から3種をランダム選出
         SelectRandomSpecialAbilities();
 

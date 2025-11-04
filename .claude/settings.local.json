@@ -26,7 +26,12 @@
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
       "Bash(ls:*)",
-      "Bash(\"C:\\Program Files\\Unity\\Hub\\Editor\\6000.0.27f1\\Editor\\Unity.exe\" -projectPath . -executeMethod UnityEditor.SceneManagement.EditorSceneManager.OpenScene -batchmode -quit -logFile -)"
+      "Bash(\"C:\\Program Files\\Unity\\Hub\\Editor\\6000.0.27f1\\Editor\\Unity.exe\" -projectPath . -executeMethod UnityEditor.SceneManagement.EditorSceneManager.OpenScene -batchmode -quit -logFile -)",
+      "mcp__serena__search_for_pattern",
+      "Bash(timeout /t 3 /nobreak)",
+      "Bash(nul)",
+      "Bash(exit 0)",
+      "Bash(timeout /t 5 /nobreak)"
     ],
     "deny": [],
     "ask": []

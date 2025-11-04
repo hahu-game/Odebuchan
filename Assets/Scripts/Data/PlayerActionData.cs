@@ -51,15 +51,12 @@ public class PlayerActionData : NetworkBehaviour
 
     public override void Spawned()
     {
-        // InputAuthorityから所有者を設定
-        OwnerPlayer = Object.InputAuthority;
-        
+        // OwnerPlayerはGameManager.SpawnPlayerActionData()で設定される
+
         // 初期値としてねむるを設定
         MorningAction = ActionData.Default();
         AfternoonAction = ActionData.Default();
         LastAfternoonAction = ActionData.Default();
-
-        Debug.Log($"[PlayerActionData] Spawned for Player {OwnerPlayer}");
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using Fusion;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+// Force recompile
 
 /// <summary>
 /// ゲーム全体の進行を管理する（ホストのみがロジックを実行）。
@@ -79,18 +80,18 @@ public class GameManager : NetworkBehaviour
         {
             _playerStates.Add(player, state); // 辞書に追加
 
-            Debug.Log($"[GameManager] Uyopyon spawned for Player {player}. Total: {_playerStates.Count}");
+            Debug.Log($"[GameManager] Uyopyon spawned for Player {player} ({playerName}). Total: {_playerStates.Count}");
         }
 
         // PlayerActionDataもスポーン
-        SpawnPlayerActionData(player);
+        SpawnPlayerActionData(player, playerName);
     }
 
     /// <summary>
     /// 各プレイヤーに対応するPlayerActionDataオブジェクトを生成する。
     /// ホスト側でのみ実行。
     /// </summary>
-    public void SpawnPlayerActionData(PlayerRef player)
+    public void SpawnPlayerActionData(PlayerRef player, string playerName)
     {
         if (_playerActionData.ContainsKey(player)) return;
 
@@ -106,7 +107,7 @@ public class GameManager : NetworkBehaviour
             actionData.OwnerPlayer = player;
             _playerActionData.Add(player, actionData);
 
-            Debug.Log($"[GameManager] PlayerActionData spawned for Player {player}. Total: {_playerActionData.Count}");
+            Debug.Log($"[GameManager] PlayerActionData spawned for Player {player} ({playerName}). Total: {_playerActionData.Count}");
         }
     }
 
