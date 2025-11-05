@@ -22,6 +22,7 @@ public class TitleScreenManager : MonoBehaviour
     public Button randomMatchButton;        // ランダムマッチボタン
     public Button friendMatchButton;        // フレンドマッチボタン
     public TextMeshProUGUI errorMessageText; // エラーメッセージ表示用テキスト（フレンドマッチボタンの上）
+    public TextMeshProUGUI playerNameErrorMessageText; // プレイヤー名エラーメッセージ表示用テキスト（PlayerNameInputFieldの下）
 
     // PlayerPrefsのキーを取得（ParrelSync対応）
     public static string GetPlayerNameKey()
@@ -58,10 +59,25 @@ public class TitleScreenManager : MonoBehaviour
         //PlayerPrefs.DeleteKey(GetPlayerNameKey());
 
         // プレイヤー名のロード（デフォルトは空欄）
-        playerNameInputField.text = PlayerPrefs.GetString(GetPlayerNameKey(), "");
+        string key = GetPlayerNameKey();
+        string loadedName = PlayerPrefs.GetString(key, "");
+        Debug.Log($"[Awake] PlayerPrefsから名前をロード: key='{key}', value='{loadedName}'");
+        playerNameInputField.text = loadedName;
+
+        Debug.Log($"[Awake] playerNameInputField null check: {(playerNameInputField == null ? "NULL" : "OK")}");
+        if (playerNameInputField != null)
+        {
+            Debug.Log($"[Awake] playerNameInputField.gameObject.name: {playerNameInputField.gameObject.name}");
+            Debug.Log($"[Awake] playerNameInputField.interactable BEFORE SetMatchingUIActive: {playerNameInputField.interactable}");
+        }
 
         // 初期状態ではマッチングUIを非表示にしておく
         SetMatchingUIActive(false);
+
+        if (playerNameInputField != null)
+        {
+            Debug.Log($"[Awake] playerNameInputField.interactable AFTER SetMatchingUIActive(false): {playerNameInputField.interactable}");
+        }
 
         // エラーメッセージを非表示にし、Raycast Targetをオフにする
         if (errorMessageText != null)
@@ -69,6 +85,13 @@ public class TitleScreenManager : MonoBehaviour
             errorMessageText.raycastTarget = false; // クリックをブロックしないようにする
         }
         HideErrorMessage();
+
+        // プレイヤー名エラーメッセージを非表示にし、Raycast Targetをオフにする
+        if (playerNameErrorMessageText != null)
+        {
+            playerNameErrorMessageText.raycastTarget = false; // クリックをブロックしないようにする
+        }
+        HidePlayerNameError();
     }
 
     /// <summary>
@@ -76,6 +99,8 @@ public class TitleScreenManager : MonoBehaviour
     /// </summary>
     private void SetMatchingUIActive(bool isActive)
     {
+        Debug.Log($"[SetMatchingUIActive] isActive={isActive}");
+
         // 1. オーバーレイパネルの表示/非表示を切り替え
         if (matchingOverlayPanel != null)
         {
@@ -86,19 +111,28 @@ public class TitleScreenManager : MonoBehaviour
         if (randomMatchButton != null)
         {
             randomMatchButton.interactable = !isActive;
+            Debug.Log($"[SetMatchingUIActive] randomMatchButton.interactable = {!isActive}");
         }
         if (friendMatchButton != null)
         {
             friendMatchButton.interactable = !isActive;
+            Debug.Log($"[SetMatchingUIActive] friendMatchButton.interactable = {!isActive}");
         }
 
         if (playerNameInputField != null)
         {
             playerNameInputField.interactable = !isActive;
+            Debug.Log($"[SetMatchingUIActive] playerNameInputField.interactable = {!isActive}");
         }
+        else
+        {
+            Debug.LogError($"[SetMatchingUIActive] playerNameInputField is NULL!");
+        }
+
         if (sessionNameInputField != null)
         {
             sessionNameInputField.interactable = !isActive;
+            Debug.Log($"[SetMatchingUIActive] sessionNameInputField.interactable = {!isActive}");
         }
     }
 
@@ -117,6 +151,14 @@ public class TitleScreenManager : MonoBehaviour
 
     public async void OnRandomMatchClicked()
     {
+        Debug.Log($"[OnRandomMatchClicked] ボタンクリック時のInputField.text: '{playerNameInputField.text}'");
+
+        // プレイヤー名のバリデーション
+        if (!ValidatePlayerName())
+        {
+            return; // バリデーションエラーの場合、処理を中断
+        }
+
         if (!CheckAndRestoreRunnerHandler()) return;
 
         SavePlayerName();
@@ -128,6 +170,14 @@ public class TitleScreenManager : MonoBehaviour
 
     public async void OnFriendMatchClicked()
     {
+        Debug.Log($"[OnFriendMatchClicked] ボタンクリック時のInputField.text: '{playerNameInputField.text}'");
+
+        // プレイヤー名のバリデーション
+        if (!ValidatePlayerName())
+        {
+            return; // バリデーションエラーの場合、処理を中断
+        }
+
         // 【修正箇所】: 合言葉の入力チェックを先に行う
         string sessionName = sessionNameInputField.text;
 
@@ -211,12 +261,22 @@ public class TitleScreenManager : MonoBehaviour
     private void SavePlayerName()
     {
         string playerName = playerNameInputField.text;
+        Debug.Log($"[SavePlayerName] InputFieldから取得した名前: '{playerName}' ({playerName.Length}文字)");
+
         if (string.IsNullOrEmpty(playerName))
         {
             playerName = "野良うーぴょん";
+            Debug.Log($"[SavePlayerName] 空欄だったためデフォルト名を設定: '{playerName}'");
         }
-        PlayerPrefs.SetString(GetPlayerNameKey(), playerName);
+
+        string key = GetPlayerNameKey();
+        Debug.Log($"[SavePlayerName] PlayerPrefsに保存: key='{key}', value='{playerName}'");
+        PlayerPrefs.SetString(key, playerName);
         PlayerPrefs.Save();
+
+        // 保存後、実際に保存された値を確認
+        string savedValue = PlayerPrefs.GetString(key, "NOT_FOUND");
+        Debug.Log($"[SavePlayerName] 保存確認: key='{key}'から読み込んだ値='{savedValue}'");
     }
 
     // ------------------------------------------------------------------
@@ -256,6 +316,85 @@ public class TitleScreenManager : MonoBehaviour
         if (errorMessageText != null)
         {
             errorMessageText.gameObject.SetActive(false);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // プレイヤー名バリデーション
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// プレイヤー名のバリデーションを行う
+    /// </summary>
+    /// <returns>バリデーション成功でtrue、失敗でfalse</returns>
+    private bool ValidatePlayerName()
+    {
+        string playerName = playerNameInputField.text;
+        Debug.Log($"[ValidatePlayerName] プレイヤー名チェック: '{playerName}' ({playerName.Length}文字)");
+
+        // プレイヤー名が8文字を超えている場合
+        if (!string.IsNullOrEmpty(playerName) && playerName.Length > 8)
+        {
+            Debug.LogWarning($"プレイヤー名が8文字を超えています: {playerName.Length}文字");
+            Debug.Log($"[ValidatePlayerName] ShowPlayerNameError()を呼び出します");
+            // エラーメッセージを3秒間表示
+            ShowPlayerNameError("プレイヤー名は８文字以下で入力してください。", 3f);
+            return false;
+        }
+
+        Debug.Log($"[ValidatePlayerName] バリデーション成功");
+        return true;
+    }
+
+    /// <summary>
+    /// プレイヤー名エラーメッセージを指定秒数だけ表示する
+    /// </summary>
+    private async void ShowPlayerNameError(string message, float duration)
+    {
+        Debug.Log($"[ShowPlayerNameError] 開始: message='{message}', duration={duration}");
+        Debug.Log($"[ShowPlayerNameError] playerNameErrorMessageText null check: {(playerNameErrorMessageText == null ? "NULL" : "OK")}");
+
+        if (playerNameErrorMessageText == null)
+        {
+            Debug.LogError("playerNameErrorMessageText が設定されていません。Inspectorで設定してください。");
+            return;
+        }
+
+        Debug.Log($"[ShowPlayerNameError] GameObject名: {playerNameErrorMessageText.gameObject.name}");
+        Debug.Log($"[ShowPlayerNameError] GameObject active before: {playerNameErrorMessageText.gameObject.activeSelf}");
+
+        // Raycast Targetをオフにして、クリックをブロックしないようにする
+        playerNameErrorMessageText.raycastTarget = false;
+
+        // メッセージを設定して表示
+        playerNameErrorMessageText.text = message;
+        playerNameErrorMessageText.gameObject.SetActive(true);
+
+        Debug.Log($"[ShowPlayerNameError] GameObject active after: {playerNameErrorMessageText.gameObject.activeSelf}");
+        Debug.Log($"[ShowPlayerNameError] Text設定完了: '{playerNameErrorMessageText.text}'");
+
+        // 指定秒数待機
+        await Task.Delay((int)(duration * 1000));
+
+        // メッセージを非表示にする
+        Debug.Log($"[ShowPlayerNameError] {duration}秒経過、非表示にします");
+        HidePlayerNameError();
+    }
+
+    /// <summary>
+    /// プレイヤー名エラーメッセージを非表示にする
+    /// </summary>
+    private void HidePlayerNameError()
+    {
+        Debug.Log($"[HidePlayerNameError] 呼び出されました");
+        if (playerNameErrorMessageText != null)
+        {
+            playerNameErrorMessageText.gameObject.SetActive(false);
+            Debug.Log($"[HidePlayerNameError] GameObjectを非表示にしました");
+        }
+        else
+        {
+            Debug.LogWarning($"[HidePlayerNameError] playerNameErrorMessageText is null");
         }
     }
 }

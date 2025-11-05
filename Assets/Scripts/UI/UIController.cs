@@ -20,11 +20,22 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI opponentWeightText;
     public TextMeshProUGUI opponentEnergyText;
 
+    // === 行動選択エリアの名前表示 ===
+    public TextMeshProUGUI selectMyNameText;    // 行動選択エリアの自分の名前
+    public TextMeshProUGUI selectOppNameText;   // 行動選択エリアの相手の名前
+
     // === 行動選択ボタン（3.1で追加） ===
     public UnityEngine.UI.Button eatButton;      // たべるボタン
     public UnityEngine.UI.Button sleepButton;    // ねむるボタン
     public UnityEngine.UI.Button playButton;     // あそぶボタン
     public UnityEngine.UI.Button clinicButton;   // つういんボタン
+
+    // === 行動選択ボタンのOutline（選択フェーズ中に表示） ===
+    [Header("Action Button Outlines")]
+    public UnityEngine.UI.Outline eatButtonOutline;
+    public UnityEngine.UI.Outline sleepButtonOutline;
+    public UnityEngine.UI.Outline playButtonOutline;
+    public UnityEngine.UI.Outline clinicButtonOutline;
 
     // === 確定・クリアボタン（3.1で追加） ===
     public UnityEngine.UI.Button fixButton;      // 確定ボタン
@@ -78,6 +89,8 @@ private PlayerRef _localPlayerRef;
         Debug.Log("[UIController] Start: 初期化開始");
         // 初期状態で午前選択中のハイライトを表示
         HighlightCurrentSelection(false);
+        // 初期状態では行動ボタンのOutlineを非表示
+        HideActionButtonOutlines();
         Debug.Log("[UIController] Start: 初期化完了");
     }
 
@@ -97,8 +110,25 @@ private PlayerRef _localPlayerRef;
     }
 
     // === プレイヤー名更新（NetworkPlayerから呼ばれる） ===
-    public void UpdateMyName(string newName) => myNameText.text = newName;
-    public void UpdateOpponentName(string newName) => opponentNameText.text = newName;
+    public void UpdateMyName(string newName)
+    {
+        myNameText.text = newName;
+        // 行動選択エリアの名前も更新
+        if (selectMyNameText != null)
+        {
+            selectMyNameText.text = newName;
+        }
+    }
+
+    public void UpdateOpponentName(string newName)
+    {
+        opponentNameText.text = newName;
+        // 行動選択エリアの名前も更新
+        if (selectOppNameText != null)
+        {
+            selectOppNameText.text = newName;
+        }
+    }
 
     // === ステータス更新（UyopyonStateから呼ばれる） ===
 
@@ -510,5 +540,64 @@ private PlayerRef _localPlayerRef;
             return runner.LocalPlayer == player;
         }
         return false;
+    }
+
+    // === 行動ボタンのOutline制御 ===
+
+    /// <summary>
+    /// 行動ボタンのOutlineを表示する（選択フェーズ開始時に呼ぶ）
+    /// </summary>
+    public void ShowActionButtonOutlines()
+    {
+        Debug.Log("[UIController] 行動ボタンのOutlineを表示");
+
+        // Outline設定: EffectColor=#FFB101, EffectDistance=(10, -10)
+        Color outlineColor;
+        if (!ColorUtility.TryParseHtmlString("#FFB101", out outlineColor))
+        {
+            outlineColor = new Color(1f, 0.694f, 0.004f); // フォールバック
+        }
+        Vector2 outlineDistance = new Vector2(10f, -10f);
+
+        if (eatButtonOutline != null)
+        {
+            eatButtonOutline.effectColor = outlineColor;
+            eatButtonOutline.effectDistance = outlineDistance;
+            eatButtonOutline.enabled = true;
+        }
+
+        if (sleepButtonOutline != null)
+        {
+            sleepButtonOutline.effectColor = outlineColor;
+            sleepButtonOutline.effectDistance = outlineDistance;
+            sleepButtonOutline.enabled = true;
+        }
+
+        if (playButtonOutline != null)
+        {
+            playButtonOutline.effectColor = outlineColor;
+            playButtonOutline.effectDistance = outlineDistance;
+            playButtonOutline.enabled = true;
+        }
+
+        if (clinicButtonOutline != null)
+        {
+            clinicButtonOutline.effectColor = outlineColor;
+            clinicButtonOutline.effectDistance = outlineDistance;
+            clinicButtonOutline.enabled = true;
+        }
+    }
+
+    /// <summary>
+    /// 行動ボタンのOutlineを非表示にする（選択フェーズ終了時に呼ぶ）
+    /// </summary>
+    public void HideActionButtonOutlines()
+    {
+        Debug.Log("[UIController] 行動ボタンのOutlineを非表示");
+
+        if (eatButtonOutline != null) eatButtonOutline.enabled = false;
+        if (sleepButtonOutline != null) sleepButtonOutline.enabled = false;
+        if (playButtonOutline != null) playButtonOutline.enabled = false;
+        if (clinicButtonOutline != null) clinicButtonOutline.enabled = false;
     }
 }

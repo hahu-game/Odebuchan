@@ -322,16 +322,20 @@
 1. `StartSelectionPhase()`メソッドを実装:
    - CurrentPhaseをSelectionに設定
    - UIの操作ロック解除（UIController経由）
+   - **行動ボタンのOutlineを表示**（`UIController.Instance.ShowActionButtonOutlines()`を呼ぶ）
    - 60秒タイマー開始
    - 両プレイヤーが確定するか、タイムアウトで実行フェーズへ遷移
 2. タイマー処理を実装（FixedUpdateNetworkで監視）
 3. 両プレイヤーの確定状態を監視する処理を実装
+4. 選択フェーズ終了時に**行動ボタンのOutlineを非表示**（`UIController.Instance.HideActionButtonOutlines()`を呼ぶ）
 
 **確認項目**:
 - [ ] 選択フェーズになると行動選択ボタンがクリックできること
+- [ ] **選択フェーズ開始時に行動ボタンにオレンジ色（#FFB101）のOutlineが表示されること**
 - [ ] 60秒経過すると自動的に次のフェーズに進むこと
 - [ ] 両プレイヤーが確定ボタンを押すと即座に次のフェーズに進むこと
 - [ ] タイムアウト時に未選択の行動が「ねむる」になること
+- [ ] **選択フェーズ終了時に行動ボタンのOutlineが非表示になること**
 
 **参照スクリプト**: `ScriptPlans/4.2.GameFlowManager.cs.md`
 
