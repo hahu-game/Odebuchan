@@ -31,7 +31,9 @@
       "Bash(timeout /t 3 /nobreak)",
       "Bash(nul)",
       "Bash(exit 0)",
-      "Bash(timeout /t 5 /nobreak)"
+      "Bash(timeout /t 5 /nobreak)",
+      "mcp__serena__get_symbols_overview",
+      "mcp__UnityMCP__find_in_file"
     ],
     "deny": [],
     "ask": []
