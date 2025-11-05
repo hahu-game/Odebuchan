@@ -60,20 +60,29 @@ public class NetworkPlayer : NetworkBehaviour
         if (!_hasSetPlayerName)
         {
             bool isLocalPlayer = (Runner.LocalPlayer == OwnerPlayerRef);
+            Debug.Log($"[NetworkPlayer.Render] OwnerPlayerRef={OwnerPlayerRef}, LocalPlayer={Runner.LocalPlayer}, isLocalPlayer={isLocalPlayer}");
 
             if (isLocalPlayer)
             {
-                string localName = PlayerPrefs.GetString(TitleScreenManager.GetPlayerNameKey(), "guest");
+                string playerPrefsKey = TitleScreenManager.GetPlayerNameKey();
+                string localName = PlayerPrefs.GetString(playerPrefsKey, "guest");
+                Debug.Log($"[NetworkPlayer.Render] PlayerPrefsから読み込んだ名前: key='{playerPrefsKey}', name='{localName}'");
 
                 // StateAuthorityがある場合は直接設定、ない場合はRPCでホストに設定してもらう
                 if (Object.HasStateAuthority)
                 {
                     PlayerName = localName;
+                    Debug.Log($"[NetworkPlayer.Render] StateAuthorityがあるので直接設定: PlayerName='{localName}'");
                 }
                 else
                 {
+                    Debug.Log($"[NetworkPlayer.Render] StateAuthorityがないのでRPCで設定: '{localName}'");
                     RPC_SetPlayerName(localName);
                 }
+            }
+            else
+            {
+                Debug.Log($"[NetworkPlayer.Render] 相手のNetworkPlayerなので、PlayerName設定はスキップ（ネットワーク同期待ち）");
             }
 
             _hasSetPlayerName = true;

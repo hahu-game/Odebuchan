@@ -88,8 +88,9 @@ public class UyopyonState : NetworkBehaviour
     /// </summary>
     public override void Spawned()
     {
-        // InputAuthorityから所有者を設定
-        OwnerPlayer = Object.InputAuthority;
+        // OwnerPlayerはonBeforeSpawnedで設定済みなので、ここでは設定しない
+        // ※ Object.InputAuthorityはFusion Shared Modeで正しく同期されない場合があるため使用しない
+        Debug.Log($"[UyopyonState] Spawned: OwnerPlayer={OwnerPlayer}, InputAuthority={Object.InputAuthority}");
 
         // UIControllerにこのオブジェクトの参照を登録
         if (UIController.Instance != null)
@@ -212,6 +213,8 @@ public class UyopyonState : NetworkBehaviour
     /// </summary>
     private void UpdateDisplay()
     {
+        Debug.Log($"[UyopyonState] UpdateDisplay: OwnerPlayer={OwnerPlayer}, Weight={Weight}, Energy={Energy}");
+
         if (UIController.Instance != null)
         {
             UIController.Instance.UpdateWeightDisplay(OwnerPlayer, Weight);
