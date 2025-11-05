@@ -57,6 +57,12 @@ public class PlayerActionData : NetworkBehaviour
         MorningAction = ActionData.Default();
         AfternoonAction = ActionData.Default();
         LastAfternoonAction = ActionData.Default();
+
+        // GameManagerに登録（全クライアントで実行）
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterPlayerActionData(this);
+        }
     }
 
     /// <summary>
@@ -86,9 +92,16 @@ public class PlayerActionData : NetworkBehaviour
     /// <summary>
     /// 午前の行動を設定（クライアント側からRPC経由で呼び出す）
     /// </summary>
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_SetMorningAction(ActionData action)
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_SetMorningAction(ActionData action, RpcInfo info = default)
     {
+        // セキュリティチェック: 送信元が自分のOwnerPlayerの場合のみ許可
+        if (info.Source != OwnerPlayer)
+        {
+            Debug.LogWarning($"[PlayerActionData] 不正なRPC: Player={info.Source}が Player={OwnerPlayer}の行動を変更しようとしました");
+            return;
+        }
+
         if (!MorningActionLocked)
         {
             MorningAction = action;
@@ -103,9 +116,16 @@ public class PlayerActionData : NetworkBehaviour
     /// <summary>
     /// 午後の行動を設定（クライアント側からRPC経由で呼び出す）
     /// </summary>
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_SetAfternoonAction(ActionData action)
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_SetAfternoonAction(ActionData action, RpcInfo info = default)
     {
+        // セキュリティチェック: 送信元が自分のOwnerPlayerの場合のみ許可
+        if (info.Source != OwnerPlayer)
+        {
+            Debug.LogWarning($"[PlayerActionData] 不正なRPC: Player={info.Source}が Player={OwnerPlayer}の行動を変更しようとしました");
+            return;
+        }
+
         if (!AfternoonActionLocked)
         {
             AfternoonAction = action;
@@ -120,9 +140,16 @@ public class PlayerActionData : NetworkBehaviour
     /// <summary>
     /// 行動を確定（クライアント側からRPC経由で呼び出す）
     /// </summary>
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_FixActions()
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_FixActions(RpcInfo info = default)
     {
+        // セキュリティチェック: 送信元が自分のOwnerPlayerの場合のみ許可
+        if (info.Source != OwnerPlayer)
+        {
+            Debug.LogWarning($"[PlayerActionData] 不正なRPC: Player={info.Source}が Player={OwnerPlayer}の行動を確定しようとしました");
+            return;
+        }
+
         IsActionFixed = true;
         Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動が確定されました");
     }
@@ -130,9 +157,16 @@ public class PlayerActionData : NetworkBehaviour
     /// <summary>
     /// 行動をクリア（クライアント側からRPC経由で呼び出す）
     /// </summary>
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
-    public void RPC_ClearActions()
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_ClearActions(RpcInfo info = default)
     {
+        // セキュリティチェック: 送信元が自分のOwnerPlayerの場合のみ許可
+        if (info.Source != OwnerPlayer)
+        {
+            Debug.LogWarning($"[PlayerActionData] 不正なRPC: Player={info.Source}が Player={OwnerPlayer}の行動をクリアしようとしました");
+            return;
+        }
+
         if (!MorningActionLocked)
         {
             MorningAction = ActionData.Default();

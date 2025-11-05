@@ -107,12 +107,17 @@ public class NetworkPlayer : NetworkBehaviour
     {
         if (Runner != null && UIController.Instance != null)
         {
-            if (Runner.LocalPlayer == Object.InputAuthority)
+            Debug.Log($"[NetworkPlayer] UpdatePlayerNameUI: OwnerPlayerRef={OwnerPlayerRef}, LocalPlayer={Runner.LocalPlayer}, InputAuthority={Object.InputAuthority}, Name='{newName}'");
+
+            // OwnerPlayerRefで判定する（InputAuthorityは同期されない場合がある）
+            if (Runner.LocalPlayer == OwnerPlayerRef)
             {
+                Debug.Log($"[NetworkPlayer] 自分の名前を更新: {newName}");
                 UIController.Instance.UpdateMyName(newName);
             }
             else
             {
+                Debug.Log($"[NetworkPlayer] 相手の名前を更新: {newName}");
                 UIController.Instance.UpdateOpponentName(newName);
             }
         }

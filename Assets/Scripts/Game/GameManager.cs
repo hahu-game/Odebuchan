@@ -99,17 +99,34 @@ public class GameManager : NetworkBehaviour
             playerActionDataPrefab,
             position: Vector3.zero,
             rotation: Quaternion.identity,
-            inputAuthority: player
+            inputAuthority: player,
+            // OnBeforeSpawned コールバックでOwnerPlayerを事前に設定
+            onBeforeSpawned: (runner, obj) =>
+            {
+                if (obj.TryGetBehaviour<PlayerActionData>(out var a))
+                {
+                    a.OwnerPlayer = player;
+                }
+            }
         );
 
-        if (newActionData.TryGetBehaviour<PlayerActionData>(out var actionData))
-        {
-            actionData.OwnerPlayer = player;
-            _playerActionData.Add(player, actionData);
+        Debug.Log($"[GameManager] PlayerActionData spawned for Player {player} ({playerName})");
+    }
 
-            Debug.Log($"[GameManager] PlayerActionData spawned for Player {player} ({playerName}). Total: {_playerActionData.Count}");
+
+    /// <summary>
+    /// PlayerActionDataを辞書に登録する（全クライアントで呼び出される）
+    /// PlayerActionData.Spawned()から呼ばれる
+    /// </summary>
+    public void RegisterPlayerActionData(PlayerActionData actionData)
+    {
+        if (actionData.OwnerPlayer != PlayerRef.None && !_playerActionData.ContainsKey(actionData.OwnerPlayer))
+        {
+            _playerActionData.Add(actionData.OwnerPlayer, actionData);
+            Debug.Log($"[GameManager] PlayerActionDataを登録: Player {actionData.OwnerPlayer}");
         }
     }
+
 
     /// <summary>
     /// 指定されたプレイヤーのUyopyonStateを取得
