@@ -33,7 +33,10 @@
       "Bash(exit 0)",
       "Bash(timeout /t 5 /nobreak)",
       "mcp__serena__get_symbols_overview",
-      "mcp__UnityMCP__find_in_file"
+      "mcp__UnityMCP__find_in_file",
+      "mcp__UnityMCP__manage_prefabs",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

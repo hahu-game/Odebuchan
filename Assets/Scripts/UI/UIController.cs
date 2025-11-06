@@ -1,6 +1,7 @@
 using Fusion;
 using UnityEngine;
 using TMPro;
+using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
@@ -61,6 +62,16 @@ public class UIController : MonoBehaviour
 
     public GameObject oppTodayAfternoonActionPanel;
     public TextMeshProUGUI oppTodayAfternoonActionText; // クリアボタン
+
+    // === 3.4で追加: ブラックアウトパネルとログエリア ===
+    [Header("Blackout Panel")]
+    public GameObject blackoutPanel;
+    public TextMeshProUGUI blackoutText;
+
+    [Header("Log Area")]
+    public UnityEngine.UI.ScrollRect logScrollRect;
+    public Transform logContent;
+    public GameObject logTextPrefab; // TextMeshProUGUIを持つプレハブ
 
     private Dictionary<PlayerRef, UyopyonState> _uyopyons = new Dictionary<PlayerRef, UyopyonState>();
     
@@ -168,18 +179,155 @@ private PlayerRef _localPlayerRef;
     // TODO: フェーズ6で実装予定 - 状態異常アイコン表示
     public void UpdateStatusAilmentDisplay(PlayerRef player, byte[] ailments) { }
 
-    // TODO: フェーズ3.4で実装予定 - ブラックアウトパネルの表示
+    /// <summary>
+    /// ブラックアウトパネルを表示
+    /// </summary>
+    /// <param name="text">表示するテキスト</param>
+    /// <param name="duration">表示時間（秒）</param>
     public void ShowBlackout(string text, float duration)
     {
-        Debug.Log($"[UIController] ブラックアウト表示（未実装）: {text}");
-        // 実装は3.4で行う予定
+        Debug.Log($"[UIController] ブラックアウト表示: {text}, duration={duration}秒");
+
+        if (blackoutPanel == null || blackoutText == null)
+        {
+            Debug.LogWarning("[UIController] BlackoutPanel or BlackoutText is not assigned!");
+            return;
+        }
+
+        blackoutText.text = text;
+        blackoutPanel.SetActive(true);
+
+        // duration秒後に非表示
+        StartCoroutine(HideBlackoutAfterDelay(duration));
     }
 
-    // TODO: フェーズ3.4で実装予定 - ログメッセージの追加
+    /// <summary>
+    /// ブラックアウトパネルを非表示
+    /// </summary>
+    private IEnumerator HideBlackoutAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (blackoutPanel != null)
+        {
+            blackoutPanel.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// ログエリアにメッセージを追加
+    /// </summary>
+    /// <param name="message">ログメッセージ</param>
     public void AddLog(string message)
     {
-        Debug.Log($"[UIController] ログ追加（未実装）: {message}");
-        // 実装は3.4で行う予定
+        Debug.Log($"[UIController] ログ追加: {message}");
+
+        if (logTextPrefab == null || logContent == null)
+        {
+            Debug.LogWarning("[UIController] LogTextPrefab or LogContent is not assigned!");
+            return;
+        }
+
+        // ログテキストのプレハブをインスタンス化
+        GameObject logObj = Instantiate(logTextPrefab, logContent);
+        RectTransform rectTransform = logObj.GetComponent<RectTransform>();
+        TextMeshProUGUI logText = logObj.GetComponent<TextMeshProUGUI>();
+
+        // RectTransformの設定を最初に行う（幅を親に合わせる）
+        if (rectTransform != null)
+        {
+            // アンカーを左上から右上に伸ばす（横幅を親に合わせる）
+            rectTransform.anchorMin = new Vector2(0, 1);
+            rectTransform.anchorMax = new Vector2(1, 1);
+            rectTransform.pivot = new Vector2(0, 1);
+            rectTransform.anchoredPosition = new Vector2(0, 0);
+
+            // sizeDeltaで横幅を明示的に設定（親の幅-10px（左右5pxずつマージン））
+            RectTransform parentRect = logContent as RectTransform;
+            if (parentRect != null)
+            {
+                float parentWidth = parentRect.rect.width;
+                rectTransform.sizeDelta = new Vector2(parentWidth - 10f, 0);
+            }
+            else
+            {
+                // フォールバック: デフォルトの幅を設定
+                rectTransform.sizeDelta = new Vector2(280f, 0);
+            }
+        }
+
+        if (logText != null)
+        {
+            // タイムスタンプ付きでログを表示
+            string timestamp = System.DateTime.Now.ToString("HH:mm:ss");
+            logText.text = $"[{timestamp}] {message}";
+
+            // ログテキストの色を黒に設定
+            logText.color = Color.black;
+
+            // 自動的に折り返しを有効化
+            logText.enableWordWrapping = true;
+            logText.overflowMode = TMPro.TextOverflowModes.Overflow;
+
+            // テキストを更新してレイアウトを再計算
+            logText.ForceMeshUpdate();
+        }
+
+        // ContentSizeFitterを追加してテキストの高さに応じて自動調整
+        UnityEngine.UI.ContentSizeFitter fitter = logObj.GetComponent<UnityEngine.UI.ContentSizeFitter>();
+        if (fitter == null)
+        {
+            fitter = logObj.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+        }
+        // 横幅は固定（RectTransformの設定に従う）、高さだけ自動調整
+        fitter.horizontalFit = UnityEngine.UI.ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
+
+        // Layout Elementを追加（最小高さを設定）
+        UnityEngine.UI.LayoutElement layoutElement = logObj.GetComponent<UnityEngine.UI.LayoutElement>();
+        if (layoutElement == null)
+        {
+            layoutElement = logObj.AddComponent<UnityEngine.UI.LayoutElement>();
+        }
+        layoutElement.minHeight = 20f;
+        // preferredHeightやflexibleWidthは設定しない（ContentSizeFitterに任せる）
+
+        // 自動的に最下部にスクロール
+        StartCoroutine(ScrollToBottom());
+    }
+
+    /// <summary>
+    /// ログエリアを最下部にスクロール
+    /// </summary>
+    private IEnumerator ScrollToBottom()
+    {
+        // レイアウト更新を強制
+        Canvas.ForceUpdateCanvases();
+
+        // 1フレーム待ってからスクロール（レイアウト更新を待つため）
+        yield return null;
+
+        if (logScrollRect != null)
+        {
+            // 最下部にスクロール（0 = 最下部、1 = 最上部）
+            logScrollRect.verticalNormalizedPosition = 0f;
+
+            // 念のためもう1フレーム待って再度設定
+            yield return null;
+            logScrollRect.verticalNormalizedPosition = 0f;
+        }
+    }
+
+    /// <summary>
+    /// ログをクリア
+    /// </summary>
+    public void ClearLog()
+    {
+        if (logContent == null) return;
+
+        foreach (Transform child in logContent)
+        {
+            Destroy(child.gameObject);
+        }
     }
 
     // === 3.1で追加: 行動選択ボタンのイベントハンドラー ===
@@ -591,6 +739,20 @@ private PlayerRef _localPlayerRef;
     /// <summary>
     /// 行動ボタンのOutlineを非表示にする（選択フェーズ終了時に呼ぶ）
     /// </summary>
+    /// <summary>
+    /// 行動ボタンの操作可否を設定
+    /// </summary>
+    /// <param name="interactable">trueで操作可能、falseで操作不可</param>
+    public void SetActionButtonsInteractable(bool interactable)
+    {
+        Debug.Log($"[UIController] 行動ボタンの操作を{(interactable ? "有効" : "無効")}に設定");
+
+        if (eatButton != null) eatButton.interactable = interactable;
+        if (sleepButton != null) sleepButton.interactable = interactable;
+        if (playButton != null) playButton.interactable = interactable;
+        if (clinicButton != null) clinicButton.interactable = interactable;
+    }
+
     public void HideActionButtonOutlines()
     {
         Debug.Log("[UIController] 行動ボタンのOutlineを非表示");
