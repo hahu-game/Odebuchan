@@ -59,6 +59,7 @@ public class GameFlowManager : NetworkBehaviour
 
     // === ローカル変数 ===
     private bool _gameStarted = false;
+    private bool _selectionPhaseActive = false;
 
     private void Awake()
     {
@@ -98,11 +99,27 @@ public class GameFlowManager : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        // ホストのみが処理を実行
+        if (!Object.HasStateAuthority)
+            return;
+
         // 5秒ごとに現在のステータスをログ出力（デバッグ用）
         // Fusion 2.0では、デフォルトのTickRateは60
-        if (Object.HasStateAuthority && Runner.Tick % (60 * 5) == 0)
+        if (Runner.Tick % (60 * 5) == 0)
         {
             Debug.Log($"[GameFlowManager][定期チェック] Day={CurrentDay}, Phase={CurrentPhase}, Object.IsValid={Object.IsValid}");
+        }
+
+        // 選択フェーズ中のタイマー処理
+        if (CurrentPhase == GamePhase.Selection && _selectionPhaseActive)
+        {
+            SelectionTimeRemaining--;
+
+            // 残り時間が10秒以下になったら警告ログ
+            if (SelectionTimeRemaining == 10)
+            {
+                RPC_AddLog("残り10秒です！");
+            }
         }
     }
 
@@ -172,38 +189,47 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// 準備フェーズ開始（スタブ、後で実装）
+    /// 準備フェーズ開始
     /// </summary>
     private async Task StartPreparationPhase()
     {
         try
         {
             Debug.Log($"[GameFlowManager] ========== StartPreparationPhase() 開始 ==========");
-            Debug.Log($"[GameFlowManager] CurrentDay={CurrentDay}, CurrentPhase={CurrentPhase}");
-            Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}, HasStateAuthority={Object?.HasStateAuthority}");
+            Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズを開始します");
 
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] 準備フェーズ開始前: Object無効 (Object={Object}, IsValid={Object?.IsValid})");
+                Debug.LogError($"[GameFlowManager] 準備フェーズ開始前: Object無効");
                 return;
             }
 
             CurrentPhase = GamePhase.Preparation;
-            Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズを開始しました (CurrentPhase={CurrentPhase})");
 
-            // この段階では、次のフェーズへの遷移のみ実装
-            Debug.Log("[GameFlowManager] 準備フェーズ: 1秒待機開始");
-            await Task.Delay(1000);
-            Debug.Log("[GameFlowManager] 準備フェーズ: 1秒待機終了");
+            // ブラックアウトで「〇日目」を表示
+            RPC_ShowBlackout($"{CurrentDay}日目");
 
-            Debug.Log($"[GameFlowManager] 待機後チェック: Object={Object}, IsValid={Object?.IsValid}");
+            // ブラックアウト表示時間待機
+            Debug.Log($"[GameFlowManager] ブラックアウト待機: {gameParams.BlackoutDuration}秒");
+            await Task.Delay((int)(gameParams.BlackoutDuration * 1000));
+
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] 準備フェーズ待機後: Object無効 (Object={Object}, IsValid={Object?.IsValid})");
+                Debug.LogError($"[GameFlowManager] 準備フェーズ待機後: Object無効");
                 return;
             }
 
-            Debug.Log($"[GameFlowManager] 準備フェーズ終了、選択フェーズへ遷移します (CurrentDay={CurrentDay})");
+            // ログに日数を追加
+            RPC_AddLog($"===== {CurrentDay}日目 =====");
+
+            // 糖尿病チェック（6.4で実装予定）
+            // CheckDiabetes();
+
+            // 進化判定（7.1で実装予定）
+            // await CheckEvolution();
+
+            // 選択フェーズへ遷移
+            Debug.Log("[GameFlowManager] 準備フェーズ終了、選択フェーズへ遷移");
             await StartSelectionPhase();
         }
         catch (System.Exception e)
@@ -215,15 +241,14 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// 選択フェーズ開始（スタブ、後で実装）
+    /// 選択フェーズ開始
     /// </summary>
     private async Task StartSelectionPhase()
     {
         try
         {
             Debug.Log($"[GameFlowManager] ========== StartSelectionPhase() 開始 ==========");
-            Debug.Log($"[GameFlowManager] CurrentDay={CurrentDay}, CurrentPhase={CurrentPhase}");
-            Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}");
+            Debug.Log($"[GameFlowManager] 選択フェーズを開始します");
 
             if (!Object || !Object.IsValid)
             {
@@ -232,21 +257,34 @@ public class GameFlowManager : NetworkBehaviour
             }
 
             CurrentPhase = GamePhase.Selection;
-            Debug.Log($"[GameFlowManager] 選択フェーズを開始しました (CurrentPhase={CurrentPhase})");
+            SelectionTimeRemaining = gameParams.SelectionPhaseTimeLimit; // 60秒
 
-            // この段階では、次のフェーズへの遷移のみ実装
-            Debug.Log("[GameFlowManager] 選択フェーズ: 3秒待機開始");
-            await Task.Delay(3000);
-            Debug.Log("[GameFlowManager] 選択フェーズ: 3秒待機終了");
+            // UIの操作ロック解除
+            RPC_SetActionButtonsInteractable(true);
 
-            Debug.Log($"[GameFlowManager] 待機後チェック: Object={Object}, IsValid={Object?.IsValid}");
-            if (!Object || !Object.IsValid)
-            {
-                Debug.LogError($"[GameFlowManager] 選択フェーズ待機後: Object無効");
-                return;
-            }
+            // 行動ボタンのOutlineを表示
+            RPC_ShowActionButtonOutlines();
 
-            Debug.Log($"[GameFlowManager] 選択フェーズ終了、実行フェーズへ遷移します (CurrentDay={CurrentDay})");
+            // ログに選択フェーズ開始を追加
+            RPC_AddLog($"行動を選択してください（制限時間: {SelectionTimeRemaining}秒）");
+
+            // タイマー開始フラグ
+            _selectionPhaseActive = true;
+
+            // 両プレイヤーが確定するか、タイムアウトまで待機
+            await WaitForSelectionComplete();
+
+            // 選択フェーズ終了
+            _selectionPhaseActive = false;
+
+            // 行動ボタンのOutlineを非表示
+            RPC_HideActionButtonOutlines();
+
+            // UIの操作をロック
+            RPC_SetActionButtonsInteractable(false);
+
+            // 実行フェーズへ遷移
+            Debug.Log("[GameFlowManager] 選択フェーズ終了、実行フェーズへ遷移");
             await StartExecutionPhase();
         }
         catch (System.Exception e)
@@ -306,6 +344,88 @@ public class GameFlowManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// 選択完了まで待機
+    /// </summary>
+    private async Task WaitForSelectionComplete()
+    {
+        while (_selectionPhaseActive)
+        {
+            // 両プレイヤーが確定したかチェック
+            if (AreAllPlayersReady())
+            {
+                Debug.Log("[GameFlowManager] 全プレイヤーが確定しました");
+                return;
+            }
+
+            // タイムアウトチェック
+            if (SelectionTimeRemaining <= 0)
+            {
+                Debug.Log("[GameFlowManager] 選択時間が終了しました");
+                // 未選択の行動を「ねむる」に設定
+                SetDefaultActionsForUnreadyPlayers();
+                return;
+            }
+
+            // 100ms待機（サーバー負荷軽減）
+            await Task.Delay(100);
+        }
+    }
+
+    /// <summary>
+    /// 全プレイヤーが確定したかチェック
+    /// </summary>
+    private bool AreAllPlayersReady()
+    {
+        if (GameManager.Instance == null || GameManager.Instance.playerActionDataDict == null)
+        {
+            return false;
+        }
+
+        foreach (var kvp in GameManager.Instance.playerActionDataDict)
+        {
+            if (!kvp.Value.IsActionFixed)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 未確定のプレイヤーの行動を「ねむる」に設定
+    /// </summary>
+    private void SetDefaultActionsForUnreadyPlayers()
+    {
+        if (GameManager.Instance == null || GameManager.Instance.playerActionDataDict == null)
+        {
+            Debug.LogWarning("[GameFlowManager] GameManager または playerActionDataDict が null です");
+            return;
+        }
+
+        foreach (var kvp in GameManager.Instance.playerActionDataDict)
+        {
+            if (!kvp.Value.IsActionFixed)
+            {
+                // デフォルト行動を設定
+                var actionData = kvp.Value;
+                actionData.MorningAction = new ActionData
+                {
+                    Type = ActionType.Sleep,
+                    Genre = Genre.None
+                };
+                actionData.AfternoonAction = new ActionData
+                {
+                    Type = ActionType.Sleep,
+                    Genre = Genre.None
+                };
+                actionData.IsActionFixed = true;
+
+                Debug.Log($"[GameFlowManager] プレイヤー {kvp.Key} の行動をデフォルト（ねむる）に設定");
+            }
+        }
+    }
+
     // === RPC（全クライアントへの通知） ===
 
     /// <summary>
@@ -326,5 +446,35 @@ public class GameFlowManager : NetworkBehaviour
     {
         Debug.Log($"[RPC] ログ追加: {message}");
         UIController.Instance?.AddLog(message);
+    }
+
+    /// <summary>
+    /// UIの操作可否を設定
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_SetActionButtonsInteractable(bool interactable)
+    {
+        UIController.Instance?.SetActionButtonsInteractable(interactable);
+        Debug.Log($"[RPC] 行動ボタンの操作: {(interactable ? "可能" : "不可")}");
+    }
+
+    /// <summary>
+    /// 行動ボタンのOutlineを表示
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowActionButtonOutlines()
+    {
+        UIController.Instance?.ShowActionButtonOutlines();
+        Debug.Log("[RPC] 行動ボタンのOutlineを表示");
+    }
+
+    /// <summary>
+    /// 行動ボタンのOutlineを非表示
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_HideActionButtonOutlines()
+    {
+        UIController.Instance?.HideActionButtonOutlines();
+        Debug.Log("[RPC] 行動ボタンのOutlineを非表示");
     }
 }
