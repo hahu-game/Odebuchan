@@ -6220,6 +6220,8 @@ MonoBehaviour:
   uyopyonPrefab: {fileID: 4012069128241522357, guid: b4b09d99f55be7f4884d14d65d620849, type: 3}
   playerActionDataPrefab: {fileID: 1016362028494796004, guid: b5265785f5978e64780434d73e370ef1, type: 3}
   gameParams: {fileID: 11400000, guid: 38a55d7b23be37947b855c67c098bcbd, type: 2}
+  player1SpawnPosition: {x: -320, y: -100, z: 0}
+  player2SpawnPosition: {x: -50, y: -100, z: 0}
 --- !u!4 &1779711841
 Transform:
   m_ObjectHideFlags: 0

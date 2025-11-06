@@ -184,23 +184,25 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
                 {
                     if (playerPrefab != null)
                     {
+                        var p = player; // ← うーぴょんオブジェクトが重なって表示されるのを防ぐための変数退避。
+
                         var networkPlayerObj = runner.Spawn(
                             playerPrefab,
                             Vector3.zero,
                             Quaternion.identity,
-                            player,
+                            p,
                             // OnBeforeSpawned コールバックでOwnerPlayerRefを事前に設定
                             (runner, obj) =>
                             {
                                 if (obj.TryGetBehaviour<NetworkPlayer>(out var np))
                                 {
-                                    np.OwnerPlayerRef = player;
-                                    Debug.Log($"[NetworkRunnerHandler] OnBeforeSpawned: OwnerPlayerRef={player} を設定");
+                                    np.OwnerPlayerRef = p;
+                                    Debug.Log($"[NetworkRunnerHandler] OnBeforeSpawned: OwnerPlayerRef={p} を設定");
                                 }
                             }
                         );
 
-                        Debug.Log($"[NetworkRunnerHandler] NetworkPlayerをスポーンしました: PlayerRef={player}");
+                        Debug.Log($"[NetworkRunnerHandler] NetworkPlayerをスポーンしました: PlayerRef={p}");
                     }
                     else
                     {

@@ -19,6 +19,14 @@ public class GameManager : NetworkBehaviour
     // TODO: フェーズ2で正式実装予定 - GameParametersへの参照
     public GameParameters gameParams;
 
+    // === プレイヤーごとの生成座標 ===
+    [Header("Uyopyon生成座標設定")]
+    [Tooltip("プレイヤー1（自分）の生成座標 - 各クライアントでローカル表示に使用")]
+    public Vector3 player1SpawnPosition = new Vector3(-3, 0, 0);
+
+    [Tooltip("プレイヤー2（相手）の生成座標 - 各クライアントでローカル表示に使用")]
+    public Vector3 player2SpawnPosition = new Vector3(3, 0, 0);
+
     // プレイヤーIDと対応するUyopyonStateの参照を保持
     private Dictionary<PlayerRef, UyopyonState> _playerStates = new Dictionary<PlayerRef, UyopyonState>();
 
@@ -49,6 +57,10 @@ public class GameManager : NetworkBehaviour
             Instance = this;
             // シーンを跨ぐ場合は、DontDestroyOnLoad(gameObject); を追加
         }
+
+        // スポーン位置の確認
+        Debug.Log($"[GameManager] player1SpawnPosition: {player1SpawnPosition}");
+        Debug.Log($"[GameManager] player2SpawnPosition: {player2SpawnPosition}");
     }
 
     /// <summary>
@@ -58,12 +70,21 @@ public class GameManager : NetworkBehaviour
     //[Server] // ホストでのみ実行することを保証
     public void SpawnUyopyon(PlayerRef player, string playerName)
     {
-        if (_playerStates.ContainsKey(player)) return;
+        Debug.Log($"[GameManager.SpawnUyopyon] 呼び出されました: player={player}, playerName='{playerName}'");
+
+        if (_playerStates.ContainsKey(player))
+        {
+            Debug.LogWarning($"[GameManager.SpawnUyopyon] Player={player}のUyopyonは既に存在します。スキップします。");
+            return;
+        }
+
+        // 初期スポーン位置は原点（各クライアントでRender()が適切な位置に調整する）
+        Vector3 spawnPosition = Vector3.zero;
 
         // プレイヤーのInput Authorityを指定して、うーぴょんオブジェクトを生成
         NetworkObject newUyopyon = Runner.Spawn(
             uyopyonPrefab,
-            position: Vector3.zero + new Vector3(player.PlayerId * 3, 0, 0), // P1とP2で位置をずらす
+            position: spawnPosition,
             rotation: Quaternion.identity,
             inputAuthority: player, // 入力権限をこのプレイヤーに渡す
             // OnBeforeSpawned コールバックでOwnerPlayerを事前に設定
@@ -72,6 +93,7 @@ public class GameManager : NetworkBehaviour
                 if (obj.TryGetBehaviour<UyopyonState>(out var s))
                 {
                     s.OwnerPlayer = player;
+                    Debug.Log($"[GameManager.SpawnUyopyon] onBeforeSpawned: OwnerPlayerを設定 player={player}");
                 }
             }
         );

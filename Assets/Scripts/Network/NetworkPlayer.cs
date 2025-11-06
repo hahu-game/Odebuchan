@@ -16,18 +16,31 @@ public class NetworkPlayer : NetworkBehaviour
     [Networked]
     public PlayerRef OwnerPlayerRef { get; set; }
 
+    /// <summary>
+    /// Uyopyonをスポーン済みかどうか（全クライアントで同期される）
+    /// </summary>
+    [Networked]
+    public NetworkBool HasSpawnedUyopyon { get; set; }
+
     private PlayerRef MyPlayerRef;
     private string _lastPlayerName; // 前回の名前を保持
-    private bool _hasSpawnedUyopyon = false; // Uyopyonをスポーン済みかどうか
     private bool _hasSetPlayerName = false; // PlayerNameを設定済みかどうか
 
     public override void Spawned()
     {
         // OwnerPlayerRefが設定されている場合はそれを使用、未設定の場合はInputAuthorityを使用
         MyPlayerRef = OwnerPlayerRef != PlayerRef.None ? OwnerPlayerRef : Object.InputAuthority;
+        Debug.Log($"[NetworkPlayer.Spawned] GameObject='{gameObject.name}', OwnerPlayerRef={OwnerPlayerRef}, InputAuthority={Object.InputAuthority}, MyPlayerRef={MyPlayerRef}");
 
         // 初期値を設定
         _lastPlayerName = PlayerName.ToString();
+
+        // スポーン時に既にPlayerNameが設定されている場合（ネットワーク同期で受信した場合）、UIを更新
+        if (!string.IsNullOrEmpty(_lastPlayerName))
+        {
+            Debug.Log($"[NetworkPlayer.Spawned] 初期PlayerNameでUI更新: '{_lastPlayerName}' (OwnerPlayerRef={OwnerPlayerRef})");
+            UpdatePlayerNameUI(_lastPlayerName);
+        }
 
         Debug.Log($"[NetworkPlayer] Spawned: Player={MyPlayerRef}");
     }
@@ -91,13 +104,15 @@ public class NetworkPlayer : NetworkBehaviour
         string currentName = PlayerName.ToString();
 
         // ホスト側でまだUyopyonをスポーンしていない場合、PlayerNameが設定されたらスポーンする
-        if (Runner.IsSharedModeMasterClient && !_hasSpawnedUyopyon)
+        // HasSpawnedUyopyonはネットワーク同期されるので、全クライアントで重複スポーンを防げる
+        if (Runner.IsSharedModeMasterClient && !HasSpawnedUyopyon)
         {
             if (!string.IsNullOrEmpty(currentName))
             {
-                Debug.Log($"[NetworkPlayer] Spawning Uyopyon for Player={MyPlayerRef}, Name='{currentName}'");
+                Debug.Log($"[NetworkPlayer.Render] '{gameObject.name}' Spawning Uyopyon: OwnerPlayerRef={OwnerPlayerRef}, MyPlayerRef={MyPlayerRef}, Name='{currentName}'");
                 GameManager.Instance.SpawnUyopyon(MyPlayerRef, currentName);
-                _hasSpawnedUyopyon = true;
+                HasSpawnedUyopyon = true;
+                Debug.Log($"[NetworkPlayer.Render] HasSpawnedUyopyonをtrueに設定（ネットワーク同期されます）");
             }
         }
 
