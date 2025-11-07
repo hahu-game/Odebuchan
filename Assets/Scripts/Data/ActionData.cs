@@ -59,4 +59,10 @@ public struct ActionData : INetworkStruct
     /// タイムアウト時や未選択時に使用
     /// </summary>
     public static ActionData Default() => CreateSleep();
+
+    /// <summary>
+    /// 空の行動（未選択状態）を返す
+    /// 準備フェーズでのリセット時に使用
+    /// </summary>
+    public static ActionData Empty() => new ActionData(ActionType.None, Genre.None);
 }

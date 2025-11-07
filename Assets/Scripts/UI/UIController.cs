@@ -67,6 +67,7 @@ public class UIController : MonoBehaviour
     [Header("Blackout Panel")]
     public GameObject blackoutPanel;
     public TextMeshProUGUI blackoutText;
+    private Coroutine _blackoutCoroutine;
 
     [Header("Log Area")]
     public UnityEngine.UI.ScrollRect logScrollRect;
@@ -194,11 +195,18 @@ private PlayerRef _localPlayerRef;
             return;
         }
 
+        // 前のコルーチンが実行中なら停止
+        if (_blackoutCoroutine != null)
+        {
+            StopCoroutine(_blackoutCoroutine);
+            Debug.Log("[UIController] 前のブラックアウトコルーチンを停止しました");
+        }
+
         blackoutText.text = text;
         blackoutPanel.SetActive(true);
 
         // duration秒後に非表示
-        StartCoroutine(HideBlackoutAfterDelay(duration));
+        _blackoutCoroutine = StartCoroutine(HideBlackoutAfterDelay(duration));
     }
 
     /// <summary>
@@ -210,7 +218,9 @@ private PlayerRef _localPlayerRef;
         if (blackoutPanel != null)
         {
             blackoutPanel.SetActive(false);
+            Debug.Log($"[UIController] ブラックアウトを非表示にしました（{delay}秒後）");
         }
+        _blackoutCoroutine = null;
     }
 
     /// <summary>
@@ -453,6 +463,9 @@ private PlayerRef _localPlayerRef;
             myActionData.RPC_FixActions();
 
             Debug.Log($"[UIController] 行動を確定しました: Player={myActionData.OwnerPlayer}, 午前={_morningAction.Value.Type}, 午後={_afternoonAction.Value.Type}");
+
+            // 確定後、行動ボタンと確定・クリアボタンを無効化（ロック）
+            LockActionButtons();
         }
         else
         {
@@ -608,8 +621,63 @@ private PlayerRef _localPlayerRef;
     }
 
     /// <summary>
+    /// 行動表示を更新（テキスト直接指定版）
+    /// </summary>
+    public void UpdateActionDisplay(PlayerRef player, bool isMorning, ActionType action, string customText)
+    {
+        Debug.Log($"[UIController] UpdateActionDisplay (customText): player={player}, isMorning={isMorning}, action={action}, text='{customText}'");
+        
+        // 自分のプレイヤーか判定
+        bool isMyPlayer = IsMyPlayer(player);
+
+        if (isMyPlayer)
+        {
+            if (isMorning)
+            {
+                myTodayMorningActionText.text = customText;
+            }
+            else
+            {
+                myTodayAfternoonActionText.text = customText;
+            }
+        }
+        else
+        {
+            if (isMorning)
+            {
+                oppTodayMorningActionText.text = customText;
+            }
+            else
+            {
+                oppTodayAfternoonActionText.text = customText;
+            }
+        }
+    }
+
+    /// <summary>
     /// 選択中の時間帯を太枠で表示
     /// </summary>
+    /// <summary>
+    /// 昨日の午後の行動表示を更新
+    /// </summary>
+    public void UpdateYesterdayAfternoonDisplay(PlayerRef player, ActionType action)
+    {
+        Debug.Log($"[UIController] UpdateYesterdayAfternoonDisplay: player={player}, action={action}");
+        string actionText = GetActionText(action);
+        bool isMyPlayer = IsMyPlayer(player);
+        
+        if (isMyPlayer)
+        {
+            if (myYesterdayAfternoonActionText != null)
+                myYesterdayAfternoonActionText.text = actionText;
+        }
+        else
+        {
+            if (oppYesterdayAfternoonActionText != null)
+                oppYesterdayAfternoonActionText.text = actionText;
+        }
+    }
+
     public void HighlightCurrentSelection(bool isAfternoon)
     {
         Debug.Log($"[UIController] HighlightCurrentSelection: isAfternoon={isAfternoon}");
@@ -667,6 +735,7 @@ private PlayerRef _localPlayerRef;
     {
         switch (action)
         {
+            case ActionType.None: return "";
             case ActionType.Eat: return "たべる";
             case ActionType.Sleep: return "ねむる";
             case ActionType.Play: return "あそぶ";
@@ -751,6 +820,29 @@ private PlayerRef _localPlayerRef;
         if (sleepButton != null) sleepButton.interactable = interactable;
         if (playButton != null) playButton.interactable = interactable;
         if (clinicButton != null) clinicButton.interactable = interactable;
+
+        // 確定・クリアボタンも同時に制御
+        if (fixButton != null) fixButton.interactable = interactable;
+        if (clearButton != null) clearButton.interactable = interactable;
+    }
+
+
+    /// <summary>
+    /// 行動確定後、すべてのボタンをロック（無効化）
+    /// </summary>
+    private void LockActionButtons()
+    {
+        Debug.Log("[UIController] 行動確定後、すべてのボタンをロックします");
+
+        // 行動ボタンを無効化
+        if (eatButton != null) eatButton.interactable = false;
+        if (sleepButton != null) sleepButton.interactable = false;
+        if (playButton != null) playButton.interactable = false;
+        if (clinicButton != null) clinicButton.interactable = false;
+
+        // 確定・クリアボタンを無効化
+        if (fixButton != null) fixButton.interactable = false;
+        if (clearButton != null) clearButton.interactable = false;
     }
 
     public void HideActionButtonOutlines()
@@ -761,5 +853,22 @@ private PlayerRef _localPlayerRef;
         if (sleepButtonOutline != null) sleepButtonOutline.enabled = false;
         if (playButtonOutline != null) playButtonOutline.enabled = false;
         if (clinicButtonOutline != null) clinicButtonOutline.enabled = false;
+    }
+
+    /// <summary>
+    /// 行動選択状態をリセット（新しい日の選択フェーズ開始時に呼ぶ）
+    /// </summary>
+    public void ResetActionSelection()
+    {
+        Debug.Log("[UIController] 行動選択状態をリセット");
+
+        _morningAction = null;
+        _afternoonAction = null;
+        _isMorningSelected = false;
+
+        // 午前選択中のハイライトに戻す
+        HighlightCurrentSelection(false);
+
+        Debug.Log("[UIController] 行動選択状態のリセット完了");
     }
 }
