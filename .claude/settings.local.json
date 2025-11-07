@@ -36,7 +36,10 @@
       "mcp__UnityMCP__find_in_file",
       "mcp__UnityMCP__manage_prefabs",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "mcp__serena__replace_symbol_body",
+      "mcp__ide__getDiagnostics",
+      "mcp__serena__insert_after_symbol"
     ],
     "deny": [],
     "ask": []

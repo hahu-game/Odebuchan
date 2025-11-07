@@ -49,19 +49,140 @@ public class PlayerActionData : NetworkBehaviour
     [Networked]
     public bool AfternoonActionLocked { get; set; } = false;
 
+    // 変更検知用のフィールド
+    private ActionData _lastMorningAction;
+    private ActionData _lastAfternoonAction;
+    private bool _lastIsActionFixed;
+    private ActionData _lastLastAfternoonAction;
+
     public override void Spawned()
     {
         // OwnerPlayerはGameManager.SpawnPlayerActionData()で設定される
 
-        // 初期値としてねむるを設定
-        MorningAction = ActionData.Default();
-        AfternoonAction = ActionData.Default();
-        LastAfternoonAction = ActionData.Default();
+        // 初期値として空の状態を設定
+        MorningAction = ActionData.Empty();
+        AfternoonAction = ActionData.Empty();
+        LastAfternoonAction = ActionData.Empty();
+
+        // 変更検知用のフィールドを無効な値で初期化（初期値の変更を確実に検知するため）
+        _lastMorningAction = new ActionData(ActionType.SpecialAbility, Genre.None);
+        _lastAfternoonAction = new ActionData(ActionType.SpecialAbility, Genre.None);
+        _lastIsActionFixed = false;
+        _lastLastAfternoonAction = new ActionData(ActionType.SpecialAbility, Genre.None);
 
         // GameManagerに登録（全クライアントで実行）
         if (GameManager.Instance != null)
         {
             GameManager.Instance.RegisterPlayerActionData(this);
+        }
+
+        Debug.Log($"[PlayerActionData] Player {OwnerPlayer} Spawned: Morning={MorningAction.Type}, Afternoon={AfternoonAction.Type}");
+    }
+
+    /// <summary>
+    /// 毎フレーム呼ばれる。ネットワーク化されたプロパティの変更を検知してUIを更新する
+    /// </summary>
+    public override void Render()
+    {
+        // 自分のプレイヤーのデータかどうかをチェック
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        bool isMyPlayer = (runner != null && runner.LocalPlayer == OwnerPlayer);
+
+        // GameFlowManagerから現在のフェーズを取得
+        bool isExecutionPhase = (GameFlowManager.Instance != null &&
+                                  GameFlowManager.Instance.CurrentPhase == GamePhase.Execution);
+
+        // 午前の行動が変更された場合
+        if (!_lastMorningAction.Equals(MorningAction))
+        {
+            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の午前の行動が変更されました: {_lastMorningAction.Type} -> {MorningAction.Type}");
+
+            if (UIController.Instance != null)
+            {
+                // 自分のプレイヤー、または実行フェーズの場合のみ表示
+                if (isMyPlayer || isExecutionPhase)
+                {
+                    // 確定していない場合は空欄を表示
+                    if (!IsActionFixed)
+                    {
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionType.None);
+                    }
+                    else
+                    {
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction.Type);
+                    }
+                }
+            }
+
+            _lastMorningAction = MorningAction;
+        }
+
+        // 午後の行動が変更された場合
+        if (!_lastAfternoonAction.Equals(AfternoonAction))
+        {
+            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の午後の行動が変更されました: {_lastAfternoonAction.Type} -> {AfternoonAction.Type}");
+
+            if (UIController.Instance != null)
+            {
+                // 自分のプレイヤー、または実行フェーズの場合のみ表示
+                if (isMyPlayer || isExecutionPhase)
+                {
+                    // 確定していない場合は空欄を表示
+                    if (!IsActionFixed)
+                    {
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionType.None);
+                    }
+                    else
+                    {
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction.Type);
+                    }
+                }
+            }
+
+            _lastAfternoonAction = AfternoonAction;
+        }
+
+        // 確定フラグが変更された場合
+        if (_lastIsActionFixed != IsActionFixed)
+        {
+            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の確定フラグが変更されました: {_lastIsActionFixed} -> {IsActionFixed}");
+
+            // 確定フラグが変更された場合、UIを更新
+            if (UIController.Instance != null)
+            {
+                // 自分のプレイヤー、または実行フェーズの場合のみ表示
+                if (isMyPlayer || isExecutionPhase)
+                {
+                    if (!IsActionFixed)
+                    {
+                        // 確定解除された場合は空欄を表示
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionType.None);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionType.None);
+                    }
+                    else
+                    {
+                        // 確定された場合は現在の行動を表示
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction.Type);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction.Type);
+                    }
+                }
+            }
+
+            _lastIsActionFixed = IsActionFixed;
+        }
+
+        // 昨日の午後の行動が変更された場合
+        if (!_lastLastAfternoonAction.Equals(LastAfternoonAction))
+        {
+            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の昨日の午後の行動が変更されました: {_lastLastAfternoonAction.Type} -> {LastAfternoonAction.Type}");
+
+            if (UIController.Instance != null)
+            {
+                // 昨日の午後の行動は常に全員に表示
+                UIController.Instance.UpdateYesterdayAfternoonDisplay(OwnerPlayer, LastAfternoonAction.Type);
+            }
+
+            _lastLastAfternoonAction = LastAfternoonAction;
         }
     }
 
@@ -75,9 +196,9 @@ public class PlayerActionData : NetworkBehaviour
             // 前日の午後の行動を保存
             LastAfternoonAction = AfternoonAction;
 
-            // 午前・午後をデフォルト（ねむる）にリセット
-            MorningAction = ActionData.Default();
-            AfternoonAction = ActionData.Default();
+            // 午前・午後を空の状態にリセット
+            MorningAction = ActionData.Empty();
+            AfternoonAction = ActionData.Empty();
 
             // 確定フラグをリセット
             IsActionFixed = false;
@@ -85,7 +206,26 @@ public class PlayerActionData : NetworkBehaviour
             // 午後のロックフラグをリセット（午前のロックは熱中症処理で個別に管理）
             AfternoonActionLocked = false;
 
+            // 全クライアントで自分と相手の今日の行動を空欄にする
+            RPC_ClearActionDisplay();
+
             Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動をリセットしました");
+        }
+    }
+
+    /// <summary>
+    /// 全クライアントで行動表示を空欄にクリアする
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ClearActionDisplay()
+    {
+        if (UIController.Instance != null)
+        {
+            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動表示を空欄にクリアします");
+
+            // 午前・午後の行動表示を空欄に
+            UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionType.None);
+            UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionType.None);
         }
     }
 
@@ -169,11 +309,11 @@ public class PlayerActionData : NetworkBehaviour
 
         if (!MorningActionLocked)
         {
-            MorningAction = ActionData.Default();
+            MorningAction = ActionData.Empty();
         }
         if (!AfternoonActionLocked)
         {
-            AfternoonAction = ActionData.Default();
+            AfternoonAction = ActionData.Empty();
         }
         IsActionFixed = false;
         Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動がクリアされました");

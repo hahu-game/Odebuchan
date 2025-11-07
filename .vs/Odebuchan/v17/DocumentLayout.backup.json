@@ -3,7 +3,15 @@
   "WorkspaceRootPath": "C:\\Users\\helic\\Odebuchan\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|c:\\users\\helic\\odebuchan\\assets\\scripts\\test\\test_uicontroller_34.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|c:\\users\\helic\\odebuchan\\assets\\scripts\\game\\gameflowmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\game\\gameflowmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\test\\test_uicontroller_34.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\test\\test_uicontroller_34.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -27,16 +35,8 @@
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\title\\titlescreenmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\data\\uyopyonstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\data\\uyopyonstate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\game\\gameflowmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\game\\gameflowmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\data\\actiondata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -62,24 +62,83 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 8,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Test_UIController_34.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Test\\Test_UIController_34.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Test\\Test_UIController_34.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Test\\Test_UIController_34.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Test\\Test_UIController_34.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 5,
+              "Title": "GameManager.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameManager.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Game\\GameManager.cs",
+              "ViewState": "AgIAAEgAAAAAAAAAAAAqwEwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-06T10:19:30.061Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-22T16:16:16.97Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "UyopyonState.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\UyopyonState.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\UyopyonState.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\UyopyonState.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Data\\UyopyonState.cs",
+              "ViewState": "AgIAAHEAAAAAAAAAAAAAAA4AAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T15:22:24.29Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "NetworkPlayer.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Network\\NetworkPlayer.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Network\\NetworkPlayer.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Network\\NetworkPlayer.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Network\\NetworkPlayer.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAuwBYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T15:20:09.066Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "NetworkRunnerHandler.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAADwv9UAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T14:31:59.714Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "TitleScreenManager.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\TitleScreenManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Title\\TitleScreenManager.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\TitleScreenManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Title\\TitleScreenManager.cs",
+              "ViewState": "AgIAAKUAAAAAAAAAAAAYwLsAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-22T14:31:23.439Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "UIController.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\UIController.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
+              "RelativeToolTip": "Assets\\Scripts\\UI\\UIController.cs",
+              "ViewState": "AgIAAM8AAAAAAAAAAAAIwOQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-02T11:36:58.038Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "ConsoleCopyTool.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Editor\\ConsoleCopyTool.cs",
               "RelativeDocumentMoniker": "Assets\\Editor\\ConsoleCopyTool.cs",
@@ -91,39 +150,28 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "ActionData.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\ActionData.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\ActionData.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\ActionData.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Data\\ActionData.cs",
-              "ViewState": "AgIAAD4AAAAAAAAAAAAAAAsAAAAbAAAAAAAAAA==",
+              "DocumentIndex": 2,
+              "Title": "Test_UIController_34.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Test\\Test_UIController_34.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Test\\Test_UIController_34.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Test\\Test_UIController_34.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Test\\Test_UIController_34.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T10:23:27.779Z"
+              "WhenOpened": "2025-11-06T10:19:30.061Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "GameParameters.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameParameters.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\GameParameters.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameParameters.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Data\\GameParameters.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAjAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "GameFlowManager.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameFlowManager.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameFlowManager.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameFlowManager.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Game\\GameFlowManager.cs",
+              "ViewState": "AgIAANMBAAAAAAAAAAArwOMBAAAsAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T09:58:23.954Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "GameEnums.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameEnums.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\GameEnums.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameEnums.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Data\\GameEnums.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAeAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T09:28:40.825Z"
+              "WhenOpened": "2025-11-02T12:59:19.56Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -139,87 +187,39 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "GameManager.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameManager.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Game\\GameManager.cs",
-              "ViewState": "AgIAAEgAAAAAAAAAAAAqwEwAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 11,
+              "Title": "GameEnums.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameEnums.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\GameEnums.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameEnums.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Data\\GameEnums.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAeAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T16:16:16.97Z"
+              "WhenOpened": "2025-11-02T09:28:40.825Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "UyopyonState.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\UyopyonState.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\UyopyonState.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\UyopyonState.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Data\\UyopyonState.cs",
-              "ViewState": "AgIAAHEAAAAAAAAAAAAAAA4AAAAjAAAAAAAAAA==",
+              "DocumentIndex": 10,
+              "Title": "GameParameters.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameParameters.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\GameParameters.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameParameters.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Data\\GameParameters.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAjAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T15:22:24.29Z"
+              "WhenOpened": "2025-11-02T09:58:23.954Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "NetworkPlayer.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Network\\NetworkPlayer.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Network\\NetworkPlayer.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Network\\NetworkPlayer.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Network\\NetworkPlayer.cs",
-              "ViewState": "AgIAABAAAAAAAAAAAAAuwBYAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 9,
+              "Title": "ActionData.cs",
+              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\ActionData.cs",
+              "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\ActionData.cs",
+              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\ActionData.cs",
+              "RelativeToolTip": "Assets\\Scripts\\Data\\ActionData.cs",
+              "ViewState": "AgIAAD4AAAAAAAAAAAAAAAsAAAAbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T15:20:09.066Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "NetworkRunnerHandler.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
-              "ViewState": "AgIAAA4AAAAAAAAAAADwv9UAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T14:31:59.714Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "TitleScreenManager.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\TitleScreenManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Title\\TitleScreenManager.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\TitleScreenManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Title\\TitleScreenManager.cs",
-              "ViewState": "AgIAAKUAAAAAAAAAAAAYwLsAAAAeAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T14:31:23.439Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "UIController.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\UIController.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
-              "RelativeToolTip": "Assets\\Scripts\\UI\\UIController.cs",
-              "ViewState": "AgIAAG4AAAAAAAAAAAAgwIoAAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T11:36:58.038Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "GameFlowManager.cs",
-              "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameFlowManager.cs",
-              "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameFlowManager.cs",
-              "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameFlowManager.cs",
-              "RelativeToolTip": "Assets\\Scripts\\Game\\GameFlowManager.cs",
-              "ViewState": "AgIAAD4AAAAAAAAAAAAcwOAAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T12:59:19.56Z"
+              "WhenOpened": "2025-11-02T10:23:27.779Z"
             }
           ]
         }

@@ -16,6 +16,7 @@ public enum GamePhase
 /// </summary>
 public enum ActionType
 {
+    None,           // 未選択（空の状態）
     Eat,            // たべる
     Sleep,          // ねむる
     Play,           // あそぶ
