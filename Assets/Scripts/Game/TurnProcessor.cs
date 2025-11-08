@@ -67,8 +67,8 @@ public class TurnProcessor : NetworkBehaviour
         CheckConsecutivePenalty(p2, p2Action.Type, playerActions[p2].LastAfternoonAction.Type);
 
         // 3. 行動実行
-        await ExecuteAction(p1, p1Action);
-        await ExecuteAction(p2, p2Action);
+        await ExecuteAction(p1, p1Action, true);
+        await ExecuteAction(p2, p2Action, true);
 
         Debug.Log("[TurnProcessor] === 午前の処理が完了 ===");
     }
@@ -102,8 +102,8 @@ public class TurnProcessor : NetworkBehaviour
         CheckConsecutivePenalty(p2, p2Action.Type, playerActions[p2].MorningAction.Type);
 
         // 3. 行動実行
-        await ExecuteAction(p1, p1Action);
-        await ExecuteAction(p2, p2Action);
+        await ExecuteAction(p1, p1Action, false);
+        await ExecuteAction(p2, p2Action, false);
 
         // 4. 午後の行動を記録（次の日の午前判定用）
         // 注: これはホスト側で実行されるが、PlayerActionDataのプロパティ変更は自動的に同期される
@@ -168,9 +168,15 @@ public class TurnProcessor : NetworkBehaviour
     /// <summary>
     /// 行動を実行
     /// </summary>
-    private async Task ExecuteAction(PlayerRef player, ActionData action)
+    /// <param name="player">プレイヤー</param>
+    /// <param name="action">行動データ</param>
+    /// <param name="isMorning">午前の行動かどうか</param>
+    private async Task ExecuteAction(PlayerRef player, ActionData action, bool isMorning)
     {
-        Debug.Log($"[TurnProcessor] Player {player} が {action.Type} を実行");
+        // 腰痛チェック（30%の確率で行動が「ねむる」に変更される）
+        CheckBackPain(player, ref action);
+
+        Debug.Log($"[TurnProcessor] Player {player} が {action.Type} を実行（{(isMorning ? "午前" : "午後")}）");
 
         UyopyonState state = GetUyopyonState(player);
         if (state == null)
@@ -193,7 +199,7 @@ public class TurnProcessor : NetworkBehaviour
                 break;
 
             case ActionType.Play:
-                ExecutePlay(player, state, playerName);
+                ExecutePlay(player, state, playerName, isMorning);
                 break;
 
             case ActionType.Clinic:
@@ -433,8 +439,8 @@ public class TurnProcessor : NetworkBehaviour
 
         Debug.Log($"[TurnProcessor] {log}");
 
-        // 病気発症判定（後で実装）
-        // CheckSickness(player, state.Weight);
+        // 病気発症判定
+        CheckSickness(player, state.Weight);
     }
 
     /// <summary>
@@ -445,12 +451,12 @@ public class TurnProcessor : NetworkBehaviour
         // 元気変化を計算（PlayBuffEnergyとBuffMultiplierを適用）
         int energyChange = (int)((gameParams.SleepEnergyChange + state.PlayBuffEnergy) * state.BuffMultiplier);
 
-        // 睡眠時無呼吸症候群のチェック（後で実装）
-        // if (state.HasStatusAilment(StatusAilment.SleepApnea))
-        // {
-        //     energyChange += gameParams.SleepApneaRecoveryReduction;
-        //     RPC_AddLog($"{playerName}は睡眠時無呼吸症候群の影響を受けた！元気回復量{FormatNumber(gameParams.SleepApneaRecoveryReduction)}");
-        // }
+        // 睡眠時無呼吸症候群のチェック
+        if (state.HasStatusAilment(StatusAilment.SleepApnea))
+        {
+            energyChange += gameParams.SleepApneaRecoveryReduction;
+            RPC_AddLog($"{playerName}は睡眠時無呼吸症候群の影響を受けた！元気回復量{FormatNumber(gameParams.SleepApneaRecoveryReduction)}");
+        }
 
         // 連続使用ペナルティのチェック（後で実装）
         // CheckConsecutiveActionPenalty()
@@ -468,7 +474,11 @@ public class TurnProcessor : NetworkBehaviour
     /// <summary>
     /// あそぶの実行
     /// </summary>
-    private void ExecutePlay(PlayerRef player, UyopyonState state, string playerName)
+    /// <param name="player">プレイヤー</param>
+    /// <param name="state">UyopyonState</param>
+    /// <param name="playerName">プレイヤー名</param>
+    /// <param name="isMorning">午前の行動かどうか</param>
+    private void ExecutePlay(PlayerRef player, UyopyonState state, string playerName, bool isMorning)
     {
         // 元気変化を計算
         int energyChange = gameParams.PlayEnergyChange;
@@ -493,8 +503,8 @@ public class TurnProcessor : NetworkBehaviour
 
         Debug.Log($"[TurnProcessor] {log}");
 
-        // ケガ発症判定（後で実装）
-        // CheckInjury(player, state.Weight);
+        // ケガ発症判定
+        CheckInjury(player, state.Weight, isMorning);
     }
 
     /// <summary>
@@ -533,5 +543,232 @@ public class TurnProcessor : NetworkBehaviour
         RPC_AddLog(log);
 
         Debug.Log($"[TurnProcessor] {log}");
+    }
+
+    /// <summary>
+    /// 病気発症判定（たべる実行時に呼び出される）
+    /// </summary>
+    /// <param name="player">プレイヤー</param>
+    /// <param name="weight">現在の重さ</param>
+    private void CheckSickness(PlayerRef player, int weight)
+    {
+        // 発症確率を計算（重さ ÷ 10 %）
+        float sicknessChance = weight / 10.0f;
+        
+        // ランダム判定（0～100の乱数）
+        float roll = UnityEngine.Random.Range(0f, 100f);
+        
+        Debug.Log($"[TurnProcessor] CheckSickness: Player={player}, Weight={weight}, Chance={sicknessChance}%, Roll={roll}");
+        
+        // 発症判定
+        if (roll < sicknessChance)
+        {
+            UyopyonState state = GetUyopyonState(player);
+            if (state == null)
+            {
+                Debug.LogError("[TurnProcessor] UyopyonState が取得できません");
+                return;
+            }
+            
+            string playerName = GetPlayerName(player);
+            
+            // すでに持っている病気をチェック
+            bool hasSleepApnea = state.HasStatusAilment(StatusAilment.SleepApnea);
+            bool hasDiabetes = state.HasStatusAilment(StatusAilment.Diabetes);
+            
+            StatusAilment newAilment;
+            
+            // 両方の病気をすでに持っている場合は何も起こらない
+            if (hasSleepApnea && hasDiabetes)
+            {
+                Debug.Log($"[TurnProcessor] {playerName}はすでに両方の病気を持っています");
+                return;
+            }
+            // 睡眠時無呼吸症候群のみ持っている場合は糖尿病を発症
+            else if (hasSleepApnea)
+            {
+                newAilment = StatusAilment.Diabetes;
+            }
+            // 糖尿病のみ持っている場合は睡眠時無呼吸症候群を発症
+            else if (hasDiabetes)
+            {
+                newAilment = StatusAilment.SleepApnea;
+            }
+            // 病気を持っていない場合は50%ずつでランダムに選択
+            else
+            {
+                if (UnityEngine.Random.Range(0f, 1f) < 0.5f)
+                {
+                    newAilment = StatusAilment.SleepApnea;
+                }
+                else
+                {
+                    newAilment = StatusAilment.Diabetes;
+                }
+            }
+            
+            // 状態異常を設定
+            state.SetStatusAilment(newAilment, true);
+            
+            // 病気名を取得
+            string ailmentName = newAilment == StatusAilment.SleepApnea ? "睡眠時無呼吸症候群" : "糖尿病";
+            
+            // ログに追加
+            string log = $"{playerName}は<color=red><b>{ailmentName}</b></color>を発症した！";
+            RPC_AddLog(log);
+            
+            Debug.Log($"[TurnProcessor] {playerName} が {ailmentName} を発症");
+        }
+    }
+
+    /// <summary>
+    /// ケガ発症判定（あそぶ実行時に呼び出される）
+    /// </summary>
+    /// <param name="player">プレイヤー</param>
+    /// <param name="weight">現在の重さ</param>
+    /// <param name="isMorning">午前の行動かどうか</param>
+    private void CheckInjury(PlayerRef player, int weight, bool isMorning)
+    {
+        // 発症確率を計算（重さ ÷ 10 %）
+        float injuryChance = weight / 10.0f;
+        
+        // ランダム判定（0～100の乱数）
+        float roll = UnityEngine.Random.Range(0f, 100f);
+        
+        Debug.Log($"[TurnProcessor] CheckInjury: Player={player}, Weight={weight}, Chance={injuryChance}%, Roll={roll}");
+        
+        // 発症判定
+        if (roll < injuryChance)
+        {
+            UyopyonState state = GetUyopyonState(player);
+            if (state == null)
+            {
+                Debug.LogError("[TurnProcessor] UyopyonState が取得できません");
+                return;
+            }
+            
+            string playerName = GetPlayerName(player);
+            
+            // すでに持っているケガをチェック
+            bool hasBackPain = state.HasStatusAilment(StatusAilment.BackPain);
+            bool hasHeatstroke = state.HasStatusAilment(StatusAilment.Heatstroke);
+            
+            StatusAilment newAilment;
+            
+            // 両方のケガをすでに持っている場合は何も起こらない
+            if (hasBackPain && hasHeatstroke)
+            {
+                Debug.Log($"[TurnProcessor] {playerName}はすでに両方のケガを持っています");
+                return;
+            }
+            // 腰痛のみ持っている場合は熱中症を発症
+            else if (hasBackPain)
+            {
+                newAilment = StatusAilment.Heatstroke;
+            }
+            // 熱中症のみ持っている場合は腰痛を発症
+            else if (hasHeatstroke)
+            {
+                newAilment = StatusAilment.BackPain;
+            }
+            // ケガを持っていない場合は50%ずつでランダムに選択
+            else
+            {
+                if (UnityEngine.Random.Range(0f, 1f) < 0.5f)
+                {
+                    newAilment = StatusAilment.BackPain;
+                }
+                else
+                {
+                    newAilment = StatusAilment.Heatstroke;
+                }
+            }
+            
+            // 状態異常を設定
+            state.SetStatusAilment(newAilment, true);
+            
+            // ケガ名を取得
+            string ailmentName = newAilment == StatusAilment.BackPain ? "腰痛" : "熱中症";
+
+            // ログに追加
+            string log = $"{playerName}は<color=red><b>{ailmentName}</b></color>を発症した！";
+            RPC_AddLog(log);
+
+            Debug.Log($"[TurnProcessor] {playerName} が {ailmentName} を発症");
+
+            // 熱中症の場合、強制つういん処理
+            if (newAilment == StatusAilment.Heatstroke)
+            {
+                // GameManagerからPlayerActionDataを取得
+                var playerActionData = gameManager.GetPlayerActionData(player);
+                if (playerActionData == null)
+                {
+                    Debug.LogError("[TurnProcessor] PlayerActionData が取得できません");
+                    return;
+                }
+
+                if (isMorning)
+                {
+                    // 午前に発症 → 今日の午後を「つういん」に強制変更
+                    playerActionData.AfternoonAction = new ActionData(ActionType.Clinic, Genre.Rock);
+                    playerActionData.AfternoonActionLocked = true;
+
+                    RPC_AddLog($"{playerName}は熱中症で動けない！午後の行動が「つういん」に固定された");
+                    Debug.Log($"[TurnProcessor] {playerName} の午後の行動を「つういん」に強制変更");
+                }
+                else
+                {
+                    // 午後に発症 → 翌日の午前を「つういん」に固定（準備フェーズで設定）
+                    // MorningActionLockedフラグを立てておく
+                    playerActionData.MorningActionLocked = true;
+
+                    RPC_AddLog($"{playerName}は熱中症で動けない！翌日午前の行動が「つういん」に固定された");
+                    Debug.Log($"[TurnProcessor] {playerName} の翌日午前の行動を「つういん」に固定（準備フェーズで設定）");
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 腰痛チェック（行動実行前に呼び出される）
+    /// 30%の確率で行動が「ねむる」に変更される
+    /// </summary>
+    /// <param name="player">プレイヤー</param>
+    /// <param name="action">現在の行動データ（参照渡しで変更される）</param>
+    /// <returns>行動が変更された場合true</returns>
+    private bool CheckBackPain(PlayerRef player, ref ActionData action)
+    {
+        UyopyonState state = GetUyopyonState(player);
+        if (state == null)
+        {
+            Debug.LogError("[TurnProcessor] UyopyonState が取得できません");
+            return false;
+        }
+
+        // 腰痛の状態異常チェック
+        if (state.HasStatusAilment(StatusAilment.BackPain))
+        {
+            // 30%の確率で行動がキャンセルされる
+            float roll = UnityEngine.Random.Range(0f, 100f);
+            Debug.Log($"[TurnProcessor] CheckBackPain: Player={player}, Roll={roll}");
+
+            if (roll < gameParams.BackPainCancelProbability * 100)
+            {
+                // 行動を「ねむる」に変更
+                action = new ActionData
+                {
+                    Type = ActionType.Sleep,
+                    Genre = Genre.Paper
+                };
+
+                string playerName = GetPlayerName(player);
+                RPC_AddLog($"{playerName}は腰痛で動けない！行動が「ねむる」に変更された");
+
+                Debug.Log($"[TurnProcessor] {playerName} の行動が腰痛により「ねむる」に変更されました");
+                return true;
+            }
+        }
+
+        return false;
     }
 }

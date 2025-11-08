@@ -243,8 +243,11 @@ public class GameFlowManager : NetworkBehaviour
                 ResetAllPlayerActions();
             }
 
-            // 糖尿病チェック（6.4で実装予定）
-            // CheckDiabetes();
+            // 糖尿病チェック
+            CheckDiabetes();
+
+            // 熱中症による強制つういんチェック（前日午後に熱中症が発症した場合）
+            CheckHeatstrokeMorningClinic();
 
             // 進化判定（7.1で実装予定）
             // await CheckEvolution();
@@ -634,6 +637,164 @@ public class GameFlowManager : NetworkBehaviour
         if (UIController.Instance != null)
         {
             UIController.Instance.ResetActionSelection();
+        }
+    }
+
+    /// <summary>
+    /// 糖尿病の朝処理（準備フェーズで呼び出される）
+    /// </summary>
+    private void CheckDiabetes()
+    {
+        Debug.Log("[GameFlowManager] 糖尿病チェック開始");
+
+        // GameManagerから全プレイヤーのUyopyonStateを取得
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[GameFlowManager] GameManager.Instanceがnullです");
+            return;
+        }
+
+        var allUyopyons = GameManager.Instance.uyopyonStateDict;
+        if (allUyopyons == null || allUyopyons.Count == 0)
+        {
+            Debug.LogWarning("[GameFlowManager] UyopyonStateが見つかりません");
+            return;
+        }
+
+        foreach (var kvp in allUyopyons)
+        {
+            PlayerRef player = kvp.Key;
+            UyopyonState state = kvp.Value;
+
+            if (state == null)
+            {
+                Debug.LogWarning($"[GameFlowManager] Player {player} のUyopyonStateがnullです");
+                continue;
+            }
+
+            // 糖尿病の状態異常チェック
+            if (state.HasStatusAilment(StatusAilment.Diabetes))
+            {
+                // 重さ-20、元気-20
+                state.Weight += gameParams.DiabetesMorningWeightChange;
+                state.Energy += gameParams.DiabetesMorningEnergyChange;
+
+                // プレイヤー名を取得
+                string playerName = GetPlayerName(player);
+
+                // ログに追加
+                string log = $"{playerName}は糖尿病の影響を受けた！重さ{FormatNumber(gameParams.DiabetesMorningWeightChange)}、元気{FormatNumber(gameParams.DiabetesMorningEnergyChange)}";
+                RPC_AddLog(log);
+
+                Debug.Log($"[GameFlowManager] {log}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 熱中症による強制つういんチェック（準備フェーズで呼び出される）
+    /// 前日午後に熱中症が発症した場合、午前の行動を「つういん」に固定する
+    /// </summary>
+    private void CheckHeatstrokeMorningClinic()
+    {
+        Debug.Log("[GameFlowManager] 熱中症による強制つういんチェック開始");
+
+        // GameManagerから全プレイヤーのPlayerActionDataを取得
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[GameFlowManager] GameManager.Instanceがnullです");
+            return;
+        }
+
+        var allPlayerActions = GameManager.Instance.playerActionDataDict;
+        if (allPlayerActions == null || allPlayerActions.Count == 0)
+        {
+            Debug.LogWarning("[GameFlowManager] PlayerActionDataが見つかりません");
+            return;
+        }
+
+        foreach (var kvp in allPlayerActions)
+        {
+            PlayerRef player = kvp.Key;
+            PlayerActionData actionData = kvp.Value;
+
+            if (actionData == null)
+            {
+                Debug.LogWarning($"[GameFlowManager] Player {player} のPlayerActionDataがnullです");
+                continue;
+            }
+
+            // MorningActionLockedがtrueの場合、午前の行動を「つういん」に設定
+            if (actionData.MorningActionLocked)
+            {
+                actionData.MorningAction = new ActionData(ActionType.Clinic, Genre.Rock);
+
+                // プレイヤー名を取得
+                string playerName = GetPlayerName(player);
+
+                // ログに追加
+                string log = $"{playerName}は熱中症の影響で午前の行動が「つういん」に固定されました";
+                RPC_AddLog(log);
+
+                Debug.Log($"[GameFlowManager] {playerName} の午前の行動を「つういん」に設定");
+
+                // ロックフラグを解除（つういん実行後に熱中症が治るため）
+                actionData.MorningActionLocked = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// プレイヤー名を取得するヘルパーメソッド
+    /// </summary>
+    private string GetPlayerName(PlayerRef player)
+    {
+        // 方法1: Runner.GetPlayerObjectから取得
+        var networkPlayerObj = Runner.GetPlayerObject(player);
+        if (networkPlayerObj != null && networkPlayerObj.TryGetBehaviour<NetworkPlayer>(out var np))
+        {
+            string name = np.PlayerName.ToString();
+            if (!string.IsNullOrEmpty(name))
+            {
+                return name;
+            }
+        }
+
+        // 方法2: シーン内の全NetworkPlayerから検索
+        var allNetworkPlayers = FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
+        foreach (var networkPlayer in allNetworkPlayers)
+        {
+            if (networkPlayer.OwnerPlayerRef == player)
+            {
+                string name = networkPlayer.PlayerName.ToString();
+                if (!string.IsNullOrEmpty(name))
+                {
+                    return name;
+                }
+            }
+        }
+
+        // フォールバック: PlayerIDを表示
+        Debug.LogWarning($"[GameFlowManager] Player {player} の名前が取得できませんでした");
+        return $"Player{player.PlayerId}";
+    }
+
+    /// <summary>
+    /// 数値を色付きフォーマットで返す（正の値は青、負の値は赤）
+    /// </summary>
+    private string FormatNumber(int value)
+    {
+        if (value > 0)
+        {
+            return $"<color=blue><b>+{value}</b></color>";
+        }
+        else if (value < 0)
+        {
+            return $"<color=red><b>{value}</b></color>";
+        }
+        else
+        {
+            return "±0";
         }
     }
 }
