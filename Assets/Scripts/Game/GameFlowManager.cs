@@ -73,6 +73,13 @@ public class GameFlowManager : NetworkBehaviour
         {
             Instance = this;
         }
+
+        // TurnProcessorの取得
+        turnProcessor = GetComponent<TurnProcessor>();
+        if (turnProcessor == null)
+        {
+            Debug.LogError("[GameFlowManager] TurnProcessorが見つかりません！同じGameObjectにアタッチしてください。");
+        }
     }
 
     public override void Spawned()
@@ -321,15 +328,14 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// 実行フェーズ開始（スタブ、後で実装）
+    /// 実行フェーズ開始
     /// </summary>
     private async UniTask StartExecutionPhase()
     {
         try
         {
             Debug.Log($"[GameFlowManager] ========== StartExecutionPhase() 開始 ==========");
-            Debug.Log($"[GameFlowManager] CurrentDay={CurrentDay}, CurrentPhase={CurrentPhase}");
-            Debug.Log($"[GameFlowManager] Object={Object}, IsValid={Object?.IsValid}");
+            Debug.Log($"[GameFlowManager] 実行フェーズを開始します");
 
             if (!Object || !Object.IsValid)
             {
@@ -338,30 +344,62 @@ public class GameFlowManager : NetworkBehaviour
             }
 
             CurrentPhase = GamePhase.Execution;
-            Debug.Log($"[GameFlowManager] 実行フェーズを開始しました (CurrentPhase={CurrentPhase})");
 
-            // 全プレイヤーの行動を公開
+            // ブラックアウト「行動開始！」を表示
+            RPC_ShowBlackout("行動開始！");
+            await UniTask.Delay((int)(gameParams.BlackoutDuration * 1000));
+
+            // ログに実行フェーズ開始を追加
+            RPC_AddLog("===== 行動実行 =====");
+
+            // 相手の選択を表示（2秒待機）
             RPC_RevealAllActions();
+            await UniTask.Delay(2000);
 
-            // この段階では、次のフェーズへの遷移のみ実装
-            Debug.Log("[GameFlowManager] 実行フェーズ: 3秒待機開始");
-            await UniTask.Delay(3000);
-            Debug.Log("[GameFlowManager] 実行フェーズ: 3秒待機終了");
+            // PlayerActionDataの辞書を取得
+            var playerActionDict = GameManager.Instance.playerActionDataDict;
 
-            Debug.Log($"[GameFlowManager] 待機後チェック: Object={Object}, IsValid={Object?.IsValid}");
+            if (playerActionDict == null || playerActionDict.Count == 0)
+            {
+                Debug.LogError("[GameFlowManager] PlayerActionDataが取得できません");
+                return;
+            }
+
+            Debug.Log($"[GameFlowManager] PlayerActionData取得完了: {playerActionDict.Count}人");
+
+            // === 午前の行動実行 ===
+            RPC_AddLog("--- 午前 ---");
+            await UniTask.Delay(500);
+
+            Debug.Log("[GameFlowManager] 午前の処理を開始");
+            await turnProcessor.ProcessMorning(playerActionDict);
+            Debug.Log("[GameFlowManager] 午前の処理が完了");
+            await UniTask.Delay(2000); // アニメーション表示時間
+
+            // 勝利判定（8.1で実装予定）
+            // if (CheckVictory(out PlayerRef winner)) { ... }
+
+            // === 午後の行動実行 ===
+            RPC_AddLog("--- 午後 ---");
+            await UniTask.Delay(500);
+
+            Debug.Log("[GameFlowManager] 午後の処理を開始");
+            await turnProcessor.ProcessAfternoon(playerActionDict);
+            Debug.Log("[GameFlowManager] 午後の処理が完了");
+            await UniTask.Delay(2000); // アニメーション表示時間
+
+            // 勝利判定（8.1で実装予定）
+            // if (CheckVictory(out PlayerRef winner)) { ... }
+
             if (!Object || !Object.IsValid)
             {
                 Debug.LogError($"[GameFlowManager] 実行フェーズ待機後: Object無効");
                 return;
             }
 
-            Debug.Log($"[GameFlowManager] 実行フェーズ終了、次の日へ (現在: {CurrentDay}日目)");
-
-            // 次の日へ
+            // 次の日の準備フェーズへ遷移
             CurrentDay++;
-            Debug.Log($"[GameFlowManager] CurrentDay を {CurrentDay} にインクリメントしました");
-            Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズへ遷移します");
-
+            Debug.Log($"[GameFlowManager] {CurrentDay}日目へ移行します");
             await StartPreparationPhase();
         }
         catch (System.Exception e)

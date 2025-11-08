@@ -275,7 +275,7 @@ private PlayerRef _localPlayerRef;
             logText.color = Color.black;
 
             // 自動的に折り返しを有効化
-            logText.enableWordWrapping = true;
+            logText.textWrappingMode = TMPro.TextWrappingModes.Normal;
             logText.overflowMode = TMPro.TextOverflowModes.Overflow;
 
             // テキストを更新してレイアウトを再計算
@@ -870,5 +870,23 @@ private PlayerRef _localPlayerRef;
         HighlightCurrentSelection(false);
 
         Debug.Log("[UIController] 行動選択状態のリセット完了");
+    }
+
+    /// <summary>
+    /// ジャンケン結果エフェクトを表示（後で実装）
+    /// </summary>
+    public void ShowJankenEffect(PlayerRef winner, Genre winGenre)
+    {
+        Debug.Log($"[UIController] ジャンケン結果エフェクト: Winner={winner}, Genre={winGenre}");
+        // 実装は後で（フェーズ10）
+    }
+
+    /// <summary>
+    /// 行動アニメーションを再生（後で実装）
+    /// </summary>
+    public void PlayActionAnimation(PlayerRef player, ActionType action)
+    {
+        Debug.Log($"[UIController] 行動アニメーション: Player={player}, Action={action}");
+        // 実装は後で（フェーズ10）
     }
 }

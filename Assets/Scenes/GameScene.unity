@@ -6060,6 +6060,7 @@ MonoBehaviour:
   Flags: 262145
   NestedObjects: []
   NetworkedBehaviours:
+  - {fileID: 1232779675}
   - {fileID: 1232779674}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &1232779674
@@ -7516,6 +7517,7 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 1779711840}
+  - {fileID: 1779711839}
   ForceRemoteRenderTimeframe: 0
 --- !u!1 &1793368303
 GameObject:
@@ -7627,7 +7629,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.000076293945, y: 0.000076293945}
+  m_AnchoredPosition: {x: -0.000076293945, y: 0.000061035156}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1840630653
@@ -7918,8 +7920,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 639.55, y: 139.85}
-  m_SizeDelta: {x: 300, y: 150}
+  m_AnchoredPosition: {x: 654.8, y: 4.1400146}
+  m_SizeDelta: {x: 300, y: 300}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1942358727
 MonoBehaviour:
