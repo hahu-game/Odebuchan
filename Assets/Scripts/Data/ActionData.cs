@@ -33,7 +33,7 @@ public struct ActionData : INetworkStruct
     public static ActionData CreateEat() => new ActionData(ActionType.Eat, Genre.Rock);
     public static ActionData CreateSleep() => new ActionData(ActionType.Sleep, Genre.Paper);
     public static ActionData CreatePlay() => new ActionData(ActionType.Play, Genre.Scissors);
-    public static ActionData CreateClinic() => new ActionData(ActionType.Clinic, Genre.Scissors);
+    public static ActionData CreateClinic() => new ActionData(ActionType.Clinic, Genre.None);
 
     /// <summary>
     /// 特殊能力の場合、特殊能力の種類に応じてジャンルを設定

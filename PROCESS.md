@@ -462,7 +462,7 @@
    - TurnProcessor.ProcessAfternoon()を呼び出し
    - 勝利判定（実装は後回し）
    - 次の日の準備フェーズへ遷移
-2. 非同期処理（await Task.Delay）を使用して待機処理を実装
+2. 非同期処理（await UniTask.Delay）を使用して待機処理を実装
 
 **確認項目**:
 - [ ] 確定ボタンを押すと実行フェーズに遷移すること
