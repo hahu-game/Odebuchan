@@ -63,6 +63,11 @@ public class UIController : MonoBehaviour
     public GameObject oppTodayAfternoonActionPanel;
     public TextMeshProUGUI oppTodayAfternoonActionText; // クリアボタン
 
+    // === 6.7で追加: 状態異常テキスト表示 ===
+    [Header("Status Ailment Texts")]
+    public TextMeshProUGUI[] myStatusAilmentTexts = new TextMeshProUGUI[4];
+    public TextMeshProUGUI[] oppStatusAilmentTexts = new TextMeshProUGUI[4];
+
     // === 3.4で追加: ブラックアウトパネルとログエリア ===
     [Header("Blackout Panel")]
     public GameObject blackoutPanel;
@@ -176,9 +181,6 @@ private PlayerRef _localPlayerRef;
 
     // TODO: フェーズ9で実装予定 - ビジュアル変更
     public void UpdateUyopyonVisual(PlayerRef player, string visualType) { }
-
-    // TODO: フェーズ6で実装予定 - 状態異常アイコン表示
-    public void UpdateStatusAilmentDisplay(PlayerRef player, byte[] ailments) { }
 
     /// <summary>
     /// ブラックアウトパネルを表示
@@ -416,16 +418,28 @@ private PlayerRef _localPlayerRef;
     /// </summary>
     public void OnFixButtonClicked()
     {
-        // 午前・午後の両方が選択されていない場合はデフォルト（ねむる）を設定
-        if (!_morningAction.HasValue)
+        // 午前・午後の行動が選択されているかチェック
+        bool morningSelected = _morningAction.HasValue;
+        bool afternoonSelected = _afternoonAction.HasValue;
+
+        // 未選択の行動がある場合はエラーメッセージを表示して処理を中断
+        if (!morningSelected && !afternoonSelected)
         {
-            _morningAction = ActionData.Default();
-            Debug.Log("[UIController] 午前が未選択のため、デフォルト（ねむる）を設定");
+            AddLog("午前と午後の行動を決めてから確定ボタンを押してください");
+            Debug.Log("[UIController] 午前と午後の行動が未選択のため、確定できません");
+            return;
         }
-        if (!_afternoonAction.HasValue)
+        else if (!morningSelected)
         {
-            _afternoonAction = ActionData.Default();
-            Debug.Log("[UIController] 午後が未選択のため、デフォルト（ねむる）を設定");
+            AddLog("午前の行動を決めてから確定ボタンを押してください");
+            Debug.Log("[UIController] 午前の行動が未選択のため、確定できません");
+            return;
+        }
+        else if (!afternoonSelected)
+        {
+            AddLog("午後の行動を決めてから確定ボタンを押してください");
+            Debug.Log("[UIController] 午後の行動が未選択のため、確定できません");
+            return;
         }
 
         // NetworkRunnerから現在のLocalPlayerを取得
@@ -888,5 +902,85 @@ private PlayerRef _localPlayerRef;
     {
         Debug.Log($"[UIController] 行動アニメーション: Player={player}, Action={action}");
         // 実装は後で（フェーズ10）
+    }
+
+    // === 6.7で追加: 状態異常テキスト表示メソッド ===
+
+    /// <summary>
+    /// 状態異常テキストを更新
+    /// </summary>
+    /// <param name="player">プレイヤー</param>
+    /// <param name="ailments">状態異常配列</param>
+    public void UpdateStatusAilmentDisplay(PlayerRef player, byte[] ailments)
+    {
+        // 自分のプレイヤーか判定
+        bool isMyPlayer = IsMyPlayer(player);
+        TextMeshProUGUI[] texts = isMyPlayer ? myStatusAilmentTexts : oppStatusAilmentTexts;
+
+        // すべての親オブジェクト（first, second, third, fourth）を非表示
+        foreach (var text in texts)
+        {
+            if (text != null && text.transform.parent != null)
+            {
+                text.transform.parent.gameObject.SetActive(false);
+            }
+        }
+
+        // 状態異常があれば対応するテキストを表示
+        int textIndex = 0;
+        for (int i = 0; i < ailments.Length && textIndex < texts.Length; i++)
+        {
+            if (ailments[i] != 0) // 状態異常あり
+            {
+                // インデックスから状態異常の種類を判定
+                StatusAilment ailment = IndexToStatusAilment(i);
+                string ailmentText = GetStatusAilmentText(ailment);
+
+                if (!string.IsNullOrEmpty(ailmentText) && texts[textIndex] != null)
+                {
+                    texts[textIndex].text = ailmentText;
+                    // 親オブジェクト（first, second, third, fourth）を表示
+                    if (texts[textIndex].transform.parent != null)
+                    {
+                        texts[textIndex].transform.parent.gameObject.SetActive(true);
+                    }
+                    textIndex++;
+                }
+            }
+        }
+
+        Debug.Log($"[UIController] Player {player} の状態異常テキストを更新しました（表示数: {textIndex}）");
+    }
+
+    /// <summary>
+    /// 配列インデックスから状態異常の種類を取得
+    /// StatusAilments配列はインデックスで状態異常の種類を表す
+    /// [0] = SleepApnea, [1] = Diabetes, [2] = BackPain, [3] = Heatstroke
+    /// </summary>
+    private StatusAilment IndexToStatusAilment(int index)
+    {
+        switch (index)
+        {
+            case 0: return StatusAilment.SleepApnea;
+            case 1: return StatusAilment.Diabetes;
+            case 2: return StatusAilment.BackPain;
+            case 3: return StatusAilment.Heatstroke;
+            default: return StatusAilment.SleepApnea; // フォールバック
+        }
+    }
+
+    /// <summary>
+    /// 状態異常に対応するテキストを取得
+    /// </summary>
+    private string GetStatusAilmentText(StatusAilment ailment)
+    {
+        switch (ailment)
+        {
+            case StatusAilment.SleepApnea: return "無呼吸";
+            case StatusAilment.Diabetes: return "糖尿病";
+            case StatusAilment.BackPain: return "腰痛";
+            case StatusAilment.Heatstroke: return "熱中症";
+            default: return null;
+        }
     }
 }
