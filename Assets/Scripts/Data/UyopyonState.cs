@@ -81,6 +81,7 @@ public class UyopyonState : NetworkBehaviour
     private int _lastPlayBuffEnergy;
     private bool _lastHasEvolved;
     private string _lastVisualType;
+    private string _lastSpecialAbilityName = "";
     private byte[] _lastStatusAilments = new byte[4];
 
     // === 位置管理 ===
@@ -249,6 +250,8 @@ public class UyopyonState : NetworkBehaviour
         if (_lastWeight != Weight)
         {
             UIController.Instance?.UpdateWeightDisplay(OwnerPlayer, Weight);
+            // 重さが変わったら、じゅくすい・どかぐいのボタン状態を更新
+            UIController.Instance?.UpdateSpecialAbilityButtonState();
             _lastWeight = Weight;
         }
 
@@ -278,6 +281,15 @@ public class UyopyonState : NetworkBehaviour
         {
             UIController.Instance?.UpdateEvolutionDisplay(OwnerPlayer, HasEvolved, SpecialAbilityName.ToString());
             _lastHasEvolved = HasEvolved;
+        }
+
+        // SpecialAbilityName の変更をチェック
+        string currentAbilityName = SpecialAbilityName.ToString();
+        if (_lastSpecialAbilityName != currentAbilityName)
+        {
+            Debug.Log($"[UyopyonState.Render] Player {OwnerPlayer} の SpecialAbilityName が変更されました: '{_lastSpecialAbilityName}' -> '{currentAbilityName}'");
+            UIController.Instance?.UpdateEvolutionDisplay(OwnerPlayer, HasEvolved, currentAbilityName);
+            _lastSpecialAbilityName = currentAbilityName;
         }
 
         // VisualType の変更をチェック
