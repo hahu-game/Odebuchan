@@ -62,6 +62,13 @@ public class GameFlowManager : NetworkBehaviour
     private bool _selectionPhaseActive = false;
     private int _selectionPhaseTickCounter = 0;
 
+    // === 7.2で追加: 特殊能力選択完了フラグ ===
+    private bool _abilitySelectionComplete = false;
+    private SpecialAbilityType? _selectedAbilityFromClient = null;
+
+    // === ゲーム全体で選択された特殊能力の記録 ===
+    private List<SpecialAbilityType> _selectedAbilities = new List<SpecialAbilityType>();
+
     private void Awake()
     {
         // シングルトンパターンの実装
@@ -249,8 +256,8 @@ public class GameFlowManager : NetworkBehaviour
             // 熱中症による強制つういんチェック（前日午後に熱中症が発症した場合）
             CheckHeatstrokeMorningClinic();
 
-            // 進化判定（7.1で実装予定）
-            // await CheckEvolution();
+            // 進化判定（7.1で実装）
+            await CheckEvolution();
 
             // 選択フェーズへ遷移
             Debug.Log("[GameFlowManager] 準備フェーズ終了、選択フェーズへ遷移");
@@ -641,6 +648,86 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// 7.2: 特殊能力選択パネルを表示するRPC
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowSpecialAbilityChoice(PlayerRef targetPlayer, 
+        SpecialAbilityType ability1, SpecialAbilityType ability2, SpecialAbilityType ability3, int choiceCount,
+        SpecialAbilityType disabled1, SpecialAbilityType disabled2, int disabledCount)
+    {
+        Debug.Log($"[RPC] 特殊能力選択パネル表示: targetPlayer={targetPlayer.PlayerId}, choiceCount={choiceCount}, disabledCount={disabledCount}");
+        
+        // NetworkArray を直接渡せないため、個別の引数で受け取り配列に変換
+        var choices = new SpecialAbilityType[choiceCount];
+        if (choiceCount >= 1) choices[0] = ability1;
+        if (choiceCount >= 2) choices[1] = ability2;
+        if (choiceCount >= 3) choices[2] = ability3;
+        
+        // 無効化リスト
+        SpecialAbilityType[] disabledAbilities = null;
+        if (disabledCount > 0)
+        {
+            disabledAbilities = new SpecialAbilityType[disabledCount];
+            if (disabledCount >= 1) disabledAbilities[0] = disabled1;
+            if (disabledCount >= 2) disabledAbilities[1] = disabled2;
+        }
+        
+        UIController.Instance?.ShowSpecialAbilityChoice(targetPlayer, choices, disabledAbilities);
+    }
+
+    /// <summary>
+    /// 7.2: 待機中パネルを表示するRPC
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowWaitingPanel(PlayerRef targetPlayer, string message)
+    {
+        Debug.Log($"[RPC] 待機パネル表示: targetPlayer={targetPlayer.PlayerId}");
+        
+        // ローカルプレイヤーが targetPlayer の場合のみ表示
+        if (Runner.LocalPlayer == targetPlayer)
+        {
+            UIController.Instance?.ShowWaitingPanel(message);
+        }
+    }
+
+    /// <summary>
+    /// 7.2: 待機中パネルを非表示にするRPC
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_HideWaitingPanel(PlayerRef targetPlayer)
+    {
+        Debug.Log($"[RPC] 待機パネル非表示: targetPlayer={targetPlayer.PlayerId}");
+        
+        // ローカルプレイヤーが targetPlayer の場合のみ非表示
+        if (Runner.LocalPlayer == targetPlayer)
+        {
+            UIController.Instance?.HideWaitingPanel();
+        }
+    }
+
+    /// <summary>
+    /// 7.2: 特殊能力選択完了を通知するRPC（クライアント→サーバー）
+    /// </summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    private void RPC_NotifyAbilitySelected(SpecialAbilityType selectedAbility)
+    {
+        Debug.Log($"[RPC] 特殊能力選択完了通知を受信: {selectedAbility}");
+        _selectedAbilityFromClient = selectedAbility;
+        _abilitySelectionComplete = true;
+    }
+
+    /// <summary>
+    /// 7.2: 特殊能力選択完了を通知（UIControllerから呼び出される）
+    /// </summary>
+    public void NotifyAbilitySelected(SpecialAbilityType selectedAbility)
+    {
+        Debug.Log($"[GameFlowManager] NotifyAbilitySelected: {selectedAbility}");
+        
+        // サーバーにRPCで通知
+        RPC_NotifyAbilitySelected(selectedAbility);
+    }
+
+    /// <summary>
     /// 糖尿病の朝処理（準備フェーズで呼び出される）
     /// </summary>
     private void CheckDiabetes()
@@ -741,6 +828,304 @@ public class GameFlowManager : NetworkBehaviour
                 // ロックフラグを解除（つういん実行後に熱中症が治るため）
                 actionData.MorningActionLocked = false;
             }
+        }
+    }
+
+    /// <summary>
+    /// 7.1: 進化判定と特殊能力選択
+    /// Weight >= 200 && !HasEvolved の条件で進化処理を実行
+    /// </summary>
+    private async UniTask CheckEvolution()
+    {
+        Debug.Log("[GameFlowManager] 進化判定開始");
+
+        // GameManagerから全プレイヤーのUyopyonStateを取得
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[GameFlowManager] GameManager.Instanceがnullです");
+            return;
+        }
+
+        var allUyopyons = GameManager.Instance.uyopyonStateDict;
+        if (allUyopyons == null || allUyopyons.Count == 0)
+        {
+            Debug.LogWarning("[GameFlowManager] UyopyonStateが見つかりません");
+            return;
+        }
+
+        // 7.2: 進化条件を満たした全プレイヤーを収集
+        var candidates = new List<KeyValuePair<PlayerRef, UyopyonState>>();
+        
+        foreach (var kvp in allUyopyons)
+        {
+            PlayerRef player = kvp.Key;
+            UyopyonState state = kvp.Value;
+
+            if (state == null)
+            {
+                Debug.LogWarning($"[GameFlowManager] Player {player} のUyopyonStateがnullです");
+                continue;
+            }
+
+            // 進化条件チェック: Weight >= 200 && !HasEvolved
+            if (state.Weight >= 200 && !state.HasEvolved)
+            {
+                Debug.Log($"[GameFlowManager] Player {player} が進化条件を満たしました (Weight: {state.Weight}, HasEvolved: {state.HasEvolved})");
+                candidates.Add(kvp);
+            }
+        }
+
+        // 進化候補がいない場合は終了
+        if (candidates.Count == 0)
+        {
+            Debug.Log("[GameFlowManager] 進化条件を満たしたプレイヤーはいません");
+            return;
+        }
+
+        Debug.Log($"[GameFlowManager] {candidates.Count}人が進化条件を満たしました");
+
+        // 7.2: 優先順位を決定
+        var orderedCandidates = DetermineEvolutionOrder(candidates);
+
+
+        // 7.2: 順番に各プレイヤーに選択させる
+        for (int i = 0; i < orderedCandidates.Count; i++)
+        {
+            var kvp = orderedCandidates[i];
+            PlayerRef currentPlayer = kvp.Key;
+            UyopyonState state = kvp.Value;
+            string playerName = GetPlayerName(currentPlayer);
+
+            Debug.Log($"[GameFlowManager] Player {currentPlayer} ({playerName}) の進化処理開始 (順位: {i + 1}/{orderedCandidates.Count})");
+
+            // 7.2修正: 現在の選択中プレイヤーの待機パネルを確実に非表示
+            RPC_HideWaitingPanel(currentPlayer);
+            Debug.Log($"[GameFlowManager] Player {currentPlayer.PlayerId} の待機パネルを非表示（選択開始前）");
+
+            // 7.2: 他のプレイヤーに待機パネルを表示
+            for (int j = 0; j < orderedCandidates.Count; j++)
+            {
+                if (i != j)
+                {
+                    PlayerRef waitingPlayer = orderedCandidates[j].Key;
+                    RPC_ShowWaitingPanel(waitingPlayer, "対戦相手が特殊能力を選択中です。");
+                    Debug.Log($"[GameFlowManager] Player {waitingPlayer.PlayerId} に待機パネルを表示");
+                }
+            }
+
+            // UIの更新を確実にするため少し待機
+            await UniTask.Delay(200);
+
+            // 利用可能な特殊能力から、すでに選ばれたものを除外
+            var availableChoices = new List<SpecialAbilityType>();
+            for (int k = 0; k < AvailableSpecialAbilities.Length; k++)
+            {
+                var ability = AvailableSpecialAbilities[k];
+                availableChoices.Add(ability);
+            }
+
+            // 最大3つの選択肢を準備
+            var choices = availableChoices.Take(3).ToArray();
+
+            if (choices.Length == 0)
+            {
+                Debug.LogError($"[GameFlowManager] Player {currentPlayer} に提供できる特殊能力がありません");
+                continue;
+            }
+
+            Debug.Log($"[GameFlowManager] Player {currentPlayer} に {choices.Length} 個の選択肢を表示、{_selectedAbilities.Count} 個が無効化");
+
+            // ログに追加
+            RPC_AddLog($"{playerName}が進化条件を満たした！特殊能力を選択してください");
+
+            // 7.2: 選択完了フラグをリセット
+            _abilitySelectionComplete = false;
+            _selectedAbilityFromClient = null;
+
+            // 7.2: RPC経由で特殊能力選択UIを表示（無効化リストも渡す）
+            SpecialAbilityType ability1 = choices.Length > 0 ? choices[0] : SpecialAbilityType.Gaishoku;
+            SpecialAbilityType ability2 = choices.Length > 1 ? choices[1] : SpecialAbilityType.Gaishoku;
+            SpecialAbilityType ability3 = choices.Length > 2 ? choices[2] : SpecialAbilityType.Gaishoku;
+            // 無効化する特殊能力を設定
+            
+            SpecialAbilityType disabled1 = _selectedAbilities.Count > 0 ? _selectedAbilities[0] : SpecialAbilityType.Gaishoku;
+            SpecialAbilityType disabled2 = _selectedAbilities.Count > 1 ? _selectedAbilities[1] : SpecialAbilityType.Gaishoku;
+            
+            RPC_ShowSpecialAbilityChoice(currentPlayer, ability1, ability2, ability3, choices.Length, disabled1, disabled2, _selectedAbilities.Count);
+
+            // 選択完了を待機（RPCベース）
+            Debug.Log($"[GameFlowManager] プレイヤー {currentPlayer} の特殊能力選択を待機中...");
+            
+            float timeout = 60f; // 60秒のタイムアウト
+            float elapsed = 0f;
+            
+            while (!_abilitySelectionComplete)
+            {
+                await UniTask.Yield();
+                elapsed += Time.deltaTime;
+                
+                if (elapsed >= timeout)
+                {
+                    Debug.LogWarning($"[GameFlowManager] プレイヤー {currentPlayer} の特殊能力選択がタイムアウトしました");
+                    break;
+                }
+            }
+
+            // 選択された特殊能力を取得
+            SpecialAbilityType? selectedAbility = _selectedAbilityFromClient;
+            
+            if (selectedAbility.HasValue)
+            {
+                Debug.Log($"[GameFlowManager] プレイヤー {currentPlayer} が {selectedAbility.Value} を選択しました");
+
+                // UyopyonStateを更新（ネットワーク同期される）
+                state.SpecialAbilityName = selectedAbility.Value.ToString();
+                state.HasEvolved = true;
+                state.VisualType = "Evolved"; // 進化後のビジュアルタイプ
+
+                Debug.Log($"[GameFlowManager] UyopyonState更新完了: HasEvolved={state.HasEvolved}, SpecialAbilityName={state.SpecialAbilityName}");
+
+                // 7.2: 選ばれた特殊能力を記録（次のプレイヤーの選択肢から除外）
+                _selectedAbilities.Add(selectedAbility.Value);
+
+                // ログに追加
+                RPC_AddLog($"{playerName}は{GetSpecialAbilityDisplayName(selectedAbility.Value)}を習得した！");
+                
+                Debug.Log($"[GameFlowManager] プレイヤー {currentPlayer} の進化完了: {selectedAbility.Value}");
+            }
+            else
+            {
+                Debug.LogWarning($"[GameFlowManager] プレイヤー {currentPlayer} の特殊能力が選択されませんでした");
+                
+                // タイムアウト時もHasEvolvedをtrueにして、再度選択させないようにする
+                state.HasEvolved = true;
+                Debug.Log($"[GameFlowManager] タイムアウトのためHasEvolved=trueに設定");
+            }
+
+            // 7.2: 全プレイヤーの待機パネルを非表示
+            for (int j = 0; j < orderedCandidates.Count; j++)
+            {
+                PlayerRef player = orderedCandidates[j].Key;
+                RPC_HideWaitingPanel(player);
+                Debug.Log($"[GameFlowManager] Player {player.PlayerId} の待機パネルを非表示（選択完了後）");
+            }
+
+            // UIの更新を確実にするため少し待機
+            await UniTask.Delay(300);
+        }
+
+        Debug.Log("[GameFlowManager] 進化判定終了");
+    }
+
+    /// <summary>
+    /// 特殊能力の表示名を取得
+    /// </summary>
+    private string GetSpecialAbilityDisplayName(SpecialAbilityType ability)
+    {
+        switch (ability)
+        {
+            case SpecialAbilityType.Gaishoku:
+                return "がいしょく";
+            case SpecialAbilityType.Kintre:
+                return "きんとれ";
+            case SpecialAbilityType.Gamushara:
+                return "がむしゃら";
+            case SpecialAbilityType.Benkyou:
+                return "べんきょう";
+            case SpecialAbilityType.Jukusui:
+                return "じゅくすい";
+            case SpecialAbilityType.Dokagui:
+                return "どかぐい";
+            default:
+                return ability.ToString();
+        }
+    }
+
+    /// <summary>
+    /// 7.2: 進化条件を満たした複数プレイヤーの優先順位を決定
+    /// </summary>
+    /// <param name="candidates">進化候補のプレイヤーとUyopyonStateのリスト</param>
+    /// <returns>優先順位順にソートされたリスト</returns>
+    private List<KeyValuePair<PlayerRef, UyopyonState>> DetermineEvolutionOrder(List<KeyValuePair<PlayerRef, UyopyonState>> candidates)
+    {
+        if (candidates == null || candidates.Count == 0)
+        {
+            return new List<KeyValuePair<PlayerRef, UyopyonState>>();
+        }
+
+        Debug.Log($"[GameFlowManager] DetermineEvolutionOrder: {candidates.Count}人の進化候補");
+
+        // 優先順位でソート
+        var sorted = candidates.OrderByDescending(kvp =>
+        {
+            // 1. 重さが大きい方が先
+            // 2. 重さが同値なら元気が大きい方が先
+            // 3. 元気も同値ならランダム（PlayerRef.PlayerId でソート）
+            return kvp.Value.Weight * 10000 + kvp.Value.Energy;
+        }).ToList();
+
+        // 元気も同値の場合はランダムにする必要がある
+        // 同じ Weight と Energy の組み合わせがある場合、ランダムに並び替え
+        var finalOrder = new List<KeyValuePair<PlayerRef, UyopyonState>>();
+        var currentGroup = new List<KeyValuePair<PlayerRef, UyopyonState>>();
+        float lastWeight = -1;
+        float lastEnergy = -1;
+
+        foreach (var kvp in sorted)
+        {
+            if (kvp.Value.Weight == lastWeight && kvp.Value.Energy == lastEnergy)
+            {
+                // 同じグループに追加
+                currentGroup.Add(kvp);
+            }
+            else
+            {
+                // 前のグループをシャッフルして追加
+                if (currentGroup.Count > 0)
+                {
+                    ShuffleList(currentGroup);
+                    finalOrder.AddRange(currentGroup);
+                    currentGroup.Clear();
+                }
+
+                // 新しいグループを開始
+                currentGroup.Add(kvp);
+                lastWeight = kvp.Value.Weight;
+                lastEnergy = kvp.Value.Energy;
+            }
+        }
+
+        // 最後のグループをシャッフルして追加
+        if (currentGroup.Count > 0)
+        {
+            ShuffleList(currentGroup);
+            finalOrder.AddRange(currentGroup);
+        }
+
+        // デバッグログ
+        for (int i = 0; i < finalOrder.Count; i++)
+        {
+            var kvp = finalOrder[i];
+            Debug.Log($"[GameFlowManager] 進化順位 {i + 1}: Player {kvp.Key.PlayerId} (Weight: {kvp.Value.Weight}, Energy: {kvp.Value.Energy})");
+        }
+
+        return finalOrder;
+    }
+
+    /// <summary>
+    /// リストをシャッフルするヘルパーメソッド
+    /// </summary>
+    private void ShuffleList<T>(List<T> list)
+    {
+        System.Random rng = new System.Random();
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rng.Next(n + 1);
+            T temp = list[k];
+            list[k] = list[n];
+            list[n] = temp;
         }
     }
 

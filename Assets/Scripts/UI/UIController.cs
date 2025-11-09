@@ -31,12 +31,18 @@ public class UIController : MonoBehaviour
     public UnityEngine.UI.Button playButton;     // あそぶボタン
     public UnityEngine.UI.Button clinicButton;   // つういんボタン
 
+    // === 行動選択ボタン（特殊能力） ===
+    [Header("Special Ability Button")]
+    public UnityEngine.UI.Button specialAbilityButton;
+    public TextMeshProUGUI specialAbilityButtonText;
+
     // === 行動選択ボタンのOutline（選択フェーズ中に表示） ===
     [Header("Action Button Outlines")]
     public UnityEngine.UI.Outline eatButtonOutline;
     public UnityEngine.UI.Outline sleepButtonOutline;
     public UnityEngine.UI.Outline playButtonOutline;
     public UnityEngine.UI.Outline clinicButtonOutline;
+    public UnityEngine.UI.Outline specialAbilityButtonOutline;
 
     // === 確定・クリアボタン（3.1で追加） ===
     public UnityEngine.UI.Button fixButton;      // 確定ボタン
@@ -68,6 +74,20 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI[] myStatusAilmentTexts = new TextMeshProUGUI[4];
     public TextMeshProUGUI[] oppStatusAilmentTexts = new TextMeshProUGUI[4];
 
+    // === 7.1で追加: 特殊能力選択UI ===
+    [Header("Special Ability Choice Panel")]
+    public GameObject specialAbilityChoicePanel;
+    public UnityEngine.UI.Button[] specialAbilityButtons = new UnityEngine.UI.Button[3];
+    public TextMeshProUGUI[] specialAbilityButtonTexts = new TextMeshProUGUI[3];
+    
+    private SpecialAbilityType? _selectedAbility = null;
+
+    // === 7.2で追加: 待機中パネル ===
+    [Header("Waiting Panel")]
+    public GameObject waitingForOpponentPanel;
+    public TextMeshProUGUI waitingMessageText;
+    private bool _isAbilitySelectionComplete = false;
+
     // === 3.4で追加: ブラックアウトパネルとログエリア ===
     [Header("Blackout Panel")]
     public GameObject blackoutPanel;
@@ -86,7 +106,9 @@ public class UIController : MonoBehaviour
     private ActionData? _morningAction = null;      // 午前に選択した行動
     private ActionData? _afternoonAction = null;    // 午後に選択した行動
     private bool _isMorningSelected = false;        // 午前が選択済みか
-private PlayerRef _localPlayerRef;
+    private PlayerRef _localPlayerRef;
+
+
 
     private void Awake()
     {
@@ -97,7 +119,7 @@ private PlayerRef _localPlayerRef;
 
         if (runner != null && runner.LocalPlayer.PlayerId != 0)
         {
-            _localPlayerRef = runner.LocalPlayer;
+         _localPlayerRef = runner.LocalPlayer;
         }
     }
 
@@ -176,8 +198,60 @@ private PlayerRef _localPlayerRef;
     // TODO: フェーズ3で実装予定 - あそぶバフの表示
     public void UpdatePlayBuffDisplay(PlayerRef player, int buffWeight, int buffEnergy) { }
 
-    // TODO: フェーズ7で実装予定 - 進化状態の表示
-    public void UpdateEvolutionDisplay(PlayerRef player, bool hasEvolved, string abilityName) { }
+    /// <summary>
+    /// 進化状態の表示を更新（TODO 3実装）
+    /// </summary>
+    public void UpdateEvolutionDisplay(PlayerRef player, bool hasEvolved, string abilityName)
+    {
+        Debug.Log($"[UIController] UpdateEvolutionDisplay: player={player}, hasEvolved={hasEvolved}, abilityName={abilityName}");
+        
+        // 自分のプレイヤーの場合のみ特殊能力ボタンを制御
+        if (!IsMyPlayer(player))
+        {
+            Debug.Log($"[UIController] Player {player} は自分ではないため、特殊能力ボタンの制御をスキップ");
+            return;
+        }
+
+        if (specialAbilityButton == null)
+        {
+            Debug.LogWarning("[UIController] specialAbilityButton が null です");
+            return;
+        }
+
+        // 進化前: 特殊能力ボタンを非表示
+        // 進化後: 特殊能力ボタンを表示し、特殊能力名を設定
+        if (hasEvolved)
+        {
+            specialAbilityButton.gameObject.SetActive(true);
+
+            // 特殊能力名を表示
+            if (specialAbilityButtonText != null && !string.IsNullOrEmpty(abilityName))
+            {
+                // SpecialAbilityTypeに変換して表示名を取得
+                if (System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+                {
+                    specialAbilityButtonText.text = GetSpecialAbilityDisplayName(abilityType);
+                    Debug.Log($"[UIController] 特殊能力ボタンのテキストを設定: {specialAbilityButtonText.text}");
+                }
+                else
+                {
+                    specialAbilityButtonText.text = abilityName;
+                    Debug.LogWarning($"[UIController] SpecialAbilityType のパースに失敗: {abilityName}");
+                }
+            }
+
+            // ボタンを有効化（じゅくすい・どかぐいの場合は条件チェック）
+            Debug.Log("[UIController] UpdateSpecialAbilityButtonState() を呼び出します");
+            UpdateSpecialAbilityButtonState();
+
+            Debug.Log($"[UIController] 進化後の表示: 特殊能力ボタンを表示 ({abilityName})");
+        }
+        else
+        {
+            specialAbilityButton.gameObject.SetActive(false);
+            Debug.Log("[UIController] 進化前の表示: 特殊能力ボタンを非表示");
+        }
+    }
 
     // TODO: フェーズ9で実装予定 - ビジュアル変更
     public void UpdateUyopyonVisual(PlayerRef player, string visualType) { }
@@ -390,6 +464,15 @@ private PlayerRef _localPlayerRef;
     }
 
     /// <summary>
+    /// TODO 5: 特殊能力ボタンがクリックされた時の処理
+    /// </summary>
+    public void OnSpecialAbilityButtonClicked()
+    {
+        Debug.Log("[UIController] OnSpecialAbilityButtonClicked が呼ばれました");
+        OnActionButtonClicked(ActionType.SpecialAbility);
+    }
+
+    /// <summary>
     /// 「確定」ボタンがクリックされた時の処理（スタブ）
     /// </summary>
     /// <summary>
@@ -558,14 +641,33 @@ private PlayerRef _localPlayerRef;
         Debug.Log($"[UIController] OnActionButtonClicked 開始: actionType={actionType}");
 
         // ActionTypeに対応するActionDataを生成
-        ActionData selectedAction = actionType switch
+        ActionData selectedAction;
+
+        if (actionType == ActionType.SpecialAbility)
         {
-            ActionType.Eat => ActionData.CreateEat(),
-            ActionType.Sleep => ActionData.CreateSleep(),
-            ActionType.Play => ActionData.CreatePlay(),
-            ActionType.Clinic => ActionData.CreateClinic(),
-            _ => ActionData.Default()
-        };
+            // TODO 5: 特殊能力の場合は、SpecialAbilityTypeを取得してActionDataを生成
+            SpecialAbilityType? abilityType = GetMySpecialAbilityType();
+            if (abilityType.HasValue)
+            {
+                selectedAction = ActionData.CreateSpecialAbility(abilityType.Value);
+            }
+            else
+            {
+                Debug.LogWarning("[UIController] 特殊能力が設定されていません");
+                return;
+            }
+        }
+        else
+        {
+            selectedAction = actionType switch
+            {
+                ActionType.Eat => ActionData.CreateEat(),
+                ActionType.Sleep => ActionData.CreateSleep(),
+                ActionType.Play => ActionData.CreatePlay(),
+                ActionType.Clinic => ActionData.CreateClinic(),
+                _ => ActionData.Default()
+            };
+        }
 
         // 午前が未選択なら午前に設定、選択済みなら午後に設定
         if (!_isMorningSelected)
@@ -578,7 +680,16 @@ private PlayerRef _localPlayerRef;
             var runner = FindFirstObjectByType<NetworkRunner>();
             if (runner != null)
             {
-                UpdateActionDisplay(runner.LocalPlayer, true, actionType);
+                // TODO 5: 特殊能力の場合は具体的な特殊能力名を表示
+                if (actionType == ActionType.SpecialAbility)
+                {
+                    string abilityDisplayName = GetMySpecialAbilityDisplayName();
+                    UpdateActionDisplay(runner.LocalPlayer, true, actionType, abilityDisplayName);
+                }
+                else
+                {
+                    UpdateActionDisplay(runner.LocalPlayer, true, actionType);
+                }
                 HighlightCurrentSelection(false); // 午前選択中を表示
             }
         }
@@ -591,7 +702,16 @@ private PlayerRef _localPlayerRef;
             var runner = FindFirstObjectByType<NetworkRunner>();
             if (runner != null)
             {
-                UpdateActionDisplay(runner.LocalPlayer, false, actionType);
+                // TODO 5: 特殊能力の場合は具体的な特殊能力名を表示
+                if (actionType == ActionType.SpecialAbility)
+                {
+                    string abilityDisplayName = GetMySpecialAbilityDisplayName();
+                    UpdateActionDisplay(runner.LocalPlayer, false, actionType, abilityDisplayName);
+                }
+                else
+                {
+                    UpdateActionDisplay(runner.LocalPlayer, false, actionType);
+                }
                 HighlightCurrentSelection(true); // 午後選択中を表示
             }
         }
@@ -605,7 +725,17 @@ private PlayerRef _localPlayerRef;
     public void UpdateActionDisplay(PlayerRef player, bool isMorning, ActionType action)
     {
         Debug.Log($"[UIController] UpdateActionDisplay: player={player}, isMorning={isMorning}, action={action}");
-        string actionText = GetActionText(action);
+
+        // 特殊能力の場合は、具体的な特殊能力名を取得
+        string actionText;
+        if (action == ActionType.SpecialAbility)
+        {
+            actionText = GetSpecialAbilityDisplayNameForPlayer(player);
+        }
+        else
+        {
+            actionText = GetActionText(action);
+        }
 
         // 自分のプレイヤーか判定
         bool isMyPlayer = IsMyPlayer(player);
@@ -674,10 +804,24 @@ private PlayerRef _localPlayerRef;
     /// <summary>
     /// 昨日の午後の行動表示を更新
     /// </summary>
+    /// <summary>
+    /// 昨日の午後の行動表示を更新
+    /// </summary>
     public void UpdateYesterdayAfternoonDisplay(PlayerRef player, ActionType action)
     {
         Debug.Log($"[UIController] UpdateYesterdayAfternoonDisplay: player={player}, action={action}");
-        string actionText = GetActionText(action);
+        
+        // 特殊能力の場合は具体的な能力名を取得
+        string actionText;
+        if (action == ActionType.SpecialAbility)
+        {
+            actionText = GetSpecialAbilityDisplayNameForPlayer(player);
+        }
+        else
+        {
+            actionText = GetActionText(action);
+        }
+        
         bool isMyPlayer = IsMyPlayer(player);
         
         if (isMyPlayer)
@@ -817,6 +961,14 @@ private PlayerRef _localPlayerRef;
             clinicButtonOutline.effectDistance = outlineDistance;
             clinicButtonOutline.enabled = true;
         }
+
+        // 特殊能力ボタンのアウトラインも表示（進化後かつボタンが表示されている場合のみ）
+        if (specialAbilityButtonOutline != null && specialAbilityButton != null && specialAbilityButton.gameObject.activeSelf)
+        {
+            specialAbilityButtonOutline.effectColor = outlineColor;
+            specialAbilityButtonOutline.effectDistance = outlineDistance;
+            specialAbilityButtonOutline.enabled = true;
+        }
     }
 
     /// <summary>
@@ -834,6 +986,20 @@ private PlayerRef _localPlayerRef;
         if (sleepButton != null) sleepButton.interactable = interactable;
         if (playButton != null) playButton.interactable = interactable;
         if (clinicButton != null) clinicButton.interactable = interactable;
+
+        // 特殊能力ボタンの制御（進化後かつボタンが表示されている場合のみ）
+        if (specialAbilityButton != null && specialAbilityButton.gameObject.activeSelf)
+        {
+            if (interactable)
+            {
+                // 有効化する場合は、じゅくすい・どかぐいの条件チェック
+                UpdateSpecialAbilityButtonState();
+            }
+            else
+            {
+                specialAbilityButton.interactable = false;
+            }
+        }
 
         // 確定・クリアボタンも同時に制御
         if (fixButton != null) fixButton.interactable = interactable;
@@ -854,6 +1020,9 @@ private PlayerRef _localPlayerRef;
         if (playButton != null) playButton.interactable = false;
         if (clinicButton != null) clinicButton.interactable = false;
 
+        // 特殊能力ボタンを無効化（進化後の場合）
+        if (specialAbilityButton != null) specialAbilityButton.interactable = false;
+
         // 確定・クリアボタンを無効化
         if (fixButton != null) fixButton.interactable = false;
         if (clearButton != null) clearButton.interactable = false;
@@ -867,6 +1036,7 @@ private PlayerRef _localPlayerRef;
         if (sleepButtonOutline != null) sleepButtonOutline.enabled = false;
         if (playButtonOutline != null) playButtonOutline.enabled = false;
         if (clinicButtonOutline != null) clinicButtonOutline.enabled = false;
+        if (specialAbilityButtonOutline != null) specialAbilityButtonOutline.enabled = false;
     }
 
     /// <summary>
@@ -884,6 +1054,110 @@ private PlayerRef _localPlayerRef;
         HighlightCurrentSelection(false);
 
         Debug.Log("[UIController] 行動選択状態のリセット完了");
+    }
+
+    /// <summary>
+    /// TODO 4: 特殊能力ボタンの有効/無効を更新（じゅくすい・どかぐいの選択条件チェック）
+    /// 選択フェーズ開始時に呼ぶ
+    /// </summary>
+    public void UpdateSpecialAbilityButtonState()
+    {
+        Debug.Log("[UIController] UpdateSpecialAbilityButtonState 開始");
+        
+        // 特殊能力ボタンが存在しない場合は何もしない
+        if (specialAbilityButton == null)
+        {
+            Debug.LogWarning("[UIController] specialAbilityButton is null");
+            return;
+        }
+        
+        if (!specialAbilityButton.gameObject.activeSelf)
+        {
+            Debug.LogWarning($"[UIController] specialAbilityButton.gameObject.activeSelf = {specialAbilityButton.gameObject.activeSelf}");
+            return;
+        }
+
+        // NetworkRunnerから自分のPlayerRefを取得
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null)
+        {
+            Debug.LogWarning("[UIController] NetworkRunnerが見つかりません");
+            return;
+        }
+
+        PlayerRef localPlayer = runner.LocalPlayer;
+        Debug.Log($"[UIController] localPlayer: {localPlayer}");
+
+        // GameManagerから自分のUyopyonStateを取得
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("[UIController] GameManager.Instance が null です");
+            return;
+        }
+
+        UyopyonState myState = GameManager.Instance.GetUyopyonState(localPlayer);
+        if (myState == null)
+        {
+            Debug.LogWarning("[UIController] 自分のUyopyonStateが見つかりません");
+            return;
+        }
+
+        // 特殊能力名を取得
+        string abilityName = $"{myState.SpecialAbilityName}";
+        Debug.Log($"[UIController] UpdateSpecialAbilityButtonState: abilityName={abilityName}");
+
+        if (string.IsNullOrEmpty(abilityName))
+        {
+            // 特殊能力が設定されていない場合は有効にする
+            specialAbilityButton.interactable = true;
+            Debug.Log("[UIController] 特殊能力名が空のため、ボタンを有効化");
+            return;
+        }
+
+        // SpecialAbilityTypeに変換
+        if (!System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+        {
+            // 変換失敗時は有効にする
+            specialAbilityButton.interactable = true;
+            Debug.LogWarning($"[UIController] 特殊能力名のパースに失敗: {abilityName}、ボタンを有効化");
+            return;
+        }
+
+        Debug.Log($"[UIController] 特殊能力タイプ: {abilityType}");
+
+        // じゅくすい・どかぐい以外の場合は常に有効
+        if (abilityType != SpecialAbilityType.Jukusui && abilityType != SpecialAbilityType.Dokagui)
+        {
+            specialAbilityButton.interactable = true;
+            Debug.Log($"[UIController] {abilityType} は条件なしで有効化");
+            return;
+        }
+
+        // 両プレイヤーの重さ合計を計算
+        int totalWeight = 0;
+        foreach (var kvp in _uyopyons)
+        {
+            totalWeight += kvp.Value.Weight;
+        }
+
+        // じゅくすい: 重さ合計が奇数のときのみ有効
+        // どかぐい: 重さ合計が偶数のときのみ有効
+        bool isOdd = (totalWeight % 2) == 1;
+        bool shouldEnable = false;
+
+        if (abilityType == SpecialAbilityType.Jukusui)
+        {
+            shouldEnable = isOdd;
+            Debug.Log($"[UIController] じゅくすい: 重さ合計={totalWeight}, 奇数={isOdd}, 有効={shouldEnable}");
+        }
+        else if (abilityType == SpecialAbilityType.Dokagui)
+        {
+            shouldEnable = !isOdd;
+            Debug.Log($"[UIController] どかぐい: 重さ合計={totalWeight}, 偶数={!isOdd}, 有効={shouldEnable}");
+        }
+
+        specialAbilityButton.interactable = shouldEnable;
+        Debug.Log($"[UIController] specialAbilityButton.interactable を {shouldEnable} に設定");
     }
 
     /// <summary>
@@ -983,4 +1257,302 @@ private PlayerRef _localPlayerRef;
             default: return null;
         }
     }
+
+    // ===== 7.1: 特殊能力選択UI =====
+    
+    /// <summary>
+    /// 特殊能力選択UIを表示する
+    /// </summary>
+    /// <param name="player">進化するプレイヤー</param>
+    /// <param name="choices">選択肢となる特殊能力</param>
+    public void ShowSpecialAbilityChoice(PlayerRef player, SpecialAbilityType[] choices, SpecialAbilityType[] disabledAbilities = null)
+    {
+        // ローカルプレイヤーでない場合は表示しない
+        if (!IsMyPlayer(player))
+        {
+            Debug.Log($"[UIController] ShowSpecialAbilityChoice: プレイヤー {player.PlayerId} は自分ではないためUIを表示しません");
+            return;
+        }
+
+        Debug.Log($"[UIController] ShowSpecialAbilityChoice: {choices.Length}個の選択肢を表示、無効化={disabledAbilities?.Length ?? 0}個");
+
+        // パネルを表示
+        if (specialAbilityChoicePanel != null)
+        {
+            specialAbilityChoicePanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("[UIController] specialAbilityChoicePanel が null です");
+            return;
+        }
+
+        // 各ボタンに選択肢を設定
+        for (int i = 0; i < specialAbilityButtons.Length; i++)
+        {
+            if (i < choices.Length)
+            {
+                // ボタンを表示
+                if (specialAbilityButtons[i] != null)
+                {
+                    specialAbilityButtons[i].gameObject.SetActive(true);
+                    
+                    // テキストを設定（無効化されていても表示）
+                    if (specialAbilityButtonTexts[i] != null)
+                    {
+                        specialAbilityButtonTexts[i].text = GetSpecialAbilityDisplayName(choices[i]);
+                    }
+
+                    // 無効化チェック
+                    bool isDisabled = disabledAbilities != null && System.Array.Exists(disabledAbilities, ability => ability == choices[i]);
+                    
+                    if (isDisabled)
+                    {
+                        // ボタンを無効化（押下不可）
+                        specialAbilityButtons[i].interactable = false;
+                        
+                        // テキストの色を変更して無効化を示す（グレー）
+                        //if (specialAbilityButtonTexts[i] != null)
+                        //{
+                        //    specialAbilityButtonTexts[i].color = new UnityEngine.Color(0.5f, 0.5f, 0.5f, 0.5f);
+                        //}
+                        
+                        Debug.Log($"[UIController] 選択肢 {choices[i]} は既に選ばれているため無効化");
+                    }
+                    else
+                    {
+                        // ボタンを有効化
+                        specialAbilityButtons[i].interactable = true;
+                        
+                        // テキストの色を黒に設定
+                        if (specialAbilityButtonTexts[i] != null)
+                        {
+                            specialAbilityButtonTexts[i].color = UnityEngine.Color.black;
+                        }
+
+                        // ボタンクリックイベントを設定
+                        int index = i; // クロージャのためローカル変数にコピー
+                        SpecialAbilityType ability = choices[i];
+                        specialAbilityButtons[i].onClick.RemoveAllListeners();
+                        specialAbilityButtons[i].onClick.AddListener(() => OnSpecialAbilityButtonClicked(ability));
+                        
+                        Debug.Log($"[UIController] 選択肢 {choices[i]} は有効（黒色テキスト）");
+                    }
+                }
+            }
+            else
+            {
+                // 選択肢が3つ未満の場合、余分なボタンを非表示
+                if (specialAbilityButtons[i] != null)
+                {
+                    specialAbilityButtons[i].gameObject.SetActive(false);
+                }
+            }
+        }
+
+        // 選択完了フラグをリセット
+        _isAbilitySelectionComplete = false;
+        _selectedAbility = null;
+    }
+
+    /// <summary>
+    /// 特殊能力選択ボタンがクリックされた時の処理
+    /// </summary>
+    private void OnSpecialAbilityButtonClicked(SpecialAbilityType ability)
+    {
+        Debug.Log($"[UIController] 特殊能力 {ability} が選択されました");
+
+        _selectedAbility = ability;
+        _isAbilitySelectionComplete = true;
+
+        // パネルを非表示
+        if (specialAbilityChoicePanel != null)
+        {
+            specialAbilityChoicePanel.SetActive(false);
+        }
+
+        // 7.2: GameFlowManagerに選択完了を通知
+        if (GameFlowManager.Instance != null)
+        {
+            GameFlowManager.Instance.NotifyAbilitySelected(ability);
+        }
+        else
+        {
+            Debug.LogError("[UIController] GameFlowManager.Instance が null です");
+        }
+    }
+
+    /// <summary>
+    /// 特殊能力選択が完了したかどうかを確認
+    /// </summary>
+    public bool IsAbilitySelectionComplete()
+    {
+        return _isAbilitySelectionComplete;
+    }
+
+    /// <summary>
+    /// 選択された特殊能力を取得
+    /// </summary>
+    public SpecialAbilityType? GetSelectedAbility()
+    {
+        return _selectedAbility;
+    }
+
+    /// <summary>
+    /// 特殊能力選択状態をリセット（7.2: 次のプレイヤーの選択のため）
+    /// </summary>
+    public void ResetAbilitySelection()
+    {
+        _isAbilitySelectionComplete = false;
+        _selectedAbility = null;
+        Debug.Log("[UIController] 特殊能力選択状態をリセットしました");
+    }
+
+    /// <summary>
+    /// 7.2: 待機中パネルを表示
+    /// </summary>
+    public void ShowWaitingPanel(string message = "対戦相手が特殊能力を選択中です。")
+    {
+        if (waitingForOpponentPanel != null)
+        {
+            waitingForOpponentPanel.SetActive(true);
+            
+            if (waitingMessageText != null)
+            {
+                waitingMessageText.text = message;
+            }
+            
+            Debug.Log($"[UIController] 待機パネルを表示: {message}");
+        }
+        else
+        {
+            Debug.LogWarning("[UIController] waitingForOpponentPanel が null です");
+        }
+    }
+
+    /// <summary>
+    /// 7.2: 待機中パネルを非表示
+    /// </summary>
+    public void HideWaitingPanel()
+    {
+        if (waitingForOpponentPanel != null)
+        {
+            waitingForOpponentPanel.SetActive(false);
+            Debug.Log("[UIController] 待機パネルを非表示");
+        }
+    }
+
+    /// <summary>
+    /// 特殊能力の表示名を取得
+    /// </summary>
+    private string GetSpecialAbilityDisplayName(SpecialAbilityType ability)
+    {
+        switch (ability)
+        {
+            case SpecialAbilityType.Gaishoku:
+                return "がいしょく";
+            case SpecialAbilityType.Kintre:
+                return "きんとれ";
+            case SpecialAbilityType.Gamushara:
+                return "がむしゃら";
+            case SpecialAbilityType.Benkyou:
+                return "べんきょう";
+            case SpecialAbilityType.Jukusui:
+                return "じゅくすい";
+            case SpecialAbilityType.Dokagui:
+                return "どかぐい";
+            default:
+                return ability.ToString();
+        }
+    }
+
+    /// <summary>
+    /// TODO 5: 自分の特殊能力の種類を取得
+    /// </summary>
+    private SpecialAbilityType? GetMySpecialAbilityType()
+    {
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null || GameManager.Instance == null)
+        {
+            return null;
+        }
+
+        PlayerRef localPlayer = runner.LocalPlayer;
+        UyopyonState myState = GameManager.Instance.GetUyopyonState(localPlayer);
+
+        if (myState == null)
+        {
+            return null;
+        }
+
+        string abilityName = $"{myState.SpecialAbilityName}";
+
+        if (string.IsNullOrEmpty(abilityName))
+        {
+            return null;
+        }
+
+        if (System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+        {
+            return abilityType;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// TODO 5: 自分の特殊能力の表示名を取得
+    /// </summary>
+    private string GetMySpecialAbilityDisplayName()
+    {
+        SpecialAbilityType? abilityType = GetMySpecialAbilityType();
+
+        if (abilityType.HasValue)
+        {
+            return GetSpecialAbilityDisplayName(abilityType.Value);
+        }
+
+        return "特殊能力";
+    }
+
+    /// <summary>
+    /// 指定されたプレイヤーの特殊能力の表示名を取得
+    /// </summary>
+    private string GetSpecialAbilityDisplayNameForPlayer(PlayerRef player)
+    {
+        Debug.Log($"[UIController] GetSpecialAbilityDisplayNameForPlayer: player={player}");
+        
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("[UIController] GameManager.Instance is null");
+            return "特殊能力";
+        }
+
+        UyopyonState state = GameManager.Instance.GetUyopyonState(player);
+        if (state == null)
+        {
+            Debug.LogWarning($"[UIController] UyopyonState is null for player {player}");
+            return "特殊能力";
+        }
+
+        string abilityName = $"{state.SpecialAbilityName}";
+        Debug.Log($"[UIController] Player {player} の SpecialAbilityName: '{abilityName}'");
+
+        if (string.IsNullOrEmpty(abilityName))
+        {
+            Debug.LogWarning($"[UIController] SpecialAbilityName is empty for player {player}");
+            return "特殊能力";
+        }
+
+        if (System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+        {
+            string displayName = GetSpecialAbilityDisplayName(abilityType);
+            Debug.Log($"[UIController] Player {player} の特殊能力表示名: '{displayName}'");
+            return displayName;
+        }
+
+        Debug.LogWarning($"[UIController] Failed to parse SpecialAbilityType: '{abilityName}'");
+        return "特殊能力";
+    }
+
 }

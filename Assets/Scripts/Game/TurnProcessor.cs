@@ -16,6 +16,9 @@ public class TurnProcessor : NetworkBehaviour
     // GameManagerへの参照
     private GameManager gameManager;
 
+    // 特殊能力の実行ロジック
+    private SpecialAbilityExecutor specialAbility;
+
     private void Start()
     {
         // GameParametersの取得
@@ -36,6 +39,9 @@ public class TurnProcessor : NetworkBehaviour
         {
             Debug.LogError("[TurnProcessor] GameManager が見つかりません");
         }
+
+        // SpecialAbilityExecutorのインスタンスを作成
+        specialAbility = new SpecialAbilityExecutor(gameParams, this);
     }
 
     /// <summary>
@@ -207,7 +213,8 @@ public class TurnProcessor : NetworkBehaviour
                 break;
 
             case ActionType.SpecialAbility:
-                // 後で実装
+                // 特殊能力の実行
+                ExecuteSpecialAbility(player, state, playerName, isMorning);
                 break;
 
             default:
@@ -341,7 +348,7 @@ public class TurnProcessor : NetworkBehaviour
     /// <summary>
     /// 数値を色付きフォーマットで返す（正の値は青、負の値は赤）
     /// </summary>
-    private string FormatNumber(int value)
+    public string FormatNumber(int value)
     {
         if (value > 0)
         {
@@ -403,6 +410,14 @@ public class TurnProcessor : NetworkBehaviour
     {
         Debug.Log($"[TurnProcessor RPC] ログ追加: {message}");
         UIController.Instance?.AddLog(message);
+    }
+
+    /// <summary>
+    /// ログ追加（SpecialAbilityから呼び出すためのpublicラッパー）
+    /// </summary>
+    public void AddLog(string message)
+    {
+        RPC_AddLog(message);
     }
 
     /// <summary>
@@ -544,13 +559,76 @@ public class TurnProcessor : NetworkBehaviour
 
         Debug.Log($"[TurnProcessor] {log}");
     }
+    // ========== 特殊能力実行メソッド (7.3-7.7) ==========
+
+    /// <summary>
+    /// 特殊能力を実行する
+    /// </summary>
+    private void ExecuteSpecialAbility(PlayerRef player, UyopyonState state, string playerName, bool isMorning)
+    {
+        // 特殊能力名からSpecialAbilityTypeを取得
+        // NetworkString<_16>を文字列に変換（文字列補間を使用）
+        string abilityName = $"{state.SpecialAbilityName}";
+
+        if (string.IsNullOrEmpty(abilityName))
+        {
+            Debug.LogWarning($"[TurnProcessor] {playerName}の特殊能力が設定されていません");
+            return;
+        }
+
+        if (!System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+        {
+            Debug.LogError($"[TurnProcessor] 不明な特殊能力: {abilityName}");
+            return;
+        }
+
+        Debug.Log($"[TurnProcessor] {playerName}が特殊能力 {abilityType} を実行");
+
+        // StudyComboリセット（べんきょう以外の行動を実行した場合）
+        if (abilityType != SpecialAbilityType.Benkyou)
+        {
+            state.StudyCombo = 0;
+        }
+
+        // 特殊能力の種類に応じて処理を分岐（SpecialAbilityクラスに委譲）
+        switch (abilityType)
+        {
+            case SpecialAbilityType.Gaishoku:
+                specialAbility.ExecuteGaishoku(player, state, playerName);
+                break;
+
+            case SpecialAbilityType.Gamushara:
+                specialAbility.ExecuteGamushara(player, state, playerName);
+                break;
+
+            case SpecialAbilityType.Benkyou:
+                specialAbility.ExecuteBenkyou(player, state, playerName);
+                break;
+
+            case SpecialAbilityType.Jukusui:
+                specialAbility.ExecuteJukusui(player, state, playerName);
+                break;
+
+            case SpecialAbilityType.Dokagui:
+                specialAbility.ExecuteDokagui(player, state, playerName);
+                break;
+
+            case SpecialAbilityType.Kintre:
+                specialAbility.ExecuteKintre(player, state, playerName);
+                break;
+
+            default:
+                Debug.LogWarning($"[TurnProcessor] 未実装の特殊能力: {abilityType}");
+                break;
+        }
+    }
 
     /// <summary>
     /// 病気発症判定（たべる実行時に呼び出される）
     /// </summary>
     /// <param name="player">プレイヤー</param>
     /// <param name="weight">現在の重さ</param>
-    private void CheckSickness(PlayerRef player, int weight)
+    public void CheckSickness(PlayerRef player, int weight)
     {
         // 発症確率を計算（重さ ÷ 10 %）
         float sicknessChance = weight / 10.0f;
