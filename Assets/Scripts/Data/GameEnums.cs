@@ -55,6 +55,6 @@ public enum StatusAilment
 {
     SleepApnea,  // 睡眠時無呼吸症候群（ねむる時の回復-20）
     Diabetes,    // 糖尿病（毎朝、重さ-20、元気-20）
-    BackPain,    // 腰痛（30%で行動がねむるに変更）
+    BackPain,    // 腰痛（30%で行動がキャンセルされ何もできない）
     Heatstroke   // 熱中症（強制的につういん）
 }

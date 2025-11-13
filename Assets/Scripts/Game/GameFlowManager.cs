@@ -118,6 +118,10 @@ public class GameFlowManager : NetworkBehaviour
         if (!Object.HasStateAuthority)
             return;
 
+        // ゲーム終了済みの場合は処理を行わない
+        if (IsGameEnded)
+            return;
+
         // 5秒ごとに現在のステータスをログ出力（デバッグ用）
         // Fusion 2.0では、デフォルトのTickRateは60
         if (Runner.Tick % (60 * 5) == 0)
@@ -220,6 +224,13 @@ public class GameFlowManager : NetworkBehaviour
             Debug.Log($"[GameFlowManager] ========== StartPreparationPhase() 開始 ==========");
             Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズを開始します");
 
+            // ゲーム終了チェック
+            if (IsGameEnded)
+            {
+                Debug.Log("[GameFlowManager] ゲーム終了済みのため、準備フェーズをスキップします");
+                return;
+            }
+
             if (!Object || !Object.IsValid)
             {
                 Debug.LogError($"[GameFlowManager] 準備フェーズ開始前: Object無効");
@@ -280,6 +291,13 @@ public class GameFlowManager : NetworkBehaviour
         {
             Debug.Log($"[GameFlowManager] ========== StartSelectionPhase() 開始 ==========");
             Debug.Log($"[GameFlowManager] 選択フェーズを開始します");
+
+            // ゲーム終了チェック
+            if (IsGameEnded)
+            {
+                Debug.Log("[GameFlowManager] ゲーム終了済みのため、選択フェーズをスキップします");
+                return;
+            }
 
             if (!Object || !Object.IsValid)
             {
@@ -389,6 +407,13 @@ public class GameFlowManager : NetworkBehaviour
             // 勝利判定（8.1で実装予定）
             // if (CheckVictory(out PlayerRef winner)) { ... }
 
+            // ゲーム終了チェック
+            if (IsGameEnded)
+            {
+                Debug.Log("[GameFlowManager] ゲーム終了済みのため、処理を中断します");
+                return;
+            }
+
             // === 午後の行動実行 ===
             RPC_AddLog("--- 午後 ---");
             await UniTask.Delay(500);
@@ -400,6 +425,13 @@ public class GameFlowManager : NetworkBehaviour
 
             // 勝利判定（8.1で実装予定）
             // if (CheckVictory(out PlayerRef winner)) { ... }
+
+            // ゲーム終了チェック
+            if (IsGameEnded)
+            {
+                Debug.Log("[GameFlowManager] ゲーム終了済みのため、処理を中断します");
+                return;
+            }
 
             if (!Object || !Object.IsValid)
             {
@@ -618,14 +650,14 @@ public class GameFlowManager : NetworkBehaviour
                 // 午前の行動を表示
                 if (actionData.IsActionFixed)
                 {
-                    UIController.Instance.UpdateActionDisplay(playerRef, true, actionData.MorningAction.Type);
+                    UIController.Instance.UpdateActionDisplay(playerRef, true, actionData.MorningAction);
                     Debug.Log($"[GameFlowManager] Player {playerRef} の午前の行動を公開: {actionData.MorningAction.Type}");
                 }
 
                 // 午後の行動を表示
                 if (actionData.IsActionFixed)
                 {
-                    UIController.Instance.UpdateActionDisplay(playerRef, false, actionData.AfternoonAction.Type);
+                    UIController.Instance.UpdateActionDisplay(playerRef, false, actionData.AfternoonAction);
                     Debug.Log($"[GameFlowManager] Player {playerRef} の午後の行動を公開: {actionData.AfternoonAction.Type}");
                 }
             }
@@ -1180,6 +1212,98 @@ public class GameFlowManager : NetworkBehaviour
         else
         {
             return "±0";
+        }
+    }
+
+    /// <summary>
+    /// 8.1 & 8.2 ゲーム終了処理
+    /// 勝者を記録し、アニメーションを再生し、ゲーム終了フラグを立てる
+    /// </summary>
+    public async UniTask EndGame(PlayerRef winner, bool isMorning)
+    {
+        if (!Object.HasStateAuthority)
+        {
+            Debug.LogWarning("[GameFlowManager] EndGame: StateAuthorityがありません");
+            return;
+        }
+
+        Debug.Log($"[GameFlowManager] EndGame: ゲームを終了します。勝者={winner}");
+
+        // ゲーム終了フラグを設定
+        IsGameEnded = true;
+        Winner = winner;
+        CurrentPhase = GamePhase.GameEnd;
+
+        // 勝者・敗者の名前を取得
+        string winnerName = GetPlayerName(winner);
+
+        // 敗者を特定
+        var allPlayers = GameManager.Instance.uyopyonStateDict.Keys.ToList();
+        PlayerRef loser = allPlayers.FirstOrDefault(p => p != winner);
+        string loserName = GetPlayerName(loser);
+
+        // ログに記録
+        RPC_AddLog($"=== ゲーム終了 ===");
+        RPC_AddLog($"勝者: {winnerName}");
+        RPC_AddLog($"敗者: {loserName}");
+
+        Debug.Log($"[GameFlowManager] ゲーム終了。勝者: {winnerName}, 敗者: {loserName}");
+
+        // 8.2: 勝利・敗北アニメーションを再生
+        RPC_PlayVictoryAnimation(winner);
+        RPC_PlayDefeatAnimation(loser);
+
+        // TODO: BGM変更（AudioManager実装後、10.4で実装予定）
+        // AudioManager.Instance?.PlayBGM("GameEnd");
+
+        // 8.2: 4秒待機
+        await UniTask.Delay(4000);
+        Debug.Log("[GameFlowManager] アニメーション再生完了、4秒待機後");
+
+        // 8.3: リザルト画面表示
+        RPC_ShowResultPanel(winner, CurrentDay, isMorning);
+    }
+
+    /// <summary>
+    /// 8.2: 勝利アニメーション再生をRPC経由で全クライアントに通知
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayVictoryAnimation(PlayerRef player)
+    {
+        Debug.Log($"[GameFlowManager] RPC_PlayVictoryAnimation: Player {player}");
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.PlayVictoryAnimation(player);
+        }
+    }
+
+    /// <summary>
+    /// 8.2: 敗北アニメーション再生をRPC経由で全クライアントに通知
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayDefeatAnimation(PlayerRef player)
+    {
+        Debug.Log($"[GameFlowManager] RPC_PlayDefeatAnimation: Player {player}");
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.PlayDefeatAnimation(player);
+        }
+    }
+
+    /// <summary>
+    /// 8.3: リザルト画面表示をRPC経由で全クライアントに通知
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowResultPanel(PlayerRef winner, int day, bool isMorning)
+    {
+        Debug.Log($"[GameFlowManager] RPC_ShowResultPanel: winner={winner}, day={day}, isMorning={isMorning}");
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.ShowResultPanel(winner, day, isMorning);
+        }
+        else
+        {
+            Debug.LogError("[GameFlowManager] UIController.Instance が null です");
         }
     }
 }

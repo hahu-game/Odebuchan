@@ -76,6 +76,9 @@ public class TurnProcessor : NetworkBehaviour
         await ExecuteAction(p1, p1Action, true);
         await ExecuteAction(p2, p2Action, true);
 
+        // 4. 勝利判定（8.1 & 8.2 & 8.3）
+        await CheckVictory(true); // 午前
+
         Debug.Log("[TurnProcessor] === 午前の処理が完了 ===");
     }
 
@@ -115,6 +118,9 @@ public class TurnProcessor : NetworkBehaviour
         // 注: これはホスト側で実行されるが、PlayerActionDataのプロパティ変更は自動的に同期される
         playerActions[p1].LastAfternoonAction = p1Action;
         playerActions[p2].LastAfternoonAction = p2Action;
+
+        // 5. 勝利判定（8.1 & 8.2 & 8.3）
+        await CheckVictory(false); // 午後
 
         Debug.Log("[TurnProcessor] === 午後の処理が完了 ===");
     }
@@ -179,10 +185,17 @@ public class TurnProcessor : NetworkBehaviour
     /// <param name="isMorning">午前の行動かどうか</param>
     private async Task ExecuteAction(PlayerRef player, ActionData action, bool isMorning)
     {
-        // 腰痛チェック（30%の確率で行動が「ねむる」に変更される）
+        // 腰痛チェック（30%の確率で行動がキャンセルされる）
         CheckBackPain(player, ref action);
 
         Debug.Log($"[TurnProcessor] Player {player} が {action.Type} を実行（{(isMorning ? "午前" : "午後")}）");
+
+        // ActionType.None の場合は何も処理しない（腰痛でキャンセルされた場合など）
+        if (action.Type == ActionType.None)
+        {
+            Debug.Log($"[TurnProcessor] Player {player} は行動がキャンセルされました");
+            return;
+        }
 
         UyopyonState state = GetUyopyonState(player);
         if (state == null)
@@ -192,6 +205,15 @@ public class TurnProcessor : NetworkBehaviour
         }
 
         string playerName = GetPlayerName(player);
+
+        // べんきょう以外の行動を選択した場合、StudyComboをリセット
+        bool isBenkyou = action.Type == ActionType.SpecialAbility &&
+                         action.SpecialAbilityName.ToString() == "Benkyou";
+        if (!isBenkyou && state.StudyCombo > 0)
+        {
+            state.StudyCombo = 0;
+            Debug.Log($"[TurnProcessor] {playerName} のべんきょう連続カウントをリセットしました");
+        }
 
         // 行動の種類に応じて処理を分岐
         switch (action.Type)
@@ -261,50 +283,44 @@ public class TurnProcessor : NetworkBehaviour
             return;
         }
 
-        // 現在の日数を取得
-        int currentDay = GameFlowManager.Instance.CurrentDay;
-
-        // 1. 元気の増減
-        int winEnergyChange = gameParams.JankenWinEnergyBase + (currentDay - 1) * gameParams.JankenEnergyIncrementPerDay;
-        int loseEnergyChange = gameParams.JankenLoseEnergyBase - (currentDay - 1) * gameParams.JankenEnergyIncrementPerDay;
-
-        winnerState.Energy += winEnergyChange;
-        loserState.Energy += loseEnergyChange;
-
         string winnerName = GetPlayerName(winner);
         string loserName = GetPlayerName(loser);
-
-        RPC_AddLog($"{winnerName}の勝ち！元気{FormatNumber(winEnergyChange)}");
-        RPC_AddLog($"{loserName}の負け... 元気{FormatNumber(loseEnergyChange)}");
-
-        // 2. バフ・デバフ効果
         string effectLog = "";
 
-        if (winGenre == Genre.Paper && loseGenre == Genre.Rock)
-        {
-            // パー > グー
-            winnerState.Energy += gameParams.JankenBuffDebuffAmount;
-            loserState.Weight -= gameParams.JankenBuffDebuffAmount;
-            effectLog = $"{winnerName}のうーぴょんはぐっすり眠った！元気+{gameParams.JankenBuffDebuffAmount}。" +
-                       $"{loserName}のうーぴょんはぼっち飯で少し寂しい！重さ-{gameParams.JankenBuffDebuffAmount}";
-        }
-        else if (winGenre == Genre.Rock && loseGenre == Genre.Scissors)
+        if (winGenre == Genre.Rock && loseGenre == Genre.Scissors)
         {
             // グー > チョキ
-            winnerState.Weight += gameParams.JankenBuffDebuffAmount;
-            loserState.PlayBuffWeight -= gameParams.JankenBuffDebuffAmount;
-            loserState.PlayBuffEnergy -= gameParams.JankenBuffDebuffAmount;
-            effectLog = $"{winnerName}のうーぴょんは独り占めしてたくさん食べた！重さ+{gameParams.JankenBuffDebuffAmount}。" +
-                       $"{loserName}のうーぴょんの好きな食べ物を取られて悲しい！たべる時の重さ-{gameParams.JankenBuffDebuffAmount}、ねむる時の元気-{gameParams.JankenBuffDebuffAmount}";
+            // 勝者: 重さ+10
+            winnerState.Weight += 10;
+            // 敗者: たべる時の重さバフ-5、ねむる時の元気バフ-5
+            loserState.PlayBuffWeight -= 5;
+            loserState.PlayBuffEnergy -= 5;
+
+            effectLog = $"{winnerName}のうーぴょんは独り占めしてたくさん食べた！重さ{FormatNumber(10)}。" +
+                       $"{loserName}のうーぴょんの好きな食べ物を取られて悲しい！たべる時の重さ{FormatNumber(-5)}、ねむる時の元気{FormatNumber(-5)}";
         }
         else if (winGenre == Genre.Scissors && loseGenre == Genre.Paper)
         {
             // チョキ > パー
-            winnerState.PlayBuffWeight += gameParams.JankenBuffDebuffAmount;
-            winnerState.PlayBuffEnergy += gameParams.JankenBuffDebuffAmount;
-            loserState.Energy -= gameParams.JankenBuffDebuffAmount;
-            effectLog = $"{winnerName}のうーぴょんはのびのびと遊んだ！たべる時の重さ+{gameParams.JankenBuffDebuffAmount}、ねむる時の元気+{gameParams.JankenBuffDebuffAmount}。" +
-                       $"{loserName}のうーぴょんは騒音で眠りが浅かった！元気-{gameParams.JankenBuffDebuffAmount}";
+            // 勝者: たべる時の重さバフ+5、ねむる時の元気バフ+5
+            winnerState.PlayBuffWeight += 5;
+            winnerState.PlayBuffEnergy += 5;
+            // 敗者: 元気-10
+            loserState.Energy -= 10;
+
+            effectLog = $"{winnerName}のうーぴょんはのびのびと遊んだ！たべる時の重さ{FormatNumber(5)}、ねむる時の元気{FormatNumber(5)}。" +
+                       $"{loserName}のうーぴょんは騒音で眠りが浅かった！元気{FormatNumber(-10)}";
+        }
+        else if (winGenre == Genre.Paper && loseGenre == Genre.Rock)
+        {
+            // パー > グー
+            // 勝者: 元気+10
+            winnerState.Energy += 10;
+            // 敗者: 重さ-10
+            loserState.Weight -= 10;
+
+            effectLog = $"{winnerName}のうーぴょんはぐっすり眠った！元気{FormatNumber(10)}。" +
+                       $"{loserName}のうーぴょんはぼっち飯で少し寂しい！重さ{FormatNumber(-10)}";
         }
 
         RPC_AddLog(effectLog);
@@ -809,7 +825,7 @@ public class TurnProcessor : NetworkBehaviour
 
     /// <summary>
     /// 腰痛チェック（行動実行前に呼び出される）
-    /// 30%の確率で行動が「ねむる」に変更される
+    /// 30%の確率で行動がキャンセルされ、何もできなくなる
     /// </summary>
     /// <param name="player">プレイヤー</param>
     /// <param name="action">現在の行動データ（参照渡しで変更される）</param>
@@ -832,21 +848,84 @@ public class TurnProcessor : NetworkBehaviour
 
             if (roll < gameParams.BackPainCancelProbability * 100)
             {
-                // 行動を「ねむる」に変更
+                // 行動をキャンセル（何もしない）
                 action = new ActionData
                 {
-                    Type = ActionType.Sleep,
-                    Genre = Genre.Paper
+                    Type = ActionType.None,
+                    Genre = Genre.None
                 };
 
                 string playerName = GetPlayerName(player);
-                RPC_AddLog($"{playerName}は腰痛で動けない！行動が「ねむる」に変更された");
+                RPC_AddLog($"{playerName}は腰痛で動けない！行動ができなかった！");
 
-                Debug.Log($"[TurnProcessor] {playerName} の行動が腰痛により「ねむる」に変更されました");
+                Debug.Log($"[TurnProcessor] {playerName} の行動が腰痛によりキャンセルされました");
                 return true;
             }
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// 8.1 & 8.2 & 8.3 勝利判定
+    /// 重さが終了条件以上のプレイヤーがいればゲーム終了
+    /// </summary>
+    public async Task<PlayerRef?> CheckVictory(bool isMorning)
+    {
+        Debug.Log("[TurnProcessor] CheckVictory: 勝利判定を開始");
+
+        // 全プレイヤーのUyopyonStateを取得
+        var playerStates = gameManager.uyopyonStateDict;
+        if (playerStates.Count != 2)
+        {
+            Debug.LogWarning($"[TurnProcessor] プレイヤーが2人ではありません: {playerStates.Count}人");
+            return null;
+        }
+
+        PlayerRef? winner = null;
+        int maxWeight = 0;
+
+        // 各プレイヤーの重さをチェック
+        foreach (var kvp in playerStates)
+        {
+            PlayerRef player = kvp.Key;
+            UyopyonState state = kvp.Value;
+
+            Debug.Log($"[TurnProcessor] Player {player} の重さ: {state.Weight}kg");
+
+            // 終了条件の体重より上のプレイヤーがいれば勝者候補
+            if (state.Weight >= gameParams.VictoryWeightThreshold)
+            {
+                // より重いプレイヤーを勝者とする（同じ重さの場合は先に到達した方）
+                if (state.Weight > maxWeight)
+                {
+                    maxWeight = state.Weight;
+                    winner = player;
+                    Debug.Log($"[TurnProcessor] Player {player} が勝者候補（重さ: {state.Weight}kg）");
+                }
+            }
+        }
+
+        if (winner.HasValue)
+        {
+            string winnerName = GetPlayerName(winner.Value);
+            Debug.Log($"[TurnProcessor] 勝者決定: {winnerName} (重さ: {maxWeight}kg)");
+
+            // GameFlowManagerにゲーム終了を通知（8.2: アニメーション再生を待機、8.3: リザルト画面表示）
+            if (GameFlowManager.Instance != null)
+            {
+                await GameFlowManager.Instance.EndGame(winner.Value, isMorning);
+            }
+            else
+            {
+                Debug.LogError("[TurnProcessor] GameFlowManager.Instance が null です");
+            }
+        }
+        else
+        {
+            Debug.Log("[TurnProcessor] 勝者なし、ゲーム続行");
+        }
+
+        return winner;
     }
 }

@@ -59,7 +59,7 @@ public class GameParameters : ScriptableObject
     public int DiabetesMorningEnergyChange = -20;
     public float BackPainCancelProbability = 0.3f;
     public float HeatstrokeForcedClinicProbability = 1.0f;
-
+    
     [Header("=== ジャンケン効果 ===")]
     public int JankenWinEnergyBase = 10;
     public int JankenLoseEnergyBase = -10;

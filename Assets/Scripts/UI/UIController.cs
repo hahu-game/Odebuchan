@@ -3,6 +3,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// ゲーム内の全てのUI要素を管理し、ネットワーク同期されたデータに基づいて表示を更新する。
@@ -88,6 +89,21 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI waitingMessageText;
     private bool _isAbilitySelectionComplete = false;
 
+    // === 8.3で追加: リザルトパネル ===
+    [Header("Result Panel")]
+    public GameObject resultPanel;
+    public TextMeshProUGUI resultWinnerText;
+    public TextMeshProUGUI resultDayText;
+    public TextMeshProUGUI resultMyNameText;
+    public TextMeshProUGUI resultMyWeightText;
+    public TextMeshProUGUI resultMyEnergyText;
+    public TextMeshProUGUI resultMyAbilityText;
+    public TextMeshProUGUI resultOppNameText;
+    public TextMeshProUGUI resultOppWeightText;
+    public TextMeshProUGUI resultOppEnergyText;
+    public TextMeshProUGUI resultOppAbilityText;
+    public UnityEngine.UI.Button resultReturnToTitleButton;
+
     // === 3.4で追加: ブラックアウトパネルとログエリア ===
     [Header("Blackout Panel")]
     public GameObject blackoutPanel;
@@ -108,6 +124,10 @@ public class UIController : MonoBehaviour
     private bool _isMorningSelected = false;        // 午前が選択済みか
     private PlayerRef _localPlayerRef;
 
+    // === フォントサイズのデフォルト値保存 ===
+    private float _defaultSpecialAbilityButtonTextSize;
+    private float _defaultActionTextSize;
+
 
 
     private void Awake()
@@ -121,6 +141,16 @@ public class UIController : MonoBehaviour
         {
          _localPlayerRef = runner.LocalPlayer;
         }
+
+        // デフォルトのフォントサイズを保存
+        if (specialAbilityButtonText != null)
+        {
+            _defaultSpecialAbilityButtonTextSize = specialAbilityButtonText.fontSize;
+        }
+        if (myTodayMorningActionText != null)
+        {
+            _defaultActionTextSize = myTodayMorningActionText.fontSize;
+        }
     }
 
     private void Start()
@@ -130,6 +160,14 @@ public class UIController : MonoBehaviour
         HighlightCurrentSelection(false);
         // 初期状態では行動ボタンのOutlineを非表示
         HideActionButtonOutlines();
+
+        // 8.3: リザルトパネルの初期化
+        if (resultPanel != null)
+        {
+            resultPanel.SetActive(false);
+            Debug.Log("[UIController] リザルトパネルを非表示に設定");
+        }
+
         Debug.Log("[UIController] Start: 初期化完了");
     }
 
@@ -231,11 +269,15 @@ public class UIController : MonoBehaviour
                 if (System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
                 {
                     specialAbilityButtonText.text = GetSpecialAbilityDisplayName(abilityType);
+                    // 5文字の特殊能力名の場合、フォントサイズを25に変更
+                    SetFontSizeForSpecialAbility(specialAbilityButtonText, specialAbilityButtonText.text, _defaultSpecialAbilityButtonTextSize, 25f);
                     Debug.Log($"[UIController] 特殊能力ボタンのテキストを設定: {specialAbilityButtonText.text}");
                 }
                 else
                 {
                     specialAbilityButtonText.text = abilityName;
+                    // フォントサイズをデフォルトに戻す
+                    SetFontSizeForSpecialAbility(specialAbilityButtonText, specialAbilityButtonText.text, _defaultSpecialAbilityButtonTextSize, 25f);
                     Debug.LogWarning($"[UIController] SpecialAbilityType のパースに失敗: {abilityName}");
                 }
             }
@@ -419,9 +461,6 @@ public class UIController : MonoBehaviour
     // === 3.1で追加: 行動選択ボタンのイベントハンドラー ===
 
     /// <summary>
-    /// 「たべる」ボタンがクリックされた時の処理（スタブ）
-    /// </summary>
-    /// <summary>
     /// 「たべる」ボタンがクリックされた時の処理
     /// </summary>
     public void OnEatButtonClicked()
@@ -431,9 +470,6 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
-    /// 「ねむる」ボタンがクリックされた時の処理（スタブ）
-    /// </summary>
-    /// <summary>
     /// 「ねむる」ボタンがクリックされた時の処理
     /// </summary>
     public void OnSleepButtonClicked()
@@ -442,9 +478,6 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
-    /// 「あそぶ」ボタンがクリックされた時の処理（スタブ）
-    /// </summary>
-    /// <summary>
     /// 「あそぶ」ボタンがクリックされた時の処理
     /// </summary>
     public void OnPlayButtonClicked()
@@ -452,9 +485,6 @@ public class UIController : MonoBehaviour
         OnActionButtonClicked(ActionType.Play);
     }
 
-    /// <summary>
-    /// 「つういん」ボタンがクリックされた時の処理（スタブ）
-    /// </summary>
     /// <summary>
     /// 「つういん」ボタンがクリックされた時の処理
     /// </summary>
@@ -472,30 +502,7 @@ public class UIController : MonoBehaviour
         OnActionButtonClicked(ActionType.SpecialAbility);
     }
 
-    /// <summary>
-    /// 「確定」ボタンがクリックされた時の処理（スタブ）
-    /// </summary>
-    /// <summary>
-    /// 「確定」ボタンがクリックされた時の処理
-    /// 選択した行動をPlayerActionDataに送信する
-    /// </summary>
-    /// <summary>
-    /// 「確定」ボタンがクリックされた時の処理
-    /// 選択した行動をPlayerActionDataに送信する
-    /// </summary>
-    /// <summary>
-    /// 「確定」ボタンがクリックされた時の処理
-    /// 選択した行動をPlayerActionDataに送信する
-    /// </summary>
-    /// <summary>
-    /// 「確定」ボタンがクリックされた時の処理
-    /// 選択した行動をPlayerActionDataに送信する
-    /// </summary>
-    /// <summary>
-    /// 「確定」ボタンがクリックされた時の処理
-    /// 選択した行動をPlayerActionDataに送信する
-    /// </summary>
-    /// <summary>
+
     /// 「確定」ボタンがクリックされた時の処理
     /// 選択した行動をPlayerActionDataに送信する
     /// </summary>
@@ -599,9 +606,15 @@ public class UIController : MonoBehaviour
 
         // パネル表示もクリア
         if (myTodayMorningActionText != null)
+        {
             myTodayMorningActionText.text = "";
+            myTodayMorningActionText.fontSize = _defaultActionTextSize; // デフォルトサイズに戻す
+        }
         if (myTodayAfternoonActionText != null)
+        {
             myTodayAfternoonActionText.text = "";
+            myTodayAfternoonActionText.fontSize = _defaultActionTextSize; // デフォルトサイズに戻す
+        }
 
         // 午前選択中のハイライトに戻す
         HighlightCurrentSelection(false);
@@ -646,10 +659,14 @@ public class UIController : MonoBehaviour
         if (actionType == ActionType.SpecialAbility)
         {
             // TODO 5: 特殊能力の場合は、SpecialAbilityTypeを取得してActionDataを生成
+            Debug.Log("[UIController] 特殊能力ボタンが押されました。GetMySpecialAbilityType()を呼び出します");
             SpecialAbilityType? abilityType = GetMySpecialAbilityType();
+            Debug.Log($"[UIController] GetMySpecialAbilityType() の結果: {(abilityType.HasValue ? abilityType.Value.ToString() : "null")}");
+
             if (abilityType.HasValue)
             {
                 selectedAction = ActionData.CreateSpecialAbility(abilityType.Value);
+                Debug.Log($"[UIController] ActionData作成成功: {abilityType.Value}");
             }
             else
             {
@@ -683,12 +700,22 @@ public class UIController : MonoBehaviour
                 // TODO 5: 特殊能力の場合は具体的な特殊能力名を表示
                 if (actionType == ActionType.SpecialAbility)
                 {
-                    string abilityDisplayName = GetMySpecialAbilityDisplayName();
-                    UpdateActionDisplay(runner.LocalPlayer, true, actionType, abilityDisplayName);
+                    // 自分の特殊能力を取得してActionDataを作成
+                    string abilityName = GetMySpecialAbilityName();
+                    if (!string.IsNullOrEmpty(abilityName) && System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+                    {
+                        UpdateActionDisplay(runner.LocalPlayer, true, ActionData.CreateSpecialAbility(abilityType));
+                    }
+                    else
+                    {
+                        // フォールバック
+                        UpdateActionDisplay(runner.LocalPlayer, true, new ActionData(ActionType.SpecialAbility, Genre.None, abilityName));
+                    }
                 }
                 else
                 {
-                    UpdateActionDisplay(runner.LocalPlayer, true, actionType);
+                    // 通常の行動（たべる、ねむる等）
+                    UpdateActionDisplay(runner.LocalPlayer, true, CreateActionDataFromType(actionType));
                 }
                 HighlightCurrentSelection(false); // 午前選択中を表示
             }
@@ -705,12 +732,22 @@ public class UIController : MonoBehaviour
                 // TODO 5: 特殊能力の場合は具体的な特殊能力名を表示
                 if (actionType == ActionType.SpecialAbility)
                 {
-                    string abilityDisplayName = GetMySpecialAbilityDisplayName();
-                    UpdateActionDisplay(runner.LocalPlayer, false, actionType, abilityDisplayName);
+                    // 自分の特殊能力を取得してActionDataを作成
+                    string abilityName = GetMySpecialAbilityName();
+                    if (!string.IsNullOrEmpty(abilityName) && System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+                    {
+                        UpdateActionDisplay(runner.LocalPlayer, false, ActionData.CreateSpecialAbility(abilityType));
+                    }
+                    else
+                    {
+                        // フォールバック
+                        UpdateActionDisplay(runner.LocalPlayer, false, new ActionData(ActionType.SpecialAbility, Genre.None, abilityName));
+                    }
                 }
                 else
                 {
-                    UpdateActionDisplay(runner.LocalPlayer, false, actionType);
+                    // 通常の行動（たべる、ねむる等）
+                    UpdateActionDisplay(runner.LocalPlayer, false, CreateActionDataFromType(actionType));
                 }
                 HighlightCurrentSelection(true); // 午後選択中を表示
             }
@@ -722,19 +759,32 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// 行動表示を更新
     /// </summary>
-    public void UpdateActionDisplay(PlayerRef player, bool isMorning, ActionType action)
+    public void UpdateActionDisplay(PlayerRef player, bool isMorning, ActionData actionData)
     {
-        Debug.Log($"[UIController] UpdateActionDisplay: player={player}, isMorning={isMorning}, action={action}");
+        Debug.Log($"[UIController] UpdateActionDisplay: player={player}, isMorning={isMorning}, action={actionData.Type}");
 
         // 特殊能力の場合は、具体的な特殊能力名を取得
         string actionText;
-        if (action == ActionType.SpecialAbility)
+        if (actionData.Type == ActionType.SpecialAbility)
         {
-            actionText = GetSpecialAbilityDisplayNameForPlayer(player);
+            // ActionDataに含まれる特殊能力名を使用
+            string abilityName = actionData.SpecialAbilityName.ToString();
+            Debug.Log($"[UIController] 特殊能力名（ActionDataから）: '{abilityName}'");
+
+            if (!string.IsNullOrEmpty(abilityName) && System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+            {
+                actionText = GetSpecialAbilityDisplayName(abilityType);
+                Debug.Log($"[UIController] 特殊能力表示名: '{actionText}'");
+            }
+            else
+            {
+                Debug.LogWarning($"[UIController] 特殊能力名が不正: '{abilityName}'");
+                actionText = "特殊能力";
+            }
         }
         else
         {
-            actionText = GetActionText(action);
+            actionText = GetActionText(actionData.Type);
         }
 
         // 自分のプレイヤーか判定
@@ -745,10 +795,12 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 myTodayMorningActionText.text = actionText;
+                SetFontSizeForSpecialAbility(myTodayMorningActionText, actionText, _defaultActionTextSize, 160f);
             }
             else
             {
                 myTodayAfternoonActionText.text = actionText;
+                SetFontSizeForSpecialAbility(myTodayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
             }
         }
         else
@@ -756,10 +808,12 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 oppTodayMorningActionText.text = actionText;
+                SetFontSizeForSpecialAbility(oppTodayMorningActionText, actionText, _defaultActionTextSize, 160f);
             }
             else
             {
                 oppTodayAfternoonActionText.text = actionText;
+                SetFontSizeForSpecialAbility(oppTodayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
             }
         }
     }
@@ -779,10 +833,12 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 myTodayMorningActionText.text = customText;
+                SetFontSizeForSpecialAbility(myTodayMorningActionText, customText, _defaultActionTextSize, 160f);
             }
             else
             {
                 myTodayAfternoonActionText.text = customText;
+                SetFontSizeForSpecialAbility(myTodayAfternoonActionText, customText, _defaultActionTextSize, 160f);
             }
         }
         else
@@ -790,49 +846,64 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 oppTodayMorningActionText.text = customText;
+                SetFontSizeForSpecialAbility(oppTodayMorningActionText, customText, _defaultActionTextSize, 160f);
             }
             else
             {
                 oppTodayAfternoonActionText.text = customText;
+                SetFontSizeForSpecialAbility(oppTodayAfternoonActionText, customText, _defaultActionTextSize, 160f);
             }
         }
     }
 
     /// <summary>
-    /// 選択中の時間帯を太枠で表示
-    /// </summary>
-    /// <summary>
     /// 昨日の午後の行動表示を更新
     /// </summary>
-    /// <summary>
-    /// 昨日の午後の行動表示を更新
-    /// </summary>
-    public void UpdateYesterdayAfternoonDisplay(PlayerRef player, ActionType action)
+    public void UpdateYesterdayAfternoonDisplay(PlayerRef player, ActionData actionData)
     {
-        Debug.Log($"[UIController] UpdateYesterdayAfternoonDisplay: player={player}, action={action}");
-        
+        Debug.Log($"[UIController] UpdateYesterdayAfternoonDisplay: player={player}, action={actionData.Type}");
+
         // 特殊能力の場合は具体的な能力名を取得
         string actionText;
-        if (action == ActionType.SpecialAbility)
+        if (actionData.Type == ActionType.SpecialAbility)
         {
-            actionText = GetSpecialAbilityDisplayNameForPlayer(player);
+            // ActionDataに含まれる特殊能力名を使用
+            string abilityName = actionData.SpecialAbilityName.ToString();
+            Debug.Log($"[UIController] 特殊能力名（ActionDataから）: '{abilityName}'");
+
+            if (!string.IsNullOrEmpty(abilityName) && System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+            {
+                actionText = GetSpecialAbilityDisplayName(abilityType);
+                Debug.Log($"[UIController] 特殊能力表示名: '{actionText}'");
+            }
+            else
+            {
+                Debug.LogWarning($"[UIController] 特殊能力名が不正: '{abilityName}'");
+                actionText = "特殊能力";
+            }
         }
         else
         {
-            actionText = GetActionText(action);
+            actionText = GetActionText(actionData.Type);
         }
-        
+
         bool isMyPlayer = IsMyPlayer(player);
-        
+
         if (isMyPlayer)
         {
             if (myYesterdayAfternoonActionText != null)
+            {
                 myYesterdayAfternoonActionText.text = actionText;
+                SetFontSizeForSpecialAbility(myYesterdayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
+            }
         }
         else
         {
             if (oppYesterdayAfternoonActionText != null)
+            {
                 oppYesterdayAfternoonActionText.text = actionText;
+                SetFontSizeForSpecialAbility(oppYesterdayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
+            }
         }
     }
 
@@ -1063,19 +1134,31 @@ public class UIController : MonoBehaviour
     public void UpdateSpecialAbilityButtonState()
     {
         Debug.Log("[UIController] UpdateSpecialAbilityButtonState 開始");
-        
+
         // 特殊能力ボタンが存在しない場合は何もしない
         if (specialAbilityButton == null)
         {
             Debug.LogWarning("[UIController] specialAbilityButton is null");
             return;
         }
-        
+
         if (!specialAbilityButton.gameObject.activeSelf)
         {
             Debug.LogWarning($"[UIController] specialAbilityButton.gameObject.activeSelf = {specialAbilityButton.gameObject.activeSelf}");
             return;
         }
+
+        // ゲームフェーズをチェック（選択フェーズ以外ではボタンを無効化）
+        if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentPhase != GamePhase.Selection)
+        {
+            specialAbilityButton.interactable = false;
+            Debug.Log($"[UIController] 選択フェーズ以外のため特殊能力ボタンを無効化。CurrentPhase={GameFlowManager.Instance?.CurrentPhase}");
+            return;
+        }
+
+        // デフォルトで有効化（早期リターンしても有効状態を維持）
+        specialAbilityButton.interactable = true;
+        Debug.Log("[UIController] specialAbilityButton をデフォルトで有効化");
 
         // NetworkRunnerから自分のPlayerRefを取得
         var runner = FindFirstObjectByType<NetworkRunner>();
@@ -1095,15 +1178,30 @@ public class UIController : MonoBehaviour
             return;
         }
 
+        Debug.Log("[UIController] GameManager.Instance 取得成功");
+
         UyopyonState myState = GameManager.Instance.GetUyopyonState(localPlayer);
+        Debug.Log($"[UIController] GetUyopyonState 完了: myState={(myState != null ? "存在" : "null")}");
+
         if (myState == null)
         {
             Debug.LogWarning("[UIController] 自分のUyopyonStateが見つかりません");
             return;
         }
 
-        // 特殊能力名を取得
-        string abilityName = $"{myState.SpecialAbilityName}";
+        // 特殊能力名を取得（try-catchで安全に）
+        string abilityName = "";
+        try
+        {
+            abilityName = myState.SpecialAbilityName.ToString();
+            Debug.Log($"[UIController] SpecialAbilityName.ToString() 成功: '{abilityName}'");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[UIController] SpecialAbilityName.ToString() で例外: {e.Message}");
+            return;
+        }
+
         Debug.Log($"[UIController] UpdateSpecialAbilityButtonState: abilityName={abilityName}");
 
         if (string.IsNullOrEmpty(abilityName))
@@ -1471,32 +1569,49 @@ public class UIController : MonoBehaviour
     /// </summary>
     private SpecialAbilityType? GetMySpecialAbilityType()
     {
+        Debug.Log("[UIController] GetMySpecialAbilityType() 開始");
+
         var runner = FindFirstObjectByType<NetworkRunner>();
-        if (runner == null || GameManager.Instance == null)
+        if (runner == null)
         {
+            Debug.LogWarning("[UIController] NetworkRunner が null です");
+            return null;
+        }
+
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("[UIController] GameManager.Instance が null です");
             return null;
         }
 
         PlayerRef localPlayer = runner.LocalPlayer;
+        Debug.Log($"[UIController] LocalPlayer: {localPlayer}");
+
         UyopyonState myState = GameManager.Instance.GetUyopyonState(localPlayer);
+        Debug.Log($"[UIController] UyopyonState: {(myState != null ? "存在" : "null")}");
 
         if (myState == null)
         {
+            Debug.LogWarning("[UIController] UyopyonState が null です");
             return null;
         }
 
         string abilityName = $"{myState.SpecialAbilityName}";
+        Debug.Log($"[UIController] SpecialAbilityName: '{abilityName}'");
 
         if (string.IsNullOrEmpty(abilityName))
         {
+            Debug.LogWarning("[UIController] SpecialAbilityName が空です");
             return null;
         }
 
         if (System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
         {
+            Debug.Log($"[UIController] パース成功: {abilityType}");
             return abilityType;
         }
 
+        Debug.LogWarning($"[UIController] SpecialAbilityType のパースに失敗: '{abilityName}'");
         return null;
     }
 
@@ -1513,6 +1628,31 @@ public class UIController : MonoBehaviour
         }
 
         return "特殊能力";
+    }
+
+    /// <summary>
+    /// 自分の特殊能力の名前（enum文字列）を取得
+    /// </summary>
+    private string GetMySpecialAbilityName()
+    {
+        SpecialAbilityType? abilityType = GetMySpecialAbilityType();
+        return abilityType.HasValue ? abilityType.Value.ToString() : "";
+    }
+
+    /// <summary>
+    /// ActionTypeからActionDataを生成するヘルパーメソッド
+    /// </summary>
+    private ActionData CreateActionDataFromType(ActionType actionType)
+    {
+        return actionType switch
+        {
+            ActionType.Eat => ActionData.CreateEat(),
+            ActionType.Sleep => ActionData.CreateSleep(),
+            ActionType.Play => ActionData.CreatePlay(),
+            ActionType.Clinic => ActionData.CreateClinic(),
+            ActionType.None => ActionData.Empty(),
+            _ => ActionData.Default()
+        };
     }
 
     /// <summary>
@@ -1553,6 +1693,408 @@ public class UIController : MonoBehaviour
 
         Debug.LogWarning($"[UIController] Failed to parse SpecialAbilityType: '{abilityName}'");
         return "特殊能力";
+    }
+
+    /// <summary>
+    /// 5文字の特殊能力名（長い名前）かどうかをチェック
+    /// </summary>
+    private bool IsLongSpecialAbilityName(string text)
+    {
+        return text == "がいしょく" || text == "がむしゃら" || text == "べんきょう" || text == "じゅくすい";
+    }
+
+    /// <summary>
+    /// 特殊能力名の長さに応じてフォントサイズを設定
+    /// </summary>
+    private void SetFontSizeForSpecialAbility(TextMeshProUGUI textComponent, string text, float normalSize, float longNameSize)
+    {
+        if (textComponent == null) return;
+
+        if (IsLongSpecialAbilityName(text))
+        {
+            textComponent.fontSize = longNameSize;
+        }
+        else
+        {
+            textComponent.fontSize = normalSize;
+        }
+    }
+
+    // === 8.2: ゲーム終了アニメーション ===
+
+    /// <summary>
+    /// 勝利アニメーションを再生（スタブ）
+    /// </summary>
+    public void PlayVictoryAnimation(PlayerRef player)
+    {
+        Debug.Log($"[UIController] PlayVictoryAnimation: Player {player} の勝利アニメーションを再生");
+
+        // TODO: 実際のアニメーションを再生する処理を実装
+        // 例: Animatorコンポーネントを使用してアニメーションクリップを再生
+
+        // プレイヤーのUyopyonStateを取得
+        if (GameManager.Instance != null && GameManager.Instance.uyopyonStateDict.TryGetValue(player, out UyopyonState state))
+        {
+            // TODO: state.GetComponent<Animator>()?.SetTrigger("Victory");
+            Debug.Log($"[UIController] Player {player} のうーぴょんで勝利アニメーションをトリガー");
+        }
+        else
+        {
+            Debug.LogWarning($"[UIController] Player {player} のUyopyonStateが見つかりません");
+        }
+
+        // TODO: SE再生（AudioManager実装後）
+        // AudioManager.Instance?.PlaySE("Victory");
+    }
+
+    /// <summary>
+    /// 敗北アニメーションを再生（スタブ）
+    /// </summary>
+    public void PlayDefeatAnimation(PlayerRef player)
+    {
+        Debug.Log($"[UIController] PlayDefeatAnimation: Player {player} の敗北アニメーションを再生");
+
+        // TODO: 実際のアニメーションを再生する処理を実装
+        // 例: Animatorコンポーネントを使用してアニメーションクリップを再生
+
+        // プレイヤーのUyopyonStateを取得
+        if (GameManager.Instance != null && GameManager.Instance.uyopyonStateDict.TryGetValue(player, out UyopyonState state))
+        {
+            // TODO: state.GetComponent<Animator>()?.SetTrigger("Defeat");
+            Debug.Log($"[UIController] Player {player} のうーぴょんで敗北アニメーションをトリガー");
+        }
+        else
+        {
+            Debug.LogWarning($"[UIController] Player {player} のUyopyonStateが見つかりません");
+        }
+
+        // TODO: SE再生（AudioManager実装後）
+        // AudioManager.Instance?.PlaySE("Defeat");
+    }
+
+    // === 8.3: リザルト画面 ===
+
+    /// <summary>
+    /// リザルト画面を表示
+    /// </summary>
+    public void ShowResultPanel(PlayerRef winner, int day, bool isMorning)
+    {
+        Debug.Log($"[UIController] ShowResultPanel: winner={winner}, day={day}, isMorning={isMorning}");
+
+        if (resultPanel == null)
+        {
+            Debug.LogError("[UIController] resultPanel が null です");
+            return;
+        }
+
+        // 全てのGraphicのRaycast Targetを一旦オフにする
+        var allGraphics = resultPanel.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
+        foreach (var graphic in allGraphics)
+        {
+            graphic.raycastTarget = false;
+        }
+        Debug.Log("[UIController] 全UIのraycastTargetをfalseに設定しました");
+
+        // LogArea（ScrollRect）のすべてのGraphicもオフにする（ボタンをブロックしないように）
+        if (logScrollRect != null)
+        {
+            var logGraphics = logScrollRect.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
+            foreach (var graphic in logGraphics)
+            {
+                graphic.raycastTarget = false;
+            }
+            Debug.Log($"[UIController] LogArea内の{logGraphics.Length}個のGraphicのraycastTargetをfalseに設定しました");
+        }
+
+        
+        // === EventSystemとGraphicRaycasterの確認 ===
+        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
+        if (eventSystem == null)
+        {
+            Debug.LogError("[UIController] EventSystemが存在しません！");
+        }
+        else
+        {
+            Debug.Log($"[UIController] EventSystem存在: {eventSystem.gameObject.name}");
+        }
+
+        // Canvas上のGraphicRaycasterを確認
+        var canvas = resultPanel.GetComponentInParent<Canvas>();
+        if (canvas != null)
+        {
+            var graphicRaycaster = canvas.GetComponent<UnityEngine.UI.GraphicRaycaster>();
+            if (graphicRaycaster == null)
+            {
+                Debug.LogError("[UIController] CanvasにGraphicRaycasterがありません！");
+            }
+            else
+            {
+                Debug.Log($"[UIController] GraphicRaycaster存在: enabled={graphicRaycaster.enabled}");
+            }
+        }
+
+        // CanvasGroupのブロック状態を確認
+        var canvasGroups = resultPanel.GetComponentsInParent<CanvasGroup>(true);
+        foreach (var cg in canvasGroups)
+        {
+            if (!cg.blocksRaycasts)
+            {
+                Debug.LogWarning($"[UIController] CanvasGroup '{cg.gameObject.name}' がraycastをブロックしています！");
+                cg.blocksRaycasts = true;
+                Debug.Log($"[UIController] CanvasGroup '{cg.gameObject.name}' のblocksRaycastsをtrueに設定しました");
+            }
+        }
+// ボタンのImageだけRaycast Targetを有効にする
+        if (resultReturnToTitleButton != null)
+        {
+            var buttonImage = resultReturnToTitleButton.GetComponent<UnityEngine.UI.Image>();
+            if (buttonImage != null)
+            {
+                buttonImage.raycastTarget = true;
+                Debug.Log("[UIController] ボタンのImageのraycastTargetをtrueに設定しました");
+            }
+        }
+
+        // NetworkRunnerから自分のPlayerRefを取得
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null)
+        {
+            Debug.LogError("[UIController] NetworkRunnerが見つかりません");
+            return;
+        }
+
+        PlayerRef localPlayer = runner.LocalPlayer;
+
+        // 勝者・敗者の情報を取得
+        var allPlayers = GameManager.Instance.uyopyonStateDict.Keys.ToList();
+        if (allPlayers.Count != 2)
+        {
+            Debug.LogError($"[UIController] プレイヤーが2人ではありません: {allPlayers.Count}人");
+            return;
+        }
+
+        PlayerRef loser = allPlayers.FirstOrDefault(p => p != winner);
+
+        // 勝者名を表示
+        string winnerName = GetPlayerName(winner);
+        if (resultWinnerText != null)
+        {
+            resultWinnerText.text = $"{winnerName} の勝ち！";
+        }
+
+        // 終了日数・午前/午後を表示
+        if (resultDayText != null)
+        {
+            string timeOfDay = isMorning ? "午前" : "午後";
+            resultDayText.text = $"{day}日目 {timeOfDay}";
+        }
+
+        // 自分と相手のステータスを取得
+        PlayerRef myPlayer = localPlayer;
+        PlayerRef oppPlayer = (myPlayer == allPlayers[0]) ? allPlayers[1] : allPlayers[0];
+
+        UyopyonState myState = GameManager.Instance.GetUyopyonState(myPlayer);
+        UyopyonState oppState = GameManager.Instance.GetUyopyonState(oppPlayer);
+
+        if (myState == null || oppState == null)
+        {
+            Debug.LogError("[UIController] UyopyonStateが取得できません");
+            return;
+        }
+
+        // 自分のステータスを表示
+        if (resultMyNameText != null)
+        {
+            resultMyNameText.text = GetPlayerName(myPlayer);
+        }
+        if (resultMyWeightText != null)
+        {
+            resultMyWeightText.text = $"重さ: {myState.Weight}kg";
+        }
+        if (resultMyEnergyText != null)
+        {
+            resultMyEnergyText.text = $"元気: {myState.Energy}";
+        }
+        if (resultMyAbilityText != null)
+        {
+            string abilityName = myState.HasEvolved ? GetSpecialAbilityDisplayNameForPlayer(myPlayer) : "未進化";
+            resultMyAbilityText.text = $"特殊能力: {abilityName}";
+        }
+
+        // 相手のステータスを表示
+        if (resultOppNameText != null)
+        {
+            resultOppNameText.text = GetPlayerName(oppPlayer);
+        }
+        if (resultOppWeightText != null)
+        {
+            resultOppWeightText.text = $"重さ: {oppState.Weight}kg";
+        }
+        if (resultOppEnergyText != null)
+        {
+            resultOppEnergyText.text = $"元気: {oppState.Energy}";
+        }
+        if (resultOppAbilityText != null)
+        {
+            string abilityName = oppState.HasEvolved ? GetSpecialAbilityDisplayNameForPlayer(oppPlayer) : "未進化";
+            resultOppAbilityText.text = $"特殊能力: {abilityName}";
+        }
+
+        // リザルトパネルを表示
+        resultPanel.SetActive(true);
+        Debug.Log("[UIController] リザルトパネルを表示しました");
+
+        // ボタンの状態を詳細に確認
+        if (resultReturnToTitleButton != null)
+        {
+            var buttonImage = resultReturnToTitleButton.GetComponent<UnityEngine.UI.Image>();
+            Debug.Log($"[UIController] ========== ボタン状態確認 ==========");
+            Debug.Log($"[UIController] Button: active={resultReturnToTitleButton.gameObject.activeSelf}, enabled={resultReturnToTitleButton.enabled}, interactable={resultReturnToTitleButton.interactable}");
+            Debug.Log($"[UIController] Button Image: raycastTarget={buttonImage?.raycastTarget}");
+            Debug.Log($"[UIController] OnClick ListenerCount: {resultReturnToTitleButton.onClick.GetPersistentEventCount()}");
+
+            // OnClick()の設定内容を確認
+            for (int i = 0; i < resultReturnToTitleButton.onClick.GetPersistentEventCount(); i++)
+            {
+                var target = resultReturnToTitleButton.onClick.GetPersistentTarget(i);
+                var methodName = resultReturnToTitleButton.onClick.GetPersistentMethodName(i);
+                Debug.Log($"[UIController] OnClick[{i}]: target={target?.GetType().Name}, method={methodName}");
+            }
+
+            Debug.Log($"[UIController] ==========================================");
+
+            // ボタンのRectTransformとヒエラルキーをチェック
+            var rectTransform = resultReturnToTitleButton.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                Debug.Log($"[UIController] Button RectTransform: rect={rectTransform.rect}, position={rectTransform.position}");
+                Debug.Log($"[UIController] Button RectTransform: sizeDelta={rectTransform.sizeDelta}, anchoredPosition={rectTransform.anchoredPosition}");
+            }
+
+            // 親オブジェクトの階層をチェック
+            Transform current = resultReturnToTitleButton.transform;
+            int depth = 0;
+            while (current != null && depth < 10)
+            {
+                Debug.Log($"[UIController] Parent[{depth}]: {current.gameObject.name}, active={current.gameObject.activeSelf}, activeInHierarchy={current.gameObject.activeInHierarchy}");
+                current = current.parent;
+                depth++;
+            }
+
+            // ボタンの実際のワールド座標を確認
+            Debug.Log($"[UIController] Button World Position: {resultReturnToTitleButton.transform.position}");
+            Debug.Log($"[UIController] Button Local Position: {resultReturnToTitleButton.transform.localPosition}");
+
+            // ResultPanelのImageがボタンをブロックしていないか確認
+            var resultPanelImage = resultPanel.GetComponent<UnityEngine.UI.Image>();
+            if (resultPanelImage != null)
+            {
+                resultPanelImage.raycastTarget = false;
+                Debug.Log("[UIController] ResultPanelのImageのraycastTargetをfalseに設定しました");
+            }
+
+            // 強制的にRaycast Targetを有効にする
+            if (buttonImage != null && !buttonImage.raycastTarget)
+            {
+                buttonImage.raycastTarget = true;
+                Debug.Log("[UIController] ボタンのImageのraycastTargetを強制的にtrueに設定しました");
+            }
+        }
+
+        Debug.Log("[UIController] リザルトパネルのRaycast設定を完了しました");
+    }
+
+    /// <summary>
+    /// タイトルに戻るボタンがクリックされた時の処理
+    /// Unity EditorのInspectorでButtonのOnClick()に設定してください
+    /// </summary>
+    public void OnReturnToTitleButtonClicked()
+    {
+        Debug.Log("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■");
+        Debug.Log("■■■ [UIController] OnReturnToTitleButtonClicked が呼ばれました！ ■■■");
+        Debug.Log("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■");
+        Debug.LogWarning("タイトルに戻るボタンがクリックされました！");
+
+        // ボタンの二重クリック防止
+        if (resultReturnToTitleButton != null)
+        {
+            resultReturnToTitleButton.interactable = false;
+        }
+
+        // コルーチンでシャットダウン処理を開始
+        StartCoroutine(ReturnToTitleCoroutine());
+    }
+
+    /// <summary>
+    /// タイトルシーンに戻るコルーチン
+    /// NetworkRunnerのシャットダウンを待機してからシーン遷移を行う
+    /// </summary>
+    private IEnumerator ReturnToTitleCoroutine()
+    {
+        Debug.Log("[UIController] ReturnToTitleCoroutine: 開始");
+
+        // NetworkRunnerを取得
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner != null)
+        {
+            // ネットワークセッションをシャットダウン
+            Debug.Log("[UIController] NetworkRunnerをシャットダウンします");
+            runner.Shutdown();
+
+            // Shutdownの完了を待つ（最大3秒）
+            float timeout = 3f;
+            float elapsed = 0f;
+
+            while (runner != null && runner.IsRunning && elapsed < timeout)
+            {
+                yield return null;
+                elapsed += Time.deltaTime;
+            }
+
+            Debug.Log($"[UIController] NetworkRunner停止完了（{elapsed}秒経過）");
+        }
+        else
+        {
+            Debug.Log("[UIController] NetworkRunnerが見つかりません（既に破棄済み？）");
+        }
+
+        // 念のため追加で0.5秒待機
+        yield return new WaitForSeconds(0.5f);
+
+        // TitleSceneに遷移
+        Debug.Log("[UIController] TitleSceneをロードします");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
+    }
+
+    /// <summary>
+    /// プレイヤー名を取得するヘルパーメソッド
+    /// </summary>
+    private string GetPlayerName(PlayerRef player)
+    {
+        var networkPlayers = FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
+        foreach (var np in networkPlayers)
+        {
+            if (np.OwnerPlayerRef == player)
+            {
+                return np.PlayerName.ToString();
+            }
+        }
+        return $"Player {player}";
+    }
+
+    /// <summary>
+    /// GameObjectの階層パスを取得するヘルパーメソッド
+    /// </summary>
+    private string GetGameObjectPath(GameObject obj)
+    {
+        string path = obj.name;
+        Transform parent = obj.transform.parent;
+        while (parent != null)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+        return path;
     }
 
 }
