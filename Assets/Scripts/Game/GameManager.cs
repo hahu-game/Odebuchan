@@ -100,9 +100,8 @@ public class GameManager : NetworkBehaviour
 
         if (newUyopyon.TryGetBehaviour<UyopyonState>(out var state))
         {
-            _playerStates.Add(player, state); // 辞書に追加
-
-            Debug.Log($"[GameManager] Uyopyon spawned for Player {player} ({playerName}). Total: {_playerStates.Count}");
+            // 辞書への追加は UyopyonState.Spawned() で自動的に行われる
+            Debug.Log($"[GameManager] Uyopyon spawned for Player {player} ({playerName})");
         }
 
         // PlayerActionDataもスポーン
@@ -137,28 +136,24 @@ public class GameManager : NetworkBehaviour
 
 
     /// <summary>
-    /// PlayerActionDataを辞書に登録する（全クライアントで呼び出される）
-    /// PlayerActionData.Spawned()から呼ばれる
-    /// </summary>
-    public void RegisterPlayerActionData(PlayerActionData actionData)
-    {
-        if (actionData.OwnerPlayer != PlayerRef.None && !_playerActionData.ContainsKey(actionData.OwnerPlayer))
-        {
-            _playerActionData.Add(actionData.OwnerPlayer, actionData);
-            Debug.Log($"[GameManager] PlayerActionDataを登録: Player {actionData.OwnerPlayer}");
-        }
-    }
-
-
-    /// <summary>
     /// 指定されたプレイヤーのUyopyonStateを取得
     /// </summary>
     public UyopyonState GetUyopyonState(PlayerRef player)
     {
+        Debug.Log($"[GameManager] GetUyopyonState: player={player}, _playerStates.Count={_playerStates.Count}");
+
         if (_playerStates.ContainsKey(player))
         {
+            Debug.Log($"[GameManager] Player {player} の UyopyonState が見つかりました");
             return _playerStates[player];
         }
+
+        Debug.LogWarning($"[GameManager] Player {player} の UyopyonState が見つかりません。登録されているプレイヤー:");
+        foreach (var kvp in _playerStates)
+        {
+            Debug.LogWarning($"  - {kvp.Key}: {kvp.Value.name}");
+        }
+
         return null;
     }
 
@@ -172,5 +167,55 @@ public class GameManager : NetworkBehaviour
             return _playerActionData[player];
         }
         return null;
+    }
+
+    /// <summary>
+    /// UyopyonStateを辞書に登録（全クライアントで実行）
+    /// UyopyonState.Spawned() から呼び出される
+    /// </summary>
+    public void RegisterUyopyonState(UyopyonState state)
+    {
+        if (state == null)
+        {
+            Debug.LogWarning("[GameManager] RegisterUyopyonState: state が null です");
+            return;
+        }
+
+        PlayerRef player = state.OwnerPlayer;
+
+        // 既に登録されている場合はスキップ
+        if (_playerStates.ContainsKey(player))
+        {
+            Debug.LogWarning($"[GameManager] Player {player} の UyopyonState は既に登録されています");
+            return;
+        }
+
+        _playerStates.Add(player, state);
+        Debug.Log($"[GameManager] Player {player} の UyopyonState を登録しました。Total: {_playerStates.Count}");
+    }
+
+    /// <summary>
+    /// PlayerActionDataを辞書に登録（全クライアントで実行）
+    /// PlayerActionData.Spawned() から呼び出される
+    /// </summary>
+    public void RegisterPlayerActionData(PlayerActionData data)
+    {
+        if (data == null)
+        {
+            Debug.LogWarning("[GameManager] RegisterPlayerActionData: data が null です");
+            return;
+        }
+
+        PlayerRef player = data.OwnerPlayer;
+
+        // 既に登録されている場合はスキップ
+        if (_playerActionData.ContainsKey(player))
+        {
+            Debug.LogWarning($"[GameManager] Player {player} の PlayerActionData は既に登録されています");
+            return;
+        }
+
+        _playerActionData.Add(player, data);
+        Debug.Log($"[GameManager] Player {player} の PlayerActionData を登録しました。Total: {_playerActionData.Count}");
     }
 }

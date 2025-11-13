@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4794285624160416315}
   - component: {fileID: 4012069128241522357}
   - component: {fileID: 7060737734134121739}
+  - component: {fileID: 4686944652385539361}
   m_Layer: 5
   m_Name: UyopyonPrefab
   m_TagString: Untagged
@@ -105,6 +106,28 @@ MonoBehaviour:
     _data:
       Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   _BuffMultiplier: 1
+--- !u!95 &4686944652385539361
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1289025091199563770}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &6344194106433868389
 GameObject:
   m_ObjectHideFlags: 0

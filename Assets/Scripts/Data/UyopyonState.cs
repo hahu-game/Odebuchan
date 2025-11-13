@@ -134,6 +134,16 @@ public class UyopyonState : NetworkBehaviour
             UIController.Instance.RegisterUyopyon(this);
         }
 
+        // GameManagerに自分自身を登録（全クライアントで実行）
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterUyopyonState(this);
+        }
+        else
+        {
+            Debug.LogWarning($"[UyopyonState.Spawned] GameManager.Instance が null のため、登録できませんでした。Player={OwnerPlayer}");
+        }
+
         // GameParametersから初期値を設定（ホストのみ）
         if (Object.HasStateAuthority)
         {

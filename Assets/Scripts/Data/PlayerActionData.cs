@@ -105,11 +105,11 @@ public class PlayerActionData : NetworkBehaviour
                     // 確定していない場合は空欄を表示
                     if (!IsActionFixed)
                     {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionType.None);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionData.Empty());
                     }
                     else
                     {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction.Type);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction);
                     }
                 }
             }
@@ -130,11 +130,11 @@ public class PlayerActionData : NetworkBehaviour
                     // 確定していない場合は空欄を表示
                     if (!IsActionFixed)
                     {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionType.None);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionData.Empty());
                     }
                     else
                     {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction.Type);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction);
                     }
                 }
             }
@@ -156,14 +156,14 @@ public class PlayerActionData : NetworkBehaviour
                     if (!IsActionFixed)
                     {
                         // 確定解除された場合は空欄を表示
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionType.None);
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionType.None);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionData.Empty());
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionData.Empty());
                     }
                     else
                     {
                         // 確定された場合は現在の行動を表示
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction.Type);
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction.Type);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction);
+                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction);
                     }
                 }
             }
@@ -178,8 +178,8 @@ public class PlayerActionData : NetworkBehaviour
 
             if (UIController.Instance != null)
             {
-                // 昨日の午後の行動は常に全員に表示
-                UIController.Instance.UpdateYesterdayAfternoonDisplay(OwnerPlayer, LastAfternoonAction.Type);
+                // 昨日の午後の行動は常に全員に表示（ActionData全体を渡す）
+                UIController.Instance.UpdateYesterdayAfternoonDisplay(OwnerPlayer, LastAfternoonAction);
             }
 
             _lastLastAfternoonAction = LastAfternoonAction;
@@ -224,8 +224,8 @@ public class PlayerActionData : NetworkBehaviour
             Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動表示を空欄にクリアします");
 
             // 午前・午後の行動表示を空欄に
-            UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionType.None);
-            UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionType.None);
+            UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionData.Empty());
+            UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionData.Empty());
         }
     }
 

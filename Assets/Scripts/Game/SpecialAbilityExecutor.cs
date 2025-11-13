@@ -71,9 +71,9 @@ public class SpecialAbilityExecutor
 
             case 2:
                 // パターン3: たべる時の重さバフ +15, ねむる時の元気バフ +15
-                state.PlayBuffWeight += 15;
-                state.PlayBuffEnergy += 15;
-                effectLog = "がむしゃらにあそんだ！たべる時の重さバフ+15、ねむる時の元気バフ+15";
+                state.PlayBuffWeight += 25;
+                state.PlayBuffEnergy += 25;
+                effectLog = $"がむしゃらにあそんだ！たべる時の重さバフ{turnProcessor.FormatNumber(+25)}、ねむる時の元気バフ{turnProcessor.FormatNumber(+25)}";
                 break;
 
             case 3:
@@ -84,12 +84,12 @@ public class SpecialAbilityExecutor
                 state.Energy += energyChange4;
                 state.PlayBuffWeight += 8;
                 state.PlayBuffEnergy += 8;
-                effectLog = $"がむしゃらにたべてねてあそんだ！元気{turnProcessor.FormatNumber(energyChange4)}、重さ{turnProcessor.FormatNumber(weightChange3)}、たべる時の重さバフ+8、ねむる時の元気バフ+8";
+                effectLog = $"がむしゃらにたべてねてあそんだ！元気{turnProcessor.FormatNumber(energyChange4)}、重さ{turnProcessor.FormatNumber(weightChange3)}、たべる時の重さバフ{turnProcessor.FormatNumber(+8)}、ねむる時の元気バフ{turnProcessor.FormatNumber(+8)}";
                 break;
         }
 
         // ログに追加
-        string log = $"{playerName}は「がむしゃら」を実行！元気-40、{effectLog}";
+        string log = $"{playerName}は「がむしゃら」を実行！元気{turnProcessor.FormatNumber(-40)}、{effectLog}";
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");
@@ -97,29 +97,31 @@ public class SpecialAbilityExecutor
 
     /// <summary>
     /// 7.5 特殊能力: べんきょうの実行
-    /// 効果: 元気-25、たべる時の重さバフ +10（固定、連続回数に関わらず）
+    /// 効果: 元気-25、たべる時の重さバフ +10×連続回数（累積）
     /// ジャンル: Scissors（チョキ）
+    /// 例: 1回目+15, 2回目+330, 3回目+45, 4回目+60
     /// </summary>
     public void ExecuteBenkyou(PlayerRef player, UyopyonState state, string playerName)
     {
         // 元気減少
         state.Energy -= 25;
 
-        // 固定で+10（連続回数に関わらず毎回+10）
-        state.PlayBuffWeight += 10;
-
         // 連続カウンタを増加
         state.StudyCombo += 1;
 
-        // ログに追加
+        // 連続回数に応じて重さバフを加算（1回目+15, 2回目+30, 3回目+45, 4回目+60...）
+        int buffIncrease = 15 * state.StudyCombo;
+        state.PlayBuffWeight += buffIncrease;
+
+        // ログに追加（今回加算された累積ボーナスを表示）
         string log;
         if (state.StudyCombo > 1)
         {
-            log = $"{playerName}は「べんきょう」を実行！元気-25、たべる時の重さバフ+10（{state.StudyCombo}回連続）";
+            log = $"{playerName}は「べんきょう」を実行！元気-25、たべる時の重さバフ+{buffIncrease}（{state.StudyCombo}回連続）";
         }
         else
         {
-            log = $"{playerName}は「べんきょう」を実行！元気-25、たべる時の重さバフ+10";
+            log = $"{playerName}は「べんきょう」を実行！元気-25、たべる時の重さバフ+{buffIncrease}";
         }
         turnProcessor.AddLog(log);
 
@@ -173,7 +175,7 @@ public class SpecialAbilityExecutor
 
     /// <summary>
     /// 7.7 特殊能力: きんとれの実行
-    /// 効果: 元気-120、重さ半減、BuffMultiplier = 1.5
+    /// 効果: 元気-120、重さ半減、BuffMultiplier *= 1.5
     /// ジャンル: Scissors（チョキ）
     /// </summary>
     public void ExecuteKintre(PlayerRef player, UyopyonState state, string playerName)
@@ -186,11 +188,11 @@ public class SpecialAbilityExecutor
         state.Weight = (int)(state.Weight * 0.5f);
         int weightChange = state.Weight - oldWeight;
 
-        // バフ倍率を設定
-        state.BuffMultiplier = 1.5f;
+        // バフ倍率を1.5倍に増加（現在の値に1.5を掛ける）
+        state.BuffMultiplier *= 1.5f;
 
         // ログに追加
-        string log = $"{playerName}は「きんとれ」を実行！元気-120、重さ{turnProcessor.FormatNumber(weightChange)}、今後の効果が1.5倍に！";
+        string log = $"{playerName}は「きんとれ」を実行！元気-120、重さ{turnProcessor.FormatNumber(weightChange)}、今後の重さ増加が1.5倍に！";
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");

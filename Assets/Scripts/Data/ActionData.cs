@@ -17,6 +17,11 @@ public struct ActionData : INetworkStruct
     public Genre Genre;
 
     /// <summary>
+    /// 特殊能力の名前（特殊能力の場合のみ使用）
+    /// </summary>
+    public NetworkString<_16> SpecialAbilityName;
+
+    /// <summary>
     /// コンストラクタ
     /// </summary>
     /// <param name="type">行動の種類</param>
@@ -25,6 +30,20 @@ public struct ActionData : INetworkStruct
     {
         Type = type;
         Genre = genre;
+        SpecialAbilityName = "";
+    }
+
+    /// <summary>
+    /// コンストラクタ（特殊能力用）
+    /// </summary>
+    /// <param name="type">行動の種類</param>
+    /// <param name="genre">ジャンル</param>
+    /// <param name="abilityName">特殊能力名</param>
+    public ActionData(ActionType type, Genre genre, string abilityName)
+    {
+        Type = type;
+        Genre = genre;
+        SpecialAbilityName = abilityName;
     }
 
     /// <summary>
@@ -51,7 +70,7 @@ public struct ActionData : INetworkStruct
             _ => Genre.None
         };
 
-        return new ActionData(ActionType.SpecialAbility, genre);
+        return new ActionData(ActionType.SpecialAbility, genre, abilityType.ToString());
     }
 
     /// <summary>

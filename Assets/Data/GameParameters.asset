@@ -20,8 +20,8 @@ MonoBehaviour:
   EatWeightChange: 50
   SleepEnergyChange: 50
   PlayEnergyChange: -30
-  PlayWeightBuffIncrement: 10
-  PlayEnergyBuffIncrement: 10
+  PlayWeightBuffIncrement: 15
+  PlayEnergyBuffIncrement: 15
   ClinicEnergyChange: -20
   ConsecutiveActionPenalty: 20
   SicknessProbabilityPerWeight: 0.1
@@ -54,8 +54,8 @@ MonoBehaviour:
   GamusharaMixBuffWeightIncrement: 15
   GamusharaMixBuffEnergyIncrement: 15
   BenkyouEnergyCost: -25
-  BenkyouBuffWeightIncrement: 10
-  BenkyouComboBuffIncrement: 10
+  BenkyouBuffWeightIncrement: 15
+  BenkyouComboBuffIncrement: 15
   JukusuiEnergyBonus: 20
   DokaguiEnergyCost: -15
   DokaguiWeightBonus: 30
