@@ -10,6 +10,9 @@ using System.Linq;
 /// </summary>
 public class TurnProcessor : NetworkBehaviour
 {
+    // シングルトンパターン（シーン内に1つ）
+    public static TurnProcessor Instance { get; private set; }
+
     // GameParametersへの参照（GameFlowManagerから取得）
     private GameParameters gameParams;
 
@@ -18,6 +21,18 @@ public class TurnProcessor : NetworkBehaviour
 
     // 特殊能力の実行ロジック
     private SpecialAbilityExecutor specialAbility;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+        }
+    }
 
     private void Start()
     {
@@ -883,6 +898,41 @@ public class TurnProcessor : NetworkBehaviour
         }
 
         PlayerRef? winner = null;
+
+        // === 9.2: 投了判定（最優先） ===
+        foreach (var kvp in playerStates)
+        {
+            PlayerRef player = kvp.Key;
+
+            if (GameManager.Instance.HasSurrendered(player))
+            {
+                // 投了したプレイヤーの相手を勝者とする
+                foreach (var otherKvp in playerStates)
+                {
+                    if (otherKvp.Key != player)
+                    {
+                        winner = otherKvp.Key;
+                        string winnerName = GetPlayerName(winner.Value);
+                        string loserName = GetPlayerName(player);
+                        Debug.Log($"[TurnProcessor] 投了による勝者決定: {winnerName} (投了者: {loserName})");
+
+                        // GameFlowManagerにゲーム終了を通知
+                        if (GameFlowManager.Instance != null)
+                        {
+                            await GameFlowManager.Instance.EndGame(winner.Value, isMorning);
+                        }
+                        else
+                        {
+                            Debug.LogError("[TurnProcessor] GameFlowManager.Instance が null です");
+                        }
+
+                        return winner;
+                    }
+                }
+            }
+        }
+
+        // === 体重による勝利判定 ===
         int maxWeight = 0;
 
         // 各プレイヤーの重さをチェック

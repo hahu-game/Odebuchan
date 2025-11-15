@@ -104,6 +104,10 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI resultOppAbilityText;
     public UnityEngine.UI.Button resultReturnToTitleButton;
 
+    // === 9.2で追加: 設定パネル ===
+    [Header("Setting Panel")]
+    public SettingController settingController;
+
     // === 3.4で追加: ブラックアウトパネルとログエリア ===
     [Header("Blackout Panel")]
     public GameObject blackoutPanel;
@@ -624,7 +628,7 @@ public class UIController : MonoBehaviour
         if (runner != null)
         {
             PlayerRef localPlayer = runner.LocalPlayer;
-            
+
             // 自分のPlayerActionDataを取得（OwnerPlayerで判定）
             if (GameManager.Instance != null)
             {
@@ -639,6 +643,10 @@ public class UIController : MonoBehaviour
                 }
             }
         }
+
+        // 行動クリア後、元気チェックを選択フェーズ開始時点（午前選択状態）にリセット
+        UpdateActionButtonsBasedOnEnergy();
+        Debug.Log("[UIController] クリアボタン押下後、元気チェックをリセットしました");
     }
 
     // ... その他、ラウンド表示、メッセージ表示などのメソッド ...
@@ -719,6 +727,10 @@ public class UIController : MonoBehaviour
                 }
                 HighlightCurrentSelection(false); // 午前選択中を表示
             }
+
+            // 午前の行動が選択されたので、午後の選択肢を午前+午後の合計で再チェック
+            UpdateActionButtonsBasedOnEnergy();
+            Debug.Log($"[UIController] 午前の行動選択後、午後のボタン状態を更新しました");
         }
         else
         {
@@ -1077,6 +1089,99 @@ public class UIController : MonoBehaviour
         if (clearButton != null) clearButton.interactable = interactable;
     }
 
+    /// <summary>
+    /// 現在の元気に基づいて、実行可能な行動のボタンのみを有効にする
+    /// 選択フェーズ開始時に呼ばれる
+    /// </summary>
+    public void UpdateActionButtonsBasedOnEnergy()
+    {
+        // LocalPlayerのUyopyonStateを取得
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null) return;
+
+        PlayerRef localPlayer = runner.LocalPlayer;
+        UyopyonState myState = GameManager.Instance?.GetUyopyonState(localPlayer);
+        if (myState == null || GameManager.Instance?.gameParams == null) return;
+
+        int currentEnergy = myState.Energy;
+        var gameParams = GameManager.Instance.gameParams;
+
+        // 午前か午後かを判定
+        bool isMorning = !_isMorningSelected;
+        Debug.Log($"[UIController] UpdateActionButtonsBasedOnEnergy: isMorning={isMorning}, _isMorningSelected={_isMorningSelected}");
+
+        // 前日午後の行動を取得（連続使用ペナルティチェック用）
+        ActionData? previousAction = null;
+        PlayerActionData actionData = GameManager.Instance.GetPlayerActionData(localPlayer);
+        if (actionData != null)
+        {
+            previousAction = actionData.LastAfternoonAction;
+            Debug.Log($"[UIController] 前日午後の行動: {previousAction?.Type}");
+        }
+
+        // 午後の場合は午前の行動を取得（ローカルの_morningActionを優先）
+        ActionData? morningAction = null;
+        if (!isMorning)
+        {
+            // まずローカルで選択した午前の行動を使用
+            if (_morningAction.HasValue)
+            {
+                morningAction = _morningAction;
+                Debug.Log($"[UIController] 午後選択中: ローカルの午前行動を使用 - {morningAction.Value.Type}");
+            }
+            else
+            {
+                // フォールバック: ネットワーク同期された午前の行動を取得
+                if (actionData != null)
+                {
+                    morningAction = actionData.MorningAction;
+                    Debug.Log($"[UIController] 午後選択中: ネットワークの午前行動を使用 - {morningAction?.Type}");
+                }
+            }
+        }
+        else
+        {
+            Debug.Log($"[UIController] 午前選択中: 午前の行動は考慮しない");
+        }
+
+        // 各行動ボタンの有効/無効を設定（EnergyCheck.csを使用）
+        // たべる
+        if (eatButton != null)
+        {
+            eatButton.interactable = EnergyCheck.CanPerformAction(currentEnergy, ActionType.Eat, isMorning, morningAction, previousAction, gameParams);
+        }
+
+        // ねむる
+        if (sleepButton != null)
+        {
+            sleepButton.interactable = EnergyCheck.CanPerformAction(currentEnergy, ActionType.Sleep, isMorning, morningAction, previousAction, gameParams);
+        }
+
+        // あそぶ
+        if (playButton != null)
+        {
+            playButton.interactable = EnergyCheck.CanPerformAction(currentEnergy, ActionType.Play, isMorning, morningAction, previousAction, gameParams);
+        }
+
+        // つういん
+        if (clinicButton != null)
+        {
+            clinicButton.interactable = EnergyCheck.CanPerformAction(currentEnergy, ActionType.Clinic, isMorning, morningAction, previousAction, gameParams);
+        }
+
+        // 特殊能力ボタン（進化後のみ）
+        if (specialAbilityButton != null && specialAbilityButton.gameObject.activeSelf && myState.HasEvolved)
+        {
+            string abilityName = myState.SpecialAbilityName.ToString();
+            bool canUseAbility = EnergyCheck.CanUseSpecialAbility(currentEnergy, abilityName, isMorning, morningAction, previousAction, gameParams);
+            specialAbilityButton.interactable = canUseAbility;
+        }
+
+        // 確定・クリアボタンは常に有効
+        if (fixButton != null) fixButton.interactable = true;
+        if (clearButton != null) clearButton.interactable = true;
+    }
+
 
     /// <summary>
     /// 行動確定後、すべてのボタンをロック（無効化）
@@ -1124,7 +1229,10 @@ public class UIController : MonoBehaviour
         // 午前選択中のハイライトに戻す
         HighlightCurrentSelection(false);
 
-        Debug.Log("[UIController] 行動選択状態のリセット完了");
+        // 行動選択状態をリセットした後、元気チェックを再実行
+        UpdateActionButtonsBasedOnEnergy();
+
+        Debug.Log("[UIController] 行動選択状態のリセット完了（元気チェックも再実行）");
     }
 
     /// <summary>
@@ -1787,15 +1895,33 @@ public class UIController : MonoBehaviour
             return;
         }
 
-        // 全てのGraphicのRaycast Targetを一旦オフにする
+        // 他のパネルを全て非表示にする
+        if (waitingForOpponentPanel != null && waitingForOpponentPanel.activeSelf)
+        {
+            waitingForOpponentPanel.SetActive(false);
+        }
+
+        if (specialAbilityChoicePanel != null && specialAbilityChoicePanel.activeSelf)
+        {
+            specialAbilityChoicePanel.SetActive(false);
+        }
+
+        if (blackoutPanel != null && blackoutPanel.activeSelf)
+        {
+            blackoutPanel.SetActive(false);
+        }
+
+        // ResultPanel内のボタン以外のすべてのGraphicのraycastをオフにする
         var allGraphics = resultPanel.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
         foreach (var graphic in allGraphics)
         {
-            graphic.raycastTarget = false;
+            if (graphic.gameObject != resultReturnToTitleButton.gameObject)
+            {
+                graphic.raycastTarget = false;
+            }
         }
-        Debug.Log("[UIController] 全UIのraycastTargetをfalseに設定しました");
 
-        // LogArea（ScrollRect）のすべてのGraphicもオフにする（ボタンをブロックしないように）
+        // LogAreaのすべてのGraphicもオフにする
         if (logScrollRect != null)
         {
             var logGraphics = logScrollRect.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
@@ -1803,56 +1929,53 @@ public class UIController : MonoBehaviour
             {
                 graphic.raycastTarget = false;
             }
-            Debug.Log($"[UIController] LogArea内の{logGraphics.Length}個のGraphicのraycastTargetをfalseに設定しました");
         }
 
-        
-        // === EventSystemとGraphicRaycasterの確認 ===
-        var eventSystem = UnityEngine.EventSystems.EventSystem.current;
-        if (eventSystem == null)
+        // Canvas全体のResultPanel以外のすべてのGraphicをオフにする
+        var mainCanvas = resultPanel.GetComponentInParent<Canvas>();
+        if (mainCanvas != null)
         {
-            Debug.LogError("[UIController] EventSystemが存在しません！");
-        }
-        else
-        {
-            Debug.Log($"[UIController] EventSystem存在: {eventSystem.gameObject.name}");
-        }
-
-        // Canvas上のGraphicRaycasterを確認
-        var canvas = resultPanel.GetComponentInParent<Canvas>();
-        if (canvas != null)
-        {
-            var graphicRaycaster = canvas.GetComponent<UnityEngine.UI.GraphicRaycaster>();
-            if (graphicRaycaster == null)
+            var allCanvasGraphics = mainCanvas.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
+            foreach (var graphic in allCanvasGraphics)
             {
-                Debug.LogError("[UIController] CanvasにGraphicRaycasterがありません！");
-            }
-            else
-            {
-                Debug.Log($"[UIController] GraphicRaycaster存在: enabled={graphicRaycaster.enabled}");
+                if (!graphic.transform.IsChildOf(resultPanel.transform))
+                {
+                    graphic.raycastTarget = false;
+                }
             }
         }
 
-        // CanvasGroupのブロック状態を確認
+        // CanvasGroupがraycastをブロックしないようにする
         var canvasGroups = resultPanel.GetComponentsInParent<CanvasGroup>(true);
         foreach (var cg in canvasGroups)
         {
             if (!cg.blocksRaycasts)
             {
-                Debug.LogWarning($"[UIController] CanvasGroup '{cg.gameObject.name}' がraycastをブロックしています！");
                 cg.blocksRaycasts = true;
-                Debug.Log($"[UIController] CanvasGroup '{cg.gameObject.name}' のblocksRaycastsをtrueに設定しました");
             }
         }
-// ボタンのImageだけRaycast Targetを有効にする
+
+        // ボタンをヒエラルキーの最前面に移動
         if (resultReturnToTitleButton != null)
         {
-            var buttonImage = resultReturnToTitleButton.GetComponent<UnityEngine.UI.Image>();
-            if (buttonImage != null)
+            resultReturnToTitleButton.transform.SetAsLastSibling();
+        }
+
+        // ボタンのすべてのGraphicのraycastTargetを有効にする
+        if (resultReturnToTitleButton != null)
+        {
+            var buttonGraphics = resultReturnToTitleButton.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
+            foreach (var graphic in buttonGraphics)
             {
-                buttonImage.raycastTarget = true;
-                Debug.Log("[UIController] ボタンのImageのraycastTargetをtrueに設定しました");
+                graphic.raycastTarget = true;
             }
+        }
+
+        // ResultPanelのImageがボタンをブロックしないようにする
+        var resultPanelImage = resultPanel.GetComponent<UnityEngine.UI.Image>();
+        if (resultPanelImage != null)
+        {
+            resultPanelImage.raycastTarget = false;
         }
 
         // NetworkRunnerから自分のPlayerRefを取得
@@ -1942,66 +2065,6 @@ public class UIController : MonoBehaviour
 
         // リザルトパネルを表示
         resultPanel.SetActive(true);
-        Debug.Log("[UIController] リザルトパネルを表示しました");
-
-        // ボタンの状態を詳細に確認
-        if (resultReturnToTitleButton != null)
-        {
-            var buttonImage = resultReturnToTitleButton.GetComponent<UnityEngine.UI.Image>();
-            Debug.Log($"[UIController] ========== ボタン状態確認 ==========");
-            Debug.Log($"[UIController] Button: active={resultReturnToTitleButton.gameObject.activeSelf}, enabled={resultReturnToTitleButton.enabled}, interactable={resultReturnToTitleButton.interactable}");
-            Debug.Log($"[UIController] Button Image: raycastTarget={buttonImage?.raycastTarget}");
-            Debug.Log($"[UIController] OnClick ListenerCount: {resultReturnToTitleButton.onClick.GetPersistentEventCount()}");
-
-            // OnClick()の設定内容を確認
-            for (int i = 0; i < resultReturnToTitleButton.onClick.GetPersistentEventCount(); i++)
-            {
-                var target = resultReturnToTitleButton.onClick.GetPersistentTarget(i);
-                var methodName = resultReturnToTitleButton.onClick.GetPersistentMethodName(i);
-                Debug.Log($"[UIController] OnClick[{i}]: target={target?.GetType().Name}, method={methodName}");
-            }
-
-            Debug.Log($"[UIController] ==========================================");
-
-            // ボタンのRectTransformとヒエラルキーをチェック
-            var rectTransform = resultReturnToTitleButton.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                Debug.Log($"[UIController] Button RectTransform: rect={rectTransform.rect}, position={rectTransform.position}");
-                Debug.Log($"[UIController] Button RectTransform: sizeDelta={rectTransform.sizeDelta}, anchoredPosition={rectTransform.anchoredPosition}");
-            }
-
-            // 親オブジェクトの階層をチェック
-            Transform current = resultReturnToTitleButton.transform;
-            int depth = 0;
-            while (current != null && depth < 10)
-            {
-                Debug.Log($"[UIController] Parent[{depth}]: {current.gameObject.name}, active={current.gameObject.activeSelf}, activeInHierarchy={current.gameObject.activeInHierarchy}");
-                current = current.parent;
-                depth++;
-            }
-
-            // ボタンの実際のワールド座標を確認
-            Debug.Log($"[UIController] Button World Position: {resultReturnToTitleButton.transform.position}");
-            Debug.Log($"[UIController] Button Local Position: {resultReturnToTitleButton.transform.localPosition}");
-
-            // ResultPanelのImageがボタンをブロックしていないか確認
-            var resultPanelImage = resultPanel.GetComponent<UnityEngine.UI.Image>();
-            if (resultPanelImage != null)
-            {
-                resultPanelImage.raycastTarget = false;
-                Debug.Log("[UIController] ResultPanelのImageのraycastTargetをfalseに設定しました");
-            }
-
-            // 強制的にRaycast Targetを有効にする
-            if (buttonImage != null && !buttonImage.raycastTarget)
-            {
-                buttonImage.raycastTarget = true;
-                Debug.Log("[UIController] ボタンのImageのraycastTargetを強制的にtrueに設定しました");
-            }
-        }
-
-        Debug.Log("[UIController] リザルトパネルのRaycast設定を完了しました");
     }
 
     /// <summary>
@@ -2010,18 +2073,12 @@ public class UIController : MonoBehaviour
     /// </summary>
     public void OnReturnToTitleButtonClicked()
     {
-        Debug.Log("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■");
-        Debug.Log("■■■ [UIController] OnReturnToTitleButtonClicked が呼ばれました！ ■■■");
-        Debug.Log("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■");
-        Debug.LogWarning("タイトルに戻るボタンがクリックされました！");
-
         // ボタンの二重クリック防止
         if (resultReturnToTitleButton != null)
         {
             resultReturnToTitleButton.interactable = false;
         }
 
-        // コルーチンでシャットダウン処理を開始
         StartCoroutine(ReturnToTitleCoroutine());
     }
 
@@ -2031,14 +2088,10 @@ public class UIController : MonoBehaviour
     /// </summary>
     private IEnumerator ReturnToTitleCoroutine()
     {
-        Debug.Log("[UIController] ReturnToTitleCoroutine: 開始");
-
         // NetworkRunnerを取得
         var runner = FindFirstObjectByType<NetworkRunner>();
         if (runner != null)
         {
-            // ネットワークセッションをシャットダウン
-            Debug.Log("[UIController] NetworkRunnerをシャットダウンします");
             runner.Shutdown();
 
             // Shutdownの完了を待つ（最大3秒）
@@ -2050,19 +2103,12 @@ public class UIController : MonoBehaviour
                 yield return null;
                 elapsed += Time.deltaTime;
             }
-
-            Debug.Log($"[UIController] NetworkRunner停止完了（{elapsed}秒経過）");
-        }
-        else
-        {
-            Debug.Log("[UIController] NetworkRunnerが見つかりません（既に破棄済み？）");
         }
 
         // 念のため追加で0.5秒待機
         yield return new WaitForSeconds(0.5f);
 
         // TitleSceneに遷移
-        Debug.Log("[UIController] TitleSceneをロードします");
         UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 
@@ -2095,6 +2141,32 @@ public class UIController : MonoBehaviour
             parent = parent.parent;
         }
         return path;
+    }
+
+    // === 9.2: 設定パネル表示メソッド ===
+
+    /// <summary>
+    /// 設定パネルを表示
+    /// </summary>
+    public void ShowSettingPanel()
+    {
+        if (settingController != null)
+        {
+            settingController.ShowSettingPanel();
+            Debug.Log("[UIController] 設定パネル表示を要求しました");
+        }
+        else
+        {
+            Debug.LogWarning("[UIController] SettingControllerが設定されていません");
+        }
+    }
+
+    /// <summary>
+    /// 設定ボタンクリック時の処理（Inspectorから設定）
+    /// </summary>
+    public void OnSettingButtonClicked()
+    {
+        ShowSettingPanel();
     }
 
 }

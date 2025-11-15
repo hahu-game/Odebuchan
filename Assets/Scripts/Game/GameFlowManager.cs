@@ -309,14 +309,15 @@ public class GameFlowManager : NetworkBehaviour
             SelectionTimeRemaining = gameParams.SelectionPhaseTimeLimit; // 60秒
             _selectionPhaseTickCounter = 0; // ティックカウンターをリセット
 
-            // UIの操作ロック解除
+            // UIの行動選択状態をリセット（2日目以降で午前から選択できるように）
+            // ※先にリセットしてから元気チェックを実行する必要がある
+            RPC_ResetActionSelection();
+
+            // UIの操作ロック解除（元気チェックが実行される）
             RPC_SetActionButtonsInteractable(true);
 
             // 行動ボタンのOutlineを表示
             RPC_ShowActionButtonOutlines();
-
-            // UIの行動選択状態をリセット（2日目以降で午前から選択できるように）
-            RPC_ResetActionSelection();
 
             // ログに選択フェーズ開始を追加
             RPC_AddLog($"行動を選択してください（制限時間: {SelectionTimeRemaining}秒）");
@@ -597,12 +598,23 @@ public class GameFlowManager : NetworkBehaviour
 
     /// <summary>
     /// UIの操作可否を設定
+    /// 有効化時は元気チェックを行い、実行可能な行動のみ有効にする
     /// </summary>
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_SetActionButtonsInteractable(bool interactable)
     {
-        UIController.Instance?.SetActionButtonsInteractable(interactable);
-        Debug.Log($"[RPC] 行動ボタンの操作: {(interactable ? "可能" : "不可")}");
+        if (interactable)
+        {
+            // 有効化の場合は、元気チェックを行う
+            UIController.Instance?.UpdateActionButtonsBasedOnEnergy();
+            Debug.Log($"[RPC] 行動ボタンの操作: 可能（元気チェック済み）");
+        }
+        else
+        {
+            // 無効化の場合は、通常通り
+            UIController.Instance?.SetActionButtonsInteractable(false);
+            Debug.Log($"[RPC] 行動ボタンの操作: 不可");
+        }
     }
 
     /// <summary>
@@ -1304,6 +1316,64 @@ public class GameFlowManager : NetworkBehaviour
         else
         {
             Debug.LogError("[GameFlowManager] UIController.Instance が null です");
+        }
+    }
+
+    // === 9.2: 投了機能 ===
+
+    /// <summary>
+    /// 投了処理（RPC）
+    /// </summary>
+    /// <summary>
+    /// 投了処理（RPC）
+    /// </summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_Surrender(RpcInfo info = default)
+    {
+        PlayerRef player = info.Source;
+        Debug.Log($"[GameFlowManager] Player {player} が投了しました");
+
+        // GameManagerに投了フラグを設定
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetSurrenderFlag(player);
+        }
+        else
+        {
+            Debug.LogError("[GameFlowManager] GameManager.Instance が null です");
+            return;
+        }
+
+        // 投了処理を非同期で実行
+        _ = ProcessSurrenderAsync(player);
+    }
+
+    /// <summary>
+    /// 投了処理の内部実装（非同期）
+    /// </summary>
+    private async UniTask ProcessSurrenderAsync(PlayerRef player)
+    {
+        // プレイヤー名を取得
+        string playerName = GetPlayerName(player);
+
+        // 投了メッセージをログに表示
+        string surrenderMessage = $"=== {playerName}が降参しました。ゲームを終了します。 ===";
+        RPC_AddLog(surrenderMessage);
+        Debug.Log($"[GameFlowManager] {surrenderMessage}");
+
+        // 2秒のディレイ
+        await UniTask.Delay(2000);
+
+        // 勝利判定を実行
+        if (turnProcessor != null)
+        {
+            // 現在のフェーズに応じて勝利判定を実行
+            bool isMorning = (CurrentPhase == GamePhase.Selection);
+            await turnProcessor.CheckVictory(isMorning);
+        }
+        else
+        {
+            Debug.LogError("[GameFlowManager] turnProcessor が null です");
         }
     }
 }
