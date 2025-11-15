@@ -8,7 +8,7 @@ using System.Linq;
 /// ゲーム全体の進行を管理する（ホストのみがロジックを実行）。
 /// 2つのUyopyonStateオブジェクトをPlayerRefで管理する。
 /// </summary>
-public class GameManager : NetworkBehaviour
+public class GameManager : MonoBehaviour
 {
     // シングルトンパターン（シーン内に1つ）
     public static GameManager Instance { get; private set; }
@@ -18,6 +18,9 @@ public class GameManager : NetworkBehaviour
 
     // TODO: フェーズ2で正式実装予定 - GameParametersへの参照
     public GameParameters gameParams;
+
+    // NetworkRunnerへの参照
+    private NetworkRunner _runner;
 
     // === プレイヤーごとの生成座標 ===
     [Header("Uyopyon生成座標設定")]
@@ -33,6 +36,9 @@ public class GameManager : NetworkBehaviour
     // プレイヤーIDと対応するPlayerActionDataの参照を保持
     private Dictionary<PlayerRef, PlayerActionData> _playerActionData = new Dictionary<PlayerRef, PlayerActionData>();
 
+    // 投了フラグを管理（各プレイヤーごと）
+    private Dictionary<PlayerRef, bool> _surrenderFlags = new Dictionary<PlayerRef, bool>();
+
     /// <summary>
     /// 全プレイヤーのUyopyonStateを取得するプロパティ
     /// </summary>
@@ -43,8 +49,7 @@ public class GameManager : NetworkBehaviour
     /// </summary>
     public Dictionary<PlayerRef, PlayerActionData> playerActionDataDict => _playerActionData;
 
-    [Networked]
-    private int CurrentRound { get; set; } = 0;
+    private int CurrentRound = 0;
 
     private void Awake()
     {
@@ -63,6 +68,20 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"[GameManager] player2SpawnPosition: {player2SpawnPosition}");
     }
 
+    private void Start()
+    {
+        // NetworkRunnerを取得
+        _runner = FindFirstObjectByType<NetworkRunner>();
+        if (_runner == null)
+        {
+            Debug.LogError("[GameManager] NetworkRunnerが見つかりません");
+        }
+        else
+        {
+            Debug.Log("[GameManager] NetworkRunnerを取得しました");
+        }
+    }
+
     /// <summary>
     /// NetworkPlayer.Spawned()から呼ばれる。ホスト側でのみ実行。
     /// 各プレイヤーに対応するうーぴょんオブジェクトを生成する。
@@ -71,6 +90,24 @@ public class GameManager : NetworkBehaviour
     public void SpawnUyopyon(PlayerRef player, string playerName)
     {
         Debug.Log($"[GameManager.SpawnUyopyon] 呼び出されました: player={player}, playerName='{playerName}'");
+
+        // Runnerのnullチェック（nullの場合は取得を試みる）
+        if (_runner == null)
+        {
+            _runner = FindFirstObjectByType<NetworkRunner>();
+            if (_runner == null)
+            {
+                Debug.LogError("[GameManager.SpawnUyopyon] Runnerがnullです。NetworkRunnerが見つかりません。");
+                return;
+            }
+        }
+
+        // uyopyonPrefabのnullチェック
+        if (uyopyonPrefab == null)
+        {
+            Debug.LogError("[GameManager.SpawnUyopyon] uyopyonPrefabがnullです。Inspectorで設定してください。");
+            return;
+        }
 
         if (_playerStates.ContainsKey(player))
         {
@@ -82,7 +119,7 @@ public class GameManager : NetworkBehaviour
         Vector3 spawnPosition = Vector3.zero;
 
         // プレイヤーのInput Authorityを指定して、うーぴょんオブジェクトを生成
-        NetworkObject newUyopyon = Runner.Spawn(
+        NetworkObject newUyopyon = _runner.Spawn(
             uyopyonPrefab,
             position: spawnPosition,
             rotation: Quaternion.identity,
@@ -114,9 +151,27 @@ public class GameManager : NetworkBehaviour
     /// </summary>
     public void SpawnPlayerActionData(PlayerRef player, string playerName)
     {
+        // Runnerのnullチェック（nullの場合は取得を試みる）
+        if (_runner == null)
+        {
+            _runner = FindFirstObjectByType<NetworkRunner>();
+            if (_runner == null)
+            {
+                Debug.LogError("[GameManager.SpawnPlayerActionData] Runnerがnullです。NetworkRunnerが見つかりません。");
+                return;
+            }
+        }
+
+        // playerActionDataPrefabのnullチェック
+        if (playerActionDataPrefab == null)
+        {
+            Debug.LogError("[GameManager.SpawnPlayerActionData] playerActionDataPrefabがnullです。Inspectorで設定してください。");
+            return;
+        }
+
         if (_playerActionData.ContainsKey(player)) return;
 
-        NetworkObject newActionData = Runner.Spawn(
+        NetworkObject newActionData = _runner.Spawn(
             playerActionDataPrefab,
             position: Vector3.zero,
             rotation: Quaternion.identity,
@@ -217,5 +272,33 @@ public class GameManager : NetworkBehaviour
 
         _playerActionData.Add(player, data);
         Debug.Log($"[GameManager] Player {player} の PlayerActionData を登録しました。Total: {_playerActionData.Count}");
+    }
+
+    // === 9.2: 投了機能 ===
+
+    /// <summary>
+    /// 投了フラグを設定（GameFlowManagerから呼ばれる）
+    /// </summary>
+    public void SetSurrenderFlag(PlayerRef player)
+    {
+        _surrenderFlags[player] = true;
+        Debug.Log($"[GameManager] Player {player} の投了フラグを設定しました");
+    }
+
+    /// <summary>
+    /// 指定プレイヤーが投了したかチェック
+    /// </summary>
+    public bool HasSurrendered(PlayerRef player)
+    {
+        return _surrenderFlags.ContainsKey(player) && _surrenderFlags[player];
+    }
+
+    /// <summary>
+    /// 新しいゲーム開始時に投了フラグをリセット
+    /// </summary>
+    public void ResetSurrenderFlags()
+    {
+        _surrenderFlags.Clear();
+        Debug.Log("[GameManager] 投了フラグをリセットしました");
     }
 }
