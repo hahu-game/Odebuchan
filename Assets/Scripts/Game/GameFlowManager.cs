@@ -607,6 +607,8 @@ public class GameFlowManager : NetworkBehaviour
         {
             // 有効化の場合は、元気チェックを行う
             UIController.Instance?.UpdateActionButtonsBasedOnEnergy();
+            // 9.3: 行動効果予測表示を更新
+            UIController.Instance?.UpdateAllActionEffectDisplay();
             Debug.Log($"[RPC] 行動ボタンの操作: 可能（元気チェック済み）");
         }
         else

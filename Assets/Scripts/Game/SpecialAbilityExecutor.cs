@@ -101,7 +101,7 @@ public class SpecialAbilityExecutor
     /// ジャンル: Scissors（チョキ）
     /// 例: 1回目+15, 2回目+330, 3回目+45, 4回目+60
     /// </summary>
-    public void ExecuteBenkyou(PlayerRef player, UyopyonState state, string playerName)
+    public void ExecuteBenkyou(PlayerRef player, UyopyonState state, string playerName, bool isMorning)
     {
         // 元気減少
         state.Energy -= 25;
@@ -178,7 +178,7 @@ public class SpecialAbilityExecutor
     /// 効果: 元気-120、重さ半減、BuffMultiplier *= 1.5
     /// ジャンル: Scissors（チョキ）
     /// </summary>
-    public void ExecuteKintre(PlayerRef player, UyopyonState state, string playerName)
+    public void ExecuteKintre(PlayerRef player, UyopyonState state, string playerName, bool isMorning)
     {
         // 元気減少
         state.Energy -= 120;
@@ -190,6 +190,9 @@ public class SpecialAbilityExecutor
 
         // バフ倍率を1.5倍に増加（現在の値に1.5を掛ける）
         state.BuffMultiplier *= 1.5f;
+
+        // ケガ判定（あそぶと同じ判定）
+        turnProcessor.CheckInjury(player, state.Weight, isMorning);
 
         // ログに追加
         string log = $"{playerName}は「きんとれ」を実行！元気-120、重さ{turnProcessor.FormatNumber(weightChange)}、今後の重さ増加が1.5倍に！";

@@ -633,7 +633,7 @@ public class TurnProcessor : NetworkBehaviour
                 break;
 
             case SpecialAbilityType.Benkyou:
-                specialAbility.ExecuteBenkyou(player, state, playerName);
+                specialAbility.ExecuteBenkyou(player, state, playerName, isMorning);
                 break;
 
             case SpecialAbilityType.Jukusui:
@@ -645,7 +645,7 @@ public class TurnProcessor : NetworkBehaviour
                 break;
 
             case SpecialAbilityType.Kintre:
-                specialAbility.ExecuteKintre(player, state, playerName);
+                specialAbility.ExecuteKintre(player, state, playerName, isMorning);
                 break;
 
             default:
@@ -661,8 +661,8 @@ public class TurnProcessor : NetworkBehaviour
     /// <param name="weight">現在の重さ</param>
     public void CheckSickness(PlayerRef player, int weight)
     {
-        // 発症確率を計算（重さ ÷ 10 %）
-        float sicknessChance = weight / 10.0f;
+        // 発症確率を計算（重さ × パラメータ）
+        float sicknessChance = weight * gameParams.SicknessProbabilityPerWeight;
         
         // ランダム判定（0～100の乱数）
         float roll = UnityEngine.Random.Range(0f, 100f);
@@ -731,15 +731,15 @@ public class TurnProcessor : NetworkBehaviour
     }
 
     /// <summary>
-    /// ケガ発症判定（あそぶ実行時に呼び出される）
+    /// ケガ発症判定（あそぶ、きんとれ、べんきょう実行時に呼び出される）
     /// </summary>
     /// <param name="player">プレイヤー</param>
     /// <param name="weight">現在の重さ</param>
     /// <param name="isMorning">午前の行動かどうか</param>
-    private void CheckInjury(PlayerRef player, int weight, bool isMorning)
+    public void CheckInjury(PlayerRef player, int weight, bool isMorning)
     {
-        // 発症確率を計算（重さ ÷ 10 %）
-        float injuryChance = weight / 10.0f;
+        // 発症確率を計算（重さ × パラメータ）
+        float injuryChance = weight * gameParams.InjuryProbabilityPerWeight;
         
         // ランダム判定（0～100の乱数）
         float roll = UnityEngine.Random.Range(0f, 100f);
