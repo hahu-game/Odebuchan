@@ -33,9 +33,7 @@ public class UIController : MonoBehaviour
     public UnityEngine.UI.Button clinicButton;   // つういんボタン
 
     // === 行動選択ボタン（特殊能力） ===
-    [Header("Special Ability Button")]
-    public UnityEngine.UI.Button specialAbilityButton;
-    public TextMeshProUGUI specialAbilityButtonText;
+    // 9.3: specialAbilityButton/Text は削除されました（6つの個別ボタンに置き換え）
 
     // === 行動選択ボタンのOutline（選択フェーズ中に表示） ===
     [Header("Action Button Outlines")]
@@ -43,7 +41,13 @@ public class UIController : MonoBehaviour
     public UnityEngine.UI.Outline sleepButtonOutline;
     public UnityEngine.UI.Outline playButtonOutline;
     public UnityEngine.UI.Outline clinicButtonOutline;
-    public UnityEngine.UI.Outline specialAbilityButtonOutline;
+    // 9.3: 特殊能力ボタンのアウトライン（6つ個別に）
+    public UnityEngine.UI.Outline gaishokuButtonOutline;
+    public UnityEngine.UI.Outline kintreButtonOutline;
+    public UnityEngine.UI.Outline gamusharaButtonOutline;
+    public UnityEngine.UI.Outline benkyouButtonOutline;
+    public UnityEngine.UI.Outline jukusuiButtonOutline;
+    public UnityEngine.UI.Outline dokaguiButtonOutline;
 
     // === 確定・クリアボタン（3.1で追加） ===
     public UnityEngine.UI.Button fixButton;      // 確定ボタン
@@ -71,9 +75,18 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI oppTodayAfternoonActionText; // クリアボタン
 
     // === 6.7で追加: 状態異常テキスト表示 ===
+    // 9.3修正: パネルを4つに分割（病気とケガを分離）
+    [Header("Status Ailment Panels")]
+    public GameObject mySicknessPanel;     // 自分の病気パネル
+    public GameObject myInjuryPanel;       // 自分のケガパネル
+    public GameObject oppSicknessPanel;    // 相手の病気パネル
+    public GameObject oppInjuryPanel;      // 相手のケガパネル
+
     [Header("Status Ailment Texts")]
-    public TextMeshProUGUI[] myStatusAilmentTexts = new TextMeshProUGUI[4];
-    public TextMeshProUGUI[] oppStatusAilmentTexts = new TextMeshProUGUI[4];
+    public TextMeshProUGUI[] mySicknessTexts = new TextMeshProUGUI[2];  // [0]=睡眠時無呼吸, [1]=糖尿病
+    public TextMeshProUGUI[] myInjuryTexts = new TextMeshProUGUI[2];    // [0]=腰痛, [1]=熱中症
+    public TextMeshProUGUI[] oppSicknessTexts = new TextMeshProUGUI[2]; // [0]=睡眠時無呼吸, [1]=糖尿病
+    public TextMeshProUGUI[] oppInjuryTexts = new TextMeshProUGUI[2];   // [0]=腰痛, [1]=熱中症
 
     // === 7.1で追加: 特殊能力選択UI ===
     [Header("Special Ability Choice Panel")]
@@ -108,6 +121,72 @@ public class UIController : MonoBehaviour
     [Header("Setting Panel")]
     public SettingController settingController;
 
+    // === 9.3で追加: 行動選択時の効果予測表示（アイコン+数値分離表示） ===
+    // アイコンは常に表示されるため、数値テキストのみをスクリプトから制御
+    [Header("Action Effect Display - Eat (たべる)")]
+    public TextMeshProUGUI eatEnergyValueText;
+    public TextMeshProUGUI eatWeightValueText;
+    public TextMeshProUGUI eatSicknessProbabilityText;
+
+    [Header("Action Effect Display - Sleep (ねむる)")]
+    public TextMeshProUGUI sleepEnergyValueText;
+
+    [Header("Action Effect Display - Play (あそぶ)")]
+    public TextMeshProUGUI playEnergyValueText;
+    public TextMeshProUGUI playEnergyBuffText;
+    public TextMeshProUGUI playWeightBuffText;
+    public TextMeshProUGUI playInjuryProbabilityText;
+
+    [Header("Action Effect Display - Clinic (つういん)")]
+    public TextMeshProUGUI clinicEnergyValueText;
+
+    // === 9.3で追加: 特殊能力ボタン（6つの個別ボタン） ===
+    [Header("Special Ability Buttons (がいしょく)")]
+    public UnityEngine.UI.Button gaishokuButton;
+    public TextMeshProUGUI gaishokuEnergyValueText;
+    public TextMeshProUGUI gaishokuWeightValueText;
+    public TextMeshProUGUI gaishokuSicknessProbabilityText;
+
+    [Header("Special Ability Buttons (きんとれ)")]
+    public UnityEngine.UI.Button kintreButton;
+    public TextMeshProUGUI kintreEnergyValueText;
+    public TextMeshProUGUI kintreWeightValueText;
+    public TextMeshProUGUI kintreEnergyBuffText;
+    public TextMeshProUGUI kintreWeightBuffText;
+    public TextMeshProUGUI kintreInjuryProbabilityText;
+
+    [Header("Special Ability Buttons (がむしゃら)")]
+    public UnityEngine.UI.Button gamusharaButton;
+
+    [Header("Special Ability Buttons (べんきょう)")]
+    public UnityEngine.UI.Button benkyouButton;
+    public TextMeshProUGUI benkyouEnergyValueText;
+    public TextMeshProUGUI benkyouWeightBuffText;
+    public TextMeshProUGUI benkyouStudyComboText;
+
+    [Header("Special Ability Buttons (じゅくすい)")]
+    public UnityEngine.UI.Button jukusuiButton;
+    public TextMeshProUGUI jukusuiEnergyValueText;
+
+    [Header("Special Ability Buttons (どかぐい)")]
+    public UnityEngine.UI.Button dokaguiButton;
+    public TextMeshProUGUI dokaguiEnergyValueText;
+    public TextMeshProUGUI dokaguiWeightValueText;
+    public TextMeshProUGUI dokaguiSicknessProbabilityText;
+
+    [Header("Action Tooltip Panels (ホバー時の詳細表示)")]
+    public GameObject eatTooltipPanel;
+    public GameObject sleepTooltipPanel;
+    public GameObject playTooltipPanel;
+    public GameObject clinicTooltipPanel;
+    public GameObject specialAbilityTooltipPanel;
+
+    public TextMeshProUGUI eatTooltipText;
+    public TextMeshProUGUI sleepTooltipText;
+    public TextMeshProUGUI playTooltipText;
+    public TextMeshProUGUI clinicTooltipText;
+    public TextMeshProUGUI specialAbilityTooltipText;
+
     // === 3.4で追加: ブラックアウトパネルとログエリア ===
     [Header("Blackout Panel")]
     public GameObject blackoutPanel;
@@ -129,7 +208,7 @@ public class UIController : MonoBehaviour
     private PlayerRef _localPlayerRef;
 
     // === フォントサイズのデフォルト値保存 ===
-    private float _defaultSpecialAbilityButtonTextSize;
+    // 9.3: _defaultSpecialAbilityButtonTextSize は削除されました
     private float _defaultActionTextSize;
 
 
@@ -147,10 +226,7 @@ public class UIController : MonoBehaviour
         }
 
         // デフォルトのフォントサイズを保存
-        if (specialAbilityButtonText != null)
-        {
-            _defaultSpecialAbilityButtonTextSize = specialAbilityButtonText.fontSize;
-        }
+        // 9.3: specialAbilityButtonText は削除されました
         if (myTodayMorningActionText != null)
         {
             _defaultActionTextSize = myTodayMorningActionText.fontSize;
@@ -171,6 +247,45 @@ public class UIController : MonoBehaviour
             resultPanel.SetActive(false);
             Debug.Log("[UIController] リザルトパネルを非表示に設定");
         }
+
+        // 9.3: 6つの特殊能力ボタンにクリックリスナーを追加（それぞれの特殊能力タイプを指定）
+        // 古いリスナーを削除してから新しいリスナーを追加
+        if (gaishokuButton != null)
+        {
+            gaishokuButton.onClick.RemoveAllListeners();
+            gaishokuButton.onClick.AddListener(() => OnSpecialAbilityButtonClicked(SpecialAbilityType.Gaishoku));
+        }
+        if (kintreButton != null)
+        {
+            kintreButton.onClick.RemoveAllListeners();
+            kintreButton.onClick.AddListener(() => OnSpecialAbilityButtonClicked(SpecialAbilityType.Kintre));
+        }
+        if (gamusharaButton != null)
+        {
+            gamusharaButton.onClick.RemoveAllListeners();
+            gamusharaButton.onClick.AddListener(() => OnSpecialAbilityButtonClicked(SpecialAbilityType.Gamushara));
+        }
+        if (benkyouButton != null)
+        {
+            benkyouButton.onClick.RemoveAllListeners();
+            benkyouButton.onClick.AddListener(() => OnSpecialAbilityButtonClicked(SpecialAbilityType.Benkyou));
+        }
+        if (jukusuiButton != null)
+        {
+            jukusuiButton.onClick.RemoveAllListeners();
+            jukusuiButton.onClick.AddListener(() => OnSpecialAbilityButtonClicked(SpecialAbilityType.Jukusui));
+        }
+        if (dokaguiButton != null)
+        {
+            dokaguiButton.onClick.RemoveAllListeners();
+            dokaguiButton.onClick.AddListener(() => OnSpecialAbilityButtonClicked(SpecialAbilityType.Dokagui));
+        }
+
+        // 9.3: 状態異常パネルの初期化（初期状態では全て非表示）
+        if (mySicknessPanel != null) mySicknessPanel.SetActive(false);
+        if (myInjuryPanel != null) myInjuryPanel.SetActive(false);
+        if (oppSicknessPanel != null) oppSicknessPanel.SetActive(false);
+        if (oppInjuryPanel != null) oppInjuryPanel.SetActive(false);
 
         Debug.Log("[UIController] Start: 初期化完了");
     }
@@ -242,11 +357,13 @@ public class UIController : MonoBehaviour
 
     /// <summary>
     /// 進化状態の表示を更新（TODO 3実装）
+    /// 9.3: specialAbilityButton は削除され、6つの個別ボタンに置き換えられました
+    /// 各ボタンの表示/非表示は UpdateAllActionEffectDisplay() で管理されます
     /// </summary>
     public void UpdateEvolutionDisplay(PlayerRef player, bool hasEvolved, string abilityName)
     {
         Debug.Log($"[UIController] UpdateEvolutionDisplay: player={player}, hasEvolved={hasEvolved}, abilityName={abilityName}");
-        
+
         // 自分のプレイヤーの場合のみ特殊能力ボタンを制御
         if (!IsMyPlayer(player))
         {
@@ -254,48 +371,15 @@ public class UIController : MonoBehaviour
             return;
         }
 
-        if (specialAbilityButton == null)
-        {
-            Debug.LogWarning("[UIController] specialAbilityButton が null です");
-            return;
-        }
+        // 9.3: specialAbilityButton は削除されました
+        // 特殊能力ボタンの表示/非表示は UpdateAllActionEffectDisplay() で自動的に管理されます
+        Debug.Log($"[UIController] 進化状態更新: hasEvolved={hasEvolved}, abilityName={abilityName}");
 
-        // 進化前: 特殊能力ボタンを非表示
-        // 進化後: 特殊能力ボタンを表示し、特殊能力名を設定
+        // ボタンの状態更新は UpdateSpecialAbilityButtonState() で処理されます
         if (hasEvolved)
         {
-            specialAbilityButton.gameObject.SetActive(true);
-
-            // 特殊能力名を表示
-            if (specialAbilityButtonText != null && !string.IsNullOrEmpty(abilityName))
-            {
-                // SpecialAbilityTypeに変換して表示名を取得
-                if (System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
-                {
-                    specialAbilityButtonText.text = GetSpecialAbilityDisplayName(abilityType);
-                    // 5文字の特殊能力名の場合、フォントサイズを25に変更
-                    SetFontSizeForSpecialAbility(specialAbilityButtonText, specialAbilityButtonText.text, _defaultSpecialAbilityButtonTextSize, 25f);
-                    Debug.Log($"[UIController] 特殊能力ボタンのテキストを設定: {specialAbilityButtonText.text}");
-                }
-                else
-                {
-                    specialAbilityButtonText.text = abilityName;
-                    // フォントサイズをデフォルトに戻す
-                    SetFontSizeForSpecialAbility(specialAbilityButtonText, specialAbilityButtonText.text, _defaultSpecialAbilityButtonTextSize, 25f);
-                    Debug.LogWarning($"[UIController] SpecialAbilityType のパースに失敗: {abilityName}");
-                }
-            }
-
-            // ボタンを有効化（じゅくすい・どかぐいの場合は条件チェック）
             Debug.Log("[UIController] UpdateSpecialAbilityButtonState() を呼び出します");
             UpdateSpecialAbilityButtonState();
-
-            Debug.Log($"[UIController] 進化後の表示: 特殊能力ボタンを表示 ({abilityName})");
-        }
-        else
-        {
-            specialAbilityButton.gameObject.SetActive(false);
-            Debug.Log("[UIController] 進化前の表示: 特殊能力ボタンを非表示");
         }
     }
 
@@ -500,6 +584,18 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// TODO 5: 特殊能力ボタンがクリックされた時の処理
     /// </summary>
+    /// <summary>
+    /// 6つの特殊能力ボタンがクリックされた時の処理（特殊能力タイプを指定）
+    /// </summary>
+    public void OnSpecialAbilityButtonClicked(SpecialAbilityType abilityType)
+    {
+        Debug.Log($"[UIController] OnSpecialAbilityButtonClicked({abilityType}) が呼ばれました");
+        OnActionButtonClicked(ActionType.SpecialAbility, abilityType);
+    }
+
+    /// <summary>
+    /// 旧: 特殊能力ボタンがクリックされた時の処理（非推奨：6つの個別ボタンに移行）
+    /// </summary>
     public void OnSpecialAbilityButtonClicked()
     {
         Debug.Log("[UIController] OnSpecialAbilityButtonClicked が呼ばれました");
@@ -571,6 +667,9 @@ public class UIController : MonoBehaviour
             myActionData.RPC_FixActions();
 
             Debug.Log($"[UIController] 行動を確定しました: Player={myActionData.OwnerPlayer}, 午前={_morningAction.Value.Type}, 午後={_afternoonAction.Value.Type}");
+
+            // LogAreaに確定メッセージを表示
+            AddLog("行動を確定しました。対戦相手の選択を待っています。");
 
             // 確定後、行動ボタンと確定・クリアボタンを無効化（ロック）
             LockActionButtons();
@@ -652,6 +751,55 @@ public class UIController : MonoBehaviour
     // ... その他、ラウンド表示、メッセージ表示などのメソッド ...
 
 
+
+    /// <summary>
+    /// 6つの特殊能力ボタンがクリックされた時の処理（特殊能力タイプを直接指定）
+    /// 9.3: べんきょうボタン修正 - 特殊能力タイプを直接渡すように変更
+    /// </summary>
+    private void OnActionButtonClicked(ActionType actionType, SpecialAbilityType abilityType)
+    {
+        Debug.Log($"[UIController] OnActionButtonClicked 開始: actionType={actionType}, abilityType={abilityType}");
+
+        // ActionDataを生成
+        ActionData selectedAction = ActionData.CreateSpecialAbility(abilityType);
+        Debug.Log($"[UIController] ActionData作成成功: {abilityType}");
+
+        // 午前が未選択なら午前に設定、選択済みなら午後に設定
+        if (!_isMorningSelected)
+        {
+            _morningAction = selectedAction;
+            _isMorningSelected = true;
+            Debug.Log($"[UIController] 午前の行動を選択: {abilityType}");
+
+            // パネル表示を更新（自分の午前）
+            var runner = FindFirstObjectByType<NetworkRunner>();
+            if (runner != null)
+            {
+                UpdateActionDisplay(runner.LocalPlayer, true, selectedAction);
+            }
+
+            HighlightCurrentSelection(false); // 午前選択中を表示
+
+            // 午前の行動が選択されたので、午後のボタン状態を更新
+            UpdateActionButtonsBasedOnEnergy();
+            Debug.Log($"[UIController] 午前の行動選択後、午後のボタン状態を更新しました");
+        }
+        else
+        {
+            _afternoonAction = selectedAction;
+            Debug.Log($"[UIController] 午後の行動を選択: {abilityType}");
+
+            // パネル表示を更新（自分の午後）
+            var runner = FindFirstObjectByType<NetworkRunner>();
+            if (runner != null)
+            {
+                UpdateActionDisplay(runner.LocalPlayer, false, selectedAction);
+            }
+
+            // 午前・午後の両方が選択されたので、選択完了
+            HighlightCurrentSelection(false); // ハイライト解除（未選択状態に戻す）
+        }
+    }
 
     /// <summary>
     /// 行動ボタンがクリックされた時の共通処理（3.2で追加）
@@ -1045,12 +1193,47 @@ public class UIController : MonoBehaviour
             clinicButtonOutline.enabled = true;
         }
 
-        // 特殊能力ボタンのアウトラインも表示（進化後かつボタンが表示されている場合のみ）
-        if (specialAbilityButtonOutline != null && specialAbilityButton != null && specialAbilityButton.gameObject.activeSelf)
+        // 9.3: 特殊能力ボタンのアウトラインも表示（6つ個別に、アクティブな場合のみ）
+        if (gaishokuButtonOutline != null && gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
         {
-            specialAbilityButtonOutline.effectColor = outlineColor;
-            specialAbilityButtonOutline.effectDistance = outlineDistance;
-            specialAbilityButtonOutline.enabled = true;
+            gaishokuButtonOutline.effectColor = outlineColor;
+            gaishokuButtonOutline.effectDistance = outlineDistance;
+            gaishokuButtonOutline.enabled = true;
+        }
+
+        if (kintreButtonOutline != null && kintreButton != null && kintreButton.gameObject.activeSelf)
+        {
+            kintreButtonOutline.effectColor = outlineColor;
+            kintreButtonOutline.effectDistance = outlineDistance;
+            kintreButtonOutline.enabled = true;
+        }
+
+        if (gamusharaButtonOutline != null && gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
+        {
+            gamusharaButtonOutline.effectColor = outlineColor;
+            gamusharaButtonOutline.effectDistance = outlineDistance;
+            gamusharaButtonOutline.enabled = true;
+        }
+
+        if (benkyouButtonOutline != null && benkyouButton != null && benkyouButton.gameObject.activeSelf)
+        {
+            benkyouButtonOutline.effectColor = outlineColor;
+            benkyouButtonOutline.effectDistance = outlineDistance;
+            benkyouButtonOutline.enabled = true;
+        }
+
+        if (jukusuiButtonOutline != null && jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
+        {
+            jukusuiButtonOutline.effectColor = outlineColor;
+            jukusuiButtonOutline.effectDistance = outlineDistance;
+            jukusuiButtonOutline.enabled = true;
+        }
+
+        if (dokaguiButtonOutline != null && dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
+        {
+            dokaguiButtonOutline.effectColor = outlineColor;
+            dokaguiButtonOutline.effectDistance = outlineDistance;
+            dokaguiButtonOutline.enabled = true;
         }
     }
 
@@ -1070,18 +1253,27 @@ public class UIController : MonoBehaviour
         if (playButton != null) playButton.interactable = interactable;
         if (clinicButton != null) clinicButton.interactable = interactable;
 
-        // 特殊能力ボタンの制御（進化後かつボタンが表示されている場合のみ）
-        if (specialAbilityButton != null && specialAbilityButton.gameObject.activeSelf)
+        // 9.3: 特殊能力ボタンの制御（6つ個別に、アクティブなボタンのみ）
+        if (interactable)
         {
-            if (interactable)
-            {
-                // 有効化する場合は、じゅくすい・どかぐいの条件チェック
-                UpdateSpecialAbilityButtonState();
-            }
-            else
-            {
-                specialAbilityButton.interactable = false;
-            }
+            // 有効化する場合は、じゅくすい・どかぐいの条件チェック
+            UpdateSpecialAbilityButtonState();
+        }
+        else
+        {
+            // 無効化する場合は、すべての特殊能力ボタンを無効化
+            if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
+                gaishokuButton.interactable = false;
+            if (kintreButton != null && kintreButton.gameObject.activeSelf)
+                kintreButton.interactable = false;
+            if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
+                gamusharaButton.interactable = false;
+            if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
+                benkyouButton.interactable = false;
+            if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
+                jukusuiButton.interactable = false;
+            if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
+                dokaguiButton.interactable = false;
         }
 
         // 確定・クリアボタンも同時に制御
@@ -1169,12 +1361,24 @@ public class UIController : MonoBehaviour
             clinicButton.interactable = EnergyCheck.CanPerformAction(currentEnergy, ActionType.Clinic, isMorning, morningAction, previousAction, gameParams);
         }
 
-        // 特殊能力ボタン（進化後のみ）
-        if (specialAbilityButton != null && specialAbilityButton.gameObject.activeSelf && myState.HasEvolved)
+        // 9.3: 特殊能力ボタン（6つ個別に、進化後のみ、アクティブなボタンのみ）
+        if (myState.HasEvolved)
         {
             string abilityName = myState.SpecialAbilityName.ToString();
             bool canUseAbility = EnergyCheck.CanUseSpecialAbility(currentEnergy, abilityName, isMorning, morningAction, previousAction, gameParams);
-            specialAbilityButton.interactable = canUseAbility;
+
+            if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
+                gaishokuButton.interactable = canUseAbility;
+            if (kintreButton != null && kintreButton.gameObject.activeSelf)
+                kintreButton.interactable = canUseAbility;
+            if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
+                gamusharaButton.interactable = canUseAbility;
+            if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
+                benkyouButton.interactable = canUseAbility;
+            if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
+                jukusuiButton.interactable = canUseAbility;
+            if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
+                dokaguiButton.interactable = canUseAbility;
         }
 
         // 確定・クリアボタンは常に有効
@@ -1196,8 +1400,13 @@ public class UIController : MonoBehaviour
         if (playButton != null) playButton.interactable = false;
         if (clinicButton != null) clinicButton.interactable = false;
 
-        // 特殊能力ボタンを無効化（進化後の場合）
-        if (specialAbilityButton != null) specialAbilityButton.interactable = false;
+        // 9.3: 特殊能力ボタンを無効化（6つ個別に）
+        if (gaishokuButton != null) gaishokuButton.interactable = false;
+        if (kintreButton != null) kintreButton.interactable = false;
+        if (gamusharaButton != null) gamusharaButton.interactable = false;
+        if (benkyouButton != null) benkyouButton.interactable = false;
+        if (jukusuiButton != null) jukusuiButton.interactable = false;
+        if (dokaguiButton != null) dokaguiButton.interactable = false;
 
         // 確定・クリアボタンを無効化
         if (fixButton != null) fixButton.interactable = false;
@@ -1212,7 +1421,14 @@ public class UIController : MonoBehaviour
         if (sleepButtonOutline != null) sleepButtonOutline.enabled = false;
         if (playButtonOutline != null) playButtonOutline.enabled = false;
         if (clinicButtonOutline != null) clinicButtonOutline.enabled = false;
-        if (specialAbilityButtonOutline != null) specialAbilityButtonOutline.enabled = false;
+
+        // 9.3: 特殊能力ボタンのアウトラインを非表示（6つ個別に）
+        if (gaishokuButtonOutline != null) gaishokuButtonOutline.enabled = false;
+        if (kintreButtonOutline != null) kintreButtonOutline.enabled = false;
+        if (gamusharaButtonOutline != null) gamusharaButtonOutline.enabled = false;
+        if (benkyouButtonOutline != null) benkyouButtonOutline.enabled = false;
+        if (jukusuiButtonOutline != null) jukusuiButtonOutline.enabled = false;
+        if (dokaguiButtonOutline != null) dokaguiButtonOutline.enabled = false;
     }
 
     /// <summary>
@@ -1238,35 +1454,32 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// TODO 4: 特殊能力ボタンの有効/無効を更新（じゅくすい・どかぐいの選択条件チェック）
     /// 選択フェーズ開始時に呼ぶ
+    /// 9.3: 6つの個別ボタンに対応
     /// </summary>
     public void UpdateSpecialAbilityButtonState()
     {
         Debug.Log("[UIController] UpdateSpecialAbilityButtonState 開始");
 
-        // 特殊能力ボタンが存在しない場合は何もしない
-        if (specialAbilityButton == null)
-        {
-            Debug.LogWarning("[UIController] specialAbilityButton is null");
-            return;
-        }
-
-        if (!specialAbilityButton.gameObject.activeSelf)
-        {
-            Debug.LogWarning($"[UIController] specialAbilityButton.gameObject.activeSelf = {specialAbilityButton.gameObject.activeSelf}");
-            return;
-        }
-
         // ゲームフェーズをチェック（選択フェーズ以外ではボタンを無効化）
         if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentPhase != GamePhase.Selection)
         {
-            specialAbilityButton.interactable = false;
+            // 9.3: 6つのボタンすべてを無効化
+            if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
+                gaishokuButton.interactable = false;
+            if (kintreButton != null && kintreButton.gameObject.activeSelf)
+                kintreButton.interactable = false;
+            if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
+                gamusharaButton.interactable = false;
+            if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
+                benkyouButton.interactable = false;
+            if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
+                jukusuiButton.interactable = false;
+            if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
+                dokaguiButton.interactable = false;
+
             Debug.Log($"[UIController] 選択フェーズ以外のため特殊能力ボタンを無効化。CurrentPhase={GameFlowManager.Instance?.CurrentPhase}");
             return;
         }
-
-        // デフォルトで有効化（早期リターンしても有効状態を維持）
-        specialAbilityButton.interactable = true;
-        Debug.Log("[UIController] specialAbilityButton をデフォルトで有効化");
 
         // NetworkRunnerから自分のPlayerRefを取得
         var runner = FindFirstObjectByType<NetworkRunner>();
@@ -1314,27 +1527,25 @@ public class UIController : MonoBehaviour
 
         if (string.IsNullOrEmpty(abilityName))
         {
-            // 特殊能力が設定されていない場合は有効にする
-            specialAbilityButton.interactable = true;
-            Debug.Log("[UIController] 特殊能力名が空のため、ボタンを有効化");
+            // 特殊能力が設定されていない場合は何もしない
+            Debug.Log("[UIController] 特殊能力名が空のため、処理をスキップ");
             return;
         }
 
         // SpecialAbilityTypeに変換
         if (!System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
         {
-            // 変換失敗時は有効にする
-            specialAbilityButton.interactable = true;
-            Debug.LogWarning($"[UIController] 特殊能力名のパースに失敗: {abilityName}、ボタンを有効化");
+            Debug.LogWarning($"[UIController] 特殊能力名のパースに失敗: {abilityName}");
             return;
         }
 
         Debug.Log($"[UIController] 特殊能力タイプ: {abilityType}");
 
-        // じゅくすい・どかぐい以外の場合は常に有効
+        // じゅくすい・どかぐい以外の場合は常に有効（該当するボタンのみ）
         if (abilityType != SpecialAbilityType.Jukusui && abilityType != SpecialAbilityType.Dokagui)
         {
-            specialAbilityButton.interactable = true;
+            // 9.3: 該当する特殊能力ボタンを有効化
+            EnableSpecialAbilityButton(abilityType, true);
             Debug.Log($"[UIController] {abilityType} は条件なしで有効化");
             return;
         }
@@ -1362,8 +1573,43 @@ public class UIController : MonoBehaviour
             Debug.Log($"[UIController] どかぐい: 重さ合計={totalWeight}, 偶数={!isOdd}, 有効={shouldEnable}");
         }
 
-        specialAbilityButton.interactable = shouldEnable;
-        Debug.Log($"[UIController] specialAbilityButton.interactable を {shouldEnable} に設定");
+        // 9.3: 該当する特殊能力ボタンを有効/無効化
+        EnableSpecialAbilityButton(abilityType, shouldEnable);
+        Debug.Log($"[UIController] {abilityType} ボタンのinteractableを {shouldEnable} に設定");
+    }
+
+    /// <summary>
+    /// 9.3: 指定された特殊能力ボタンの有効/無効を設定
+    /// </summary>
+    private void EnableSpecialAbilityButton(SpecialAbilityType abilityType, bool enable)
+    {
+        switch (abilityType)
+        {
+            case SpecialAbilityType.Gaishoku:
+                if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
+                    gaishokuButton.interactable = enable;
+                break;
+            case SpecialAbilityType.Kintre:
+                if (kintreButton != null && kintreButton.gameObject.activeSelf)
+                    kintreButton.interactable = enable;
+                break;
+            case SpecialAbilityType.Gamushara:
+                if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
+                    gamusharaButton.interactable = enable;
+                break;
+            case SpecialAbilityType.Benkyou:
+                if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
+                    benkyouButton.interactable = enable;
+                break;
+            case SpecialAbilityType.Jukusui:
+                if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
+                    jukusuiButton.interactable = enable;
+                break;
+            case SpecialAbilityType.Dokagui:
+                if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
+                    dokaguiButton.interactable = enable;
+                break;
+        }
     }
 
     /// <summary>
@@ -1388,48 +1634,86 @@ public class UIController : MonoBehaviour
 
     /// <summary>
     /// 状態異常テキストを更新
+    /// 9.3修正: 病気とケガを別々のパネルに分けて表示
     /// </summary>
     /// <param name="player">プレイヤー</param>
-    /// <param name="ailments">状態異常配列</param>
+    /// <param name="ailments">状態異常配列 [0]=睡眠時無呼吸, [1]=糖尿病, [2]=腰痛, [3]=熱中症</param>
     public void UpdateStatusAilmentDisplay(PlayerRef player, byte[] ailments)
     {
         // 自分のプレイヤーか判定
         bool isMyPlayer = IsMyPlayer(player);
-        TextMeshProUGUI[] texts = isMyPlayer ? myStatusAilmentTexts : oppStatusAilmentTexts;
 
-        // すべての親オブジェクト（first, second, third, fourth）を非表示
-        foreach (var text in texts)
-        {
-            if (text != null && text.transform.parent != null)
-            {
-                text.transform.parent.gameObject.SetActive(false);
-            }
-        }
+        // プレイヤーごとのパネルとテキストを取得
+        GameObject sicknessPanel = isMyPlayer ? mySicknessPanel : oppSicknessPanel;
+        GameObject injuryPanel = isMyPlayer ? myInjuryPanel : oppInjuryPanel;
+        TextMeshProUGUI[] sicknessTexts = isMyPlayer ? mySicknessTexts : oppSicknessTexts;
+        TextMeshProUGUI[] injuryTexts = isMyPlayer ? myInjuryTexts : oppInjuryTexts;
 
-        // 状態異常があれば対応するテキストを表示
-        int textIndex = 0;
-        for (int i = 0; i < ailments.Length && textIndex < texts.Length; i++)
+        // 病気パネルの更新（インデックス0=睡眠時無呼吸, 1=糖尿病）
+        bool hasSickness = false;
+        int sicknessTextIndex = 0;
+        for (int i = 0; i < 2; i++) // 病気は0と1
         {
-            if (ailments[i] != 0) // 状態異常あり
+            if (i < ailments.Length && ailments[i] != 0)
             {
-                // インデックスから状態異常の種類を判定
+                hasSickness = true;
                 StatusAilment ailment = IndexToStatusAilment(i);
                 string ailmentText = GetStatusAilmentText(ailment);
 
-                if (!string.IsNullOrEmpty(ailmentText) && texts[textIndex] != null)
+                if (!string.IsNullOrEmpty(ailmentText) && sicknessTextIndex < sicknessTexts.Length && sicknessTexts[sicknessTextIndex] != null)
                 {
-                    texts[textIndex].text = ailmentText;
-                    // 親オブジェクト（first, second, third, fourth）を表示
-                    if (texts[textIndex].transform.parent != null)
-                    {
-                        texts[textIndex].transform.parent.gameObject.SetActive(true);
-                    }
-                    textIndex++;
+                    sicknessTexts[sicknessTextIndex].text = ailmentText;
+                    sicknessTextIndex++;
                 }
             }
         }
+        // 病気がない場合は未使用のテキストをクリア
+        for (int i = sicknessTextIndex; i < sicknessTexts.Length; i++)
+        {
+            if (sicknessTexts[i] != null)
+            {
+                sicknessTexts[i].text = "";
+            }
+        }
+        // 病気パネルの表示/非表示
+        if (sicknessPanel != null)
+        {
+            sicknessPanel.SetActive(hasSickness);
+        }
 
-        Debug.Log($"[UIController] Player {player} の状態異常テキストを更新しました（表示数: {textIndex}）");
+        // ケガパネルの更新（インデックス2=腰痛, 3=熱中症）
+        bool hasInjury = false;
+        int injuryTextIndex = 0;
+        for (int i = 2; i < 4; i++) // ケガは2と3
+        {
+            if (i < ailments.Length && ailments[i] != 0)
+            {
+                hasInjury = true;
+                StatusAilment ailment = IndexToStatusAilment(i);
+                string ailmentText = GetStatusAilmentText(ailment);
+
+                if (!string.IsNullOrEmpty(ailmentText) && injuryTextIndex < injuryTexts.Length && injuryTexts[injuryTextIndex] != null)
+                {
+                    injuryTexts[injuryTextIndex].text = ailmentText;
+                    injuryTextIndex++;
+                }
+            }
+        }
+        // ケガがない場合は未使用のテキストをクリア
+        for (int i = injuryTextIndex; i < injuryTexts.Length; i++)
+        {
+            if (injuryTexts[i] != null)
+            {
+                injuryTexts[i].text = "";
+            }
+        }
+        // ケガパネルの表示/非表示
+        if (injuryPanel != null)
+        {
+            injuryPanel.SetActive(hasInjury);
+        }
+
+        Debug.Log($"[UIController] Player {player} の状態異常を更新: 病気{sicknessTextIndex}件, ケガ{injuryTextIndex}件");
     }
 
     /// <summary>
@@ -1540,7 +1824,7 @@ public class UIController : MonoBehaviour
                         int index = i; // クロージャのためローカル変数にコピー
                         SpecialAbilityType ability = choices[i];
                         specialAbilityButtons[i].onClick.RemoveAllListeners();
-                        specialAbilityButtons[i].onClick.AddListener(() => OnSpecialAbilityButtonClicked(ability));
+                        specialAbilityButtons[i].onClick.AddListener(() => OnAbilityChoicePanelButtonClicked(ability));
                         
                         Debug.Log($"[UIController] 選択肢 {choices[i]} は有効（黒色テキスト）");
                     }
@@ -1562,11 +1846,11 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
-    /// 特殊能力選択ボタンがクリックされた時の処理
+    /// 進化時の特殊能力選択パネルのボタンがクリックされた時の処理
     /// </summary>
-    private void OnSpecialAbilityButtonClicked(SpecialAbilityType ability)
+    private void OnAbilityChoicePanelButtonClicked(SpecialAbilityType ability)
     {
-        Debug.Log($"[UIController] 特殊能力 {ability} が選択されました");
+        Debug.Log($"[UIController] 特殊能力選択パネルで {ability} が選択されました");
 
         _selectedAbility = ability;
         _isAbilitySelectionComplete = true;
@@ -2168,5 +2452,498 @@ public class UIController : MonoBehaviour
     {
         ShowSettingPanel();
     }
+
+    // === 9.3: 行動選択時の効果予測表示メソッド ===
+
+    /// <summary>
+    /// 行動ボタンにホバーした時にツールチップを表示
+    /// </summary>
+    /// <summary>
+    /// 行動ボタンにホバーした時にツールチップ（詳細情報）を表示
+    /// </summary>
+    public void ShowActionTooltip(ActionType action)
+    {
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null || runner.LocalPlayer == PlayerRef.None) return;
+
+        UyopyonState myState = GameManager.Instance?.GetUyopyonState(runner.LocalPlayer);
+        PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+        GameParameters gameParams = GameFlowManager.Instance?.gameParams;
+
+        if (myState == null || myActionData == null || gameParams == null) return;
+
+        // 詳細テキストを生成（ActionDetailDisplayを使用）
+        string detailText = ActionDetailDisplay.GenerateDetailText(action, null, myState, myActionData, gameParams);
+
+        // 対応するツールチップを表示
+        switch (action)
+        {
+            case ActionType.Eat:
+                if (eatTooltipPanel != null && eatTooltipText != null)
+                {
+                    eatTooltipText.text = detailText;
+                    eatTooltipPanel.SetActive(true);
+                }
+                break;
+            case ActionType.Sleep:
+                if (sleepTooltipPanel != null && sleepTooltipText != null)
+                {
+                    sleepTooltipText.text = detailText;
+                    sleepTooltipPanel.SetActive(true);
+                }
+                break;
+            case ActionType.Play:
+                if (playTooltipPanel != null && playTooltipText != null)
+                {
+                    playTooltipText.text = detailText;
+                    playTooltipPanel.SetActive(true);
+                }
+                break;
+            case ActionType.Clinic:
+                if (clinicTooltipPanel != null && clinicTooltipText != null)
+                {
+                    clinicTooltipText.text = detailText;
+                    clinicTooltipPanel.SetActive(true);
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 特殊能力ボタンにホバーした時にツールチップ（詳細情報）を表示
+    /// </summary>
+    public void ShowSpecialAbilityTooltip()
+    {
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null || runner.LocalPlayer == PlayerRef.None) return;
+
+        UyopyonState myState = GameManager.Instance?.GetUyopyonState(runner.LocalPlayer);
+        PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+        GameParameters gameParams = GameFlowManager.Instance?.gameParams;
+
+        if (myState == null || myActionData == null || gameParams == null) return;
+        if (!myState.HasEvolved || string.IsNullOrEmpty(myState.SpecialAbilityName.ToString())) return;
+
+        string abilityName = myState.SpecialAbilityName.ToString();
+        string detailText = ActionDetailDisplay.GenerateDetailText(ActionType.SpecialAbility, abilityName, myState, myActionData, gameParams);
+
+        if (specialAbilityTooltipPanel != null && specialAbilityTooltipText != null)
+        {
+            specialAbilityTooltipText.text = detailText;
+            specialAbilityTooltipPanel.SetActive(true);
+        }
+    }
+
+    /// <summary>
+    /// すべての行動ボタンの常時表示テキストを更新
+    /// 選択フェーズ開始時やステータス変更時に呼び出す
+    /// </summary>
+    public void UpdateAllActionEffectDisplay()
+    {
+        Debug.Log("[UIController] UpdateAllActionEffectDisplay() 呼び出し");
+
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null || runner.LocalPlayer == PlayerRef.None)
+        {
+            Debug.LogWarning("[UIController] NetworkRunner or LocalPlayer not found");
+            return;
+        }
+
+        UyopyonState myState = GameManager.Instance?.GetUyopyonState(runner.LocalPlayer);
+        PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+        GameParameters gameParams = GameFlowManager.Instance?.gameParams;
+
+        if (myState == null || myActionData == null || gameParams == null)
+        {
+            Debug.LogWarning($"[UIController] データ取得失敗: State={myState != null}, ActionData={myActionData != null}, Params={gameParams != null}");
+            return;
+        }
+
+        Debug.Log($"[UIController] データ取得成功: Weight={myState.Weight}, BuffWeight={myState.PlayBuffWeight}, BuffEnergy={myState.PlayBuffEnergy}");
+
+        // 午前か午後かを判定
+        bool isMorning = (GameFlowManager.Instance.CurrentPhase == GamePhase.Selection &&
+                          myActionData.MorningAction.Type == ActionType.None);
+
+        // たべる：元気増減量、重さ増減量、病気にかかる確率
+        UpdateActionEffectDisplay(ActionType.Eat,
+            eatEnergyValueText, eatWeightValueText,
+            myState, myActionData, gameParams, isMorning,
+            sicknessProbabilityText: eatSicknessProbabilityText);
+
+        // ねむる：元気増減量のみ
+        UpdateActionEffectDisplay(ActionType.Sleep,
+            sleepEnergyValueText, null,
+            myState, myActionData, gameParams, isMorning);
+
+        // あそぶ：元気増減量、元気バフ量、重さバフ量、ケガにかかる確率
+        UpdateActionEffectDisplay(ActionType.Play,
+            playEnergyValueText, null,
+            myState, myActionData, gameParams, isMorning,
+            energyBuffText: playEnergyBuffText,
+            weightBuffText: playWeightBuffText,
+            injuryProbabilityText: playInjuryProbabilityText);
+
+        // つういん：元気増減量のみ
+        UpdateActionEffectDisplay(ActionType.Clinic,
+            clinicEnergyValueText, null,
+            myState, myActionData, gameParams, isMorning);
+
+        // 特殊能力の表示を更新（進化後のみ）
+        if (myState.HasEvolved && !string.IsNullOrEmpty(myState.SpecialAbilityName.ToString()))
+        {
+            UpdateSpecialAbilityButtons(myState.SpecialAbilityName.ToString(),
+                myState, myActionData, gameParams, isMorning);
+        }
+    }
+
+    /// <summary>
+    /// 個別の行動ボタンの常時表示を更新（数値テキストのみ）
+    /// </summary>
+    private void UpdateActionEffectDisplay(
+        ActionType action,
+        TextMeshProUGUI energyValueText,
+        TextMeshProUGUI weightValueText,
+        UyopyonState state,
+        PlayerActionData actionData,
+        GameParameters gameParams,
+        bool isMorning,
+        TextMeshProUGUI sicknessProbabilityText = null,
+        TextMeshProUGUI injuryProbabilityText = null,
+        TextMeshProUGUI energyBuffText = null,
+        TextMeshProUGUI weightBuffText = null)
+    {
+        int energyChange = ActionCalculator.CalculateEnergyChange(action, null, state, actionData, gameParams, isMorning);
+        int weightChange = ActionCalculator.CalculateWeightChange(action, null, state, gameParams);
+
+        Debug.Log($"[UIController] {action} - Energy: {energyChange}, Weight: {weightChange}, BuffWeight: {state.PlayBuffWeight}");
+
+        // 元気値テキストの更新
+        if (energyValueText != null)
+        {
+            Debug.Log($"[UIController] {action} EnergyText GameObject名: {energyValueText.gameObject.name}, 更新前Active: {energyValueText.gameObject.activeSelf}");
+            if (energyChange != 0)
+            {
+                energyValueText.gameObject.SetActive(true);
+                energyValueText.text = FormatChange(energyChange);
+                Debug.Log($"[UIController] {action} Energy表示更新: {energyValueText.text}, 更新後Active: {energyValueText.gameObject.activeSelf}");
+            }
+            else
+            {
+                // 元気変化が0の場合は非表示
+                energyValueText.gameObject.SetActive(false);
+                Debug.Log($"[UIController] {action} Energy値が0のため非表示");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[UIController] {action} のenergyValueTextがnullです");
+        }
+
+        // 重さ値テキストの更新
+        if (weightValueText != null)
+        {
+            if (weightChange != 0)
+            {
+                weightValueText.gameObject.SetActive(true);
+                weightValueText.text = FormatChange(weightChange);
+                Debug.Log($"[UIController] {action} Weight表示更新: {weightValueText.text}");
+            }
+            else
+            {
+                // 重さ変化が0の場合は非表示
+                weightValueText.gameObject.SetActive(false);
+            }
+        }
+
+        // 病気発症確率の更新（たべる用）
+        if (sicknessProbabilityText != null)
+        {
+            var (sicknessProbability, _) = ActionCalculator.CalculateAilmentProbability(state, gameParams);
+            sicknessProbabilityText.gameObject.SetActive(true);
+            sicknessProbabilityText.text = ActionCalculator.FormatProbability(sicknessProbability);
+        }
+
+        // ケガ発症確率の更新（あそぶ用）
+        if (injuryProbabilityText != null)
+        {
+            var (_, injuryProbability) = ActionCalculator.CalculateAilmentProbability(state, gameParams);
+            injuryProbabilityText.gameObject.SetActive(true);
+            injuryProbabilityText.text = ActionCalculator.FormatProbability(injuryProbability);
+        }
+
+        // バフ量の更新（あそぶ用）
+        if (energyBuffText != null || weightBuffText != null)
+        {
+            var (energyBuff, weightBuff) = ActionCalculator.GetBuffIncrement(gameParams);
+
+            if (energyBuffText != null)
+            {
+                energyBuffText.gameObject.SetActive(true);
+                energyBuffText.text = FormatChange(energyBuff);
+            }
+
+            if (weightBuffText != null)
+            {
+                weightBuffText.gameObject.SetActive(true);
+                weightBuffText.text = FormatChange(weightBuff);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 特殊能力ボタンの常時表示テキストを更新
+    /// </summary>
+    /// <summary>
+    /// 特殊能力ボタンの常時表示を更新（アイコン+数値分離表示）
+    /// </summary>
+    /// <summary>
+    /// 特殊能力ボタンの常時表示を更新（数値テキストのみ）
+    /// </summary>
+    /// <summary>
+    /// 特殊能力ボタンの表示を更新（6つのボタンのうち1つをSetActiveにする）
+    /// </summary>
+    private void UpdateSpecialAbilityButtons(
+        string abilityName,
+        UyopyonState state,
+        PlayerActionData actionData,
+        GameParameters gameParams,
+        bool isMorning)
+    {
+        // すべてのボタンを非表示
+        if (gaishokuButton != null) gaishokuButton.gameObject.SetActive(false);
+        if (kintreButton != null) kintreButton.gameObject.SetActive(false);
+        if (gamusharaButton != null) gamusharaButton.gameObject.SetActive(false);
+        if (benkyouButton != null) benkyouButton.gameObject.SetActive(false);
+        if (jukusuiButton != null) jukusuiButton.gameObject.SetActive(false);
+        if (dokaguiButton != null) dokaguiButton.gameObject.SetActive(false);
+
+        // 選択された特殊能力に応じてボタンを表示・更新
+        switch (abilityName)
+        {
+            case "Gaishoku":
+                UpdateGaishokuButton(state, actionData, gameParams, isMorning);
+                break;
+            case "Kintre":
+                UpdateKintreButton(state, actionData, gameParams, isMorning);
+                break;
+            case "Gamushara":
+                UpdateGamusharaButton(state, actionData, gameParams, isMorning);
+                break;
+            case "Benkyou":
+                UpdateBenkyouButton(state, actionData, gameParams, isMorning);
+                break;
+            case "Jukusui":
+                UpdateJukusuiButton(state, actionData, gameParams, isMorning);
+                break;
+            case "Dokagui":
+                UpdateDokaguiButton(state, actionData, gameParams, isMorning);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// がいしょくボタンの表示を更新
+    /// </summary>
+    private void UpdateGaishokuButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    {
+        if (gaishokuButton == null) return;
+        gaishokuButton.gameObject.SetActive(true);
+
+        // 元気増減量
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Gaishoku", state, actionData, gameParams, isMorning);
+        if (gaishokuEnergyValueText != null)
+            gaishokuEnergyValueText.text = FormatChange(energyChange);
+
+        // 重さ増減量
+        int weightChange = ActionCalculator.CalculateWeightChange(ActionType.SpecialAbility, "Gaishoku", state, gameParams);
+        if (gaishokuWeightValueText != null)
+            gaishokuWeightValueText.text = FormatChange(weightChange);
+
+        // 病気確率
+        float sicknessProbability = ActionCalculator.CalculateSpecialAbilitySicknessProbability(state, gameParams);
+        if (gaishokuSicknessProbabilityText != null)
+            gaishokuSicknessProbabilityText.text = ActionCalculator.FormatProbability(sicknessProbability);
+    }
+
+    /// <summary>
+    /// きんとれボタンの表示を更新
+    /// </summary>
+    private void UpdateKintreButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    {
+        if (kintreButton == null) return;
+        kintreButton.gameObject.SetActive(true);
+
+        // 元気増減量
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Kintre", state, actionData, gameParams, isMorning);
+        if (kintreEnergyValueText != null)
+            kintreEnergyValueText.text = FormatChange(energyChange);
+
+        // 重さ増減量
+        int weightChange = ActionCalculator.CalculateKintreWeightChange(state.Weight);
+        if (kintreWeightValueText != null)
+            kintreWeightValueText.text = FormatChange(weightChange);
+
+        // 元気バフ・重さバフの増減量
+        var (energyBuffChange, weightBuffChange) = ActionCalculator.CalculateKintreBuffChange(state, gameParams);
+        if (kintreEnergyBuffText != null)
+            kintreEnergyBuffText.text = FormatChange(energyBuffChange);
+        if (kintreWeightBuffText != null)
+            kintreWeightBuffText.text = FormatChange(weightBuffChange);
+
+        // ケガ確率
+        var (_, injuryProbability) = ActionCalculator.CalculateAilmentProbability(state, gameParams);
+        if (kintreInjuryProbabilityText != null)
+            kintreInjuryProbabilityText.text = ActionCalculator.FormatProbability(injuryProbability);
+    }
+
+    /// <summary>
+    /// がむしゃらボタンの表示を更新
+    /// </summary>
+    private void UpdateGamusharaButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    {
+        if (gamusharaButton == null) return;
+        gamusharaButton.gameObject.SetActive(true);
+
+    }
+
+    /// <summary>
+    /// べんきょうボタンの表示を更新
+    /// </summary>
+    private void UpdateBenkyouButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    {
+        if (benkyouButton == null) return;
+        benkyouButton.gameObject.SetActive(true);
+
+        // 元気増減量
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Benkyou", state, actionData, gameParams, isMorning);
+        if (benkyouEnergyValueText != null)
+            benkyouEnergyValueText.text = FormatChange(energyChange);
+
+        // 重さバフ増加量（次回実行時）
+        int nextStudyCombo = state.StudyCombo + 1;
+        int buffIncrement = ActionCalculator.CalculateBenkyouBuffIncrement(nextStudyCombo);
+        if (benkyouWeightBuffText != null)
+            benkyouWeightBuffText.text = FormatChange(buffIncrement);
+
+        // 連続使用数表示
+        if (benkyouStudyComboText != null)
+            benkyouStudyComboText.text = $"{state.StudyCombo}";
+    }
+
+    /// <summary>
+    /// じゅくすいボタンの表示を更新
+    /// </summary>
+    private void UpdateJukusuiButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    {
+        if (jukusuiButton == null) return;
+        jukusuiButton.gameObject.SetActive(true);
+
+        // 元気増減量のみ
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Jukusui", state, actionData, gameParams, isMorning);
+        if (jukusuiEnergyValueText != null)
+            jukusuiEnergyValueText.text = FormatChange(energyChange);
+    }
+
+    /// <summary>
+    /// どかぐいボタンの表示を更新
+    /// </summary>
+    private void UpdateDokaguiButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    {
+        if (dokaguiButton == null) return;
+        dokaguiButton.gameObject.SetActive(true);
+
+        // 元気増減量
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Dokagui", state, actionData, gameParams, isMorning);
+        if (dokaguiEnergyValueText != null)
+            dokaguiEnergyValueText.text = FormatChange(energyChange);
+
+        // 重さ増減量
+        int weightChange = ActionCalculator.CalculateWeightChange(ActionType.SpecialAbility, "Dokagui", state, gameParams);
+        if (dokaguiWeightValueText != null)
+            dokaguiWeightValueText.text = FormatChange(weightChange);
+
+        // 病気確率
+        float sicknessProbability = ActionCalculator.CalculateSpecialAbilitySicknessProbability(state, gameParams);
+        if (dokaguiSicknessProbabilityText != null)
+            dokaguiSicknessProbabilityText.text = ActionCalculator.FormatProbability(sicknessProbability);
+    }
+
+    /// <summary>
+    /// 旧バージョン：個別の特殊能力の常時表示を更新（非推奨：6つのパネルに移行）
+    /// </summary>
+    private void UpdateSpecialAbilityEffectDisplay(
+        string abilityName,
+        TextMeshProUGUI energyValueText,
+        TextMeshProUGUI weightValueText,
+        UyopyonState state,
+        PlayerActionData actionData,
+        GameParameters gameParams,
+        bool isMorning)
+    {
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, abilityName, 
+                                                                   state, actionData, gameParams, isMorning);
+        int weightChange = ActionCalculator.CalculateWeightChange(ActionType.SpecialAbility, abilityName, state, gameParams);
+
+        // 元気値テキストの更新
+        if (energyValueText != null)
+        {
+            if (energyChange != 0)
+            {
+                energyValueText.gameObject.SetActive(true);
+                energyValueText.text = FormatChange(energyChange);
+            }
+            else
+            {
+                energyValueText.gameObject.SetActive(false);
+            }
+        }
+
+        // 重さ値テキストの更新
+        if (weightValueText != null)
+        {
+            if (weightChange != 0)
+            {
+                weightValueText.gameObject.SetActive(true);
+                weightValueText.text = FormatChange(weightChange);
+            }
+            else
+            {
+                weightValueText.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 数値の変化をフォーマットする（+10、-15など）
+    /// </summary>
+    private string FormatChange(int value)
+    {
+        if (value > 0)
+        {
+            return $"+{value}";
+        }
+        else if (value < 0)
+        {
+            return value.ToString();
+        }
+        else
+        {
+            return "±0";
+        }
+    }
+
+    /// <summary>
+    /// ツールチップを非表示にする
+    /// </summary>
+    public void HideActionTooltip()
+    {
+        if (eatTooltipPanel != null) eatTooltipPanel.SetActive(false);
+        if (sleepTooltipPanel != null) sleepTooltipPanel.SetActive(false);
+        if (playTooltipPanel != null) playTooltipPanel.SetActive(false);
+        if (clinicTooltipPanel != null) clinicTooltipPanel.SetActive(false);
+        if (specialAbilityTooltipPanel != null) specialAbilityTooltipPanel.SetActive(false);
+    }
+
 
 }
