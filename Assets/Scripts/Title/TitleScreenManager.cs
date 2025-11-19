@@ -94,6 +94,35 @@ public class TitleScreenManager : MonoBehaviour
         HidePlayerNameError();
     }
 
+    private void Start()
+    {
+        // タイトルBGM再生（AudioManagerが見つかるまで待機）
+        StartCoroutine(PlayTitleBGMCoroutine());
+    }
+
+    private System.Collections.IEnumerator PlayTitleBGMCoroutine()
+    {
+        // AudioManagerが初期化されるまで待機（最大1秒）
+        float timeout = 1f;
+        float elapsed = 0f;
+
+        while (AudioManager.Instance == null && elapsed < timeout)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayTitleBGM();
+            Debug.Log("[TitleScreenManager] タイトルBGMを再生開始");
+        }
+        else
+        {
+            Debug.LogWarning("[TitleScreenManager] AudioManager.Instance が null のため、タイトルBGMを再生できません。TitleSceneにAudioManagerを配置してください。");
+        }
+    }
+
     /// <summary>
     /// マッチングUIの表示を切り替え、他のボタンとインプットフィールドを操作不可にする
     /// </summary>

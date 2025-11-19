@@ -1,4 +1,4 @@
-using Fusion;
+﻿using Fusion;
 using UnityEngine;
 
 /// <summary>
@@ -95,19 +95,19 @@ public class UyopyonState : NetworkBehaviour
     {
         // OwnerPlayerはonBeforeSpawnedで設定済みなので、ここでは設定しない
         // ※ Object.InputAuthorityはFusion Shared Modeで正しく同期されない場合があるため使用しない
-        Debug.Log($"[UyopyonState] Spawned: GameObject名='{gameObject.name}', OwnerPlayer={OwnerPlayer}, InputAuthority={Object.InputAuthority}");
+        DebugLogger.Log($"[UyopyonState] Spawned: GameObject名='{gameObject.name}', OwnerPlayer={OwnerPlayer}, InputAuthority={Object.InputAuthority}");
 
         // NetworkTransformを無効化（各クライアントで独立した位置を持つため）
         var networkTransform = GetComponent<Fusion.NetworkTransform>();
         if (networkTransform != null)
         {
             networkTransform.enabled = false;
-            Debug.Log($"[UyopyonState] NetworkTransformを無効化しました");
+            DebugLogger.Log($"[UyopyonState] NetworkTransformを無効化しました");
         }
 
         // GameObjectの名前を変更（デバッグ用）
         gameObject.name = $"UyopyonPrefab_{OwnerPlayer}";
-        Debug.Log($"[UyopyonState.Spawned] GameObject名を変更: '{gameObject.name}'");
+        DebugLogger.Log($"[UyopyonState.Spawned] GameObject名を変更: '{gameObject.name}'");
 
         // UIオブジェクトとして機能させるため、Canvasの下に配置する
         // 親子関係はネットワーク同期されないので、各クライアントで個別に設定する必要がある
@@ -117,7 +117,7 @@ public class UyopyonState : NetworkBehaviour
             if (mainCanvas != null)
             {
                 transform.SetParent(mainCanvas.transform, false);
-                Debug.Log($"[UyopyonState.Spawned] '{gameObject.name}' をCanvas '{mainCanvas.gameObject.name}' の子に設定しました");
+                DebugLogger.Log($"[UyopyonState.Spawned] '{gameObject.name}' をCanvas '{mainCanvas.gameObject.name}' の子に設定しました");
             }
             else
             {
@@ -126,7 +126,7 @@ public class UyopyonState : NetworkBehaviour
         }
 
         // 位置設定はRender()で行う（ネットワーク同期を待つため）
-        Debug.Log($"[UyopyonState.Spawned] 位置設定はRender()で行います。OwnerPlayer={OwnerPlayer}, LocalPlayer={(Runner != null ? Runner.LocalPlayer.ToString() : "N/A")}");
+        DebugLogger.Log($"[UyopyonState.Spawned] 位置設定はRender()で行います。OwnerPlayer={OwnerPlayer}, LocalPlayer={(Runner != null ? Runner.LocalPlayer.ToString() : "N/A")}");
 
         // UIControllerにこのオブジェクトの参照を登録
         if (UIController.Instance != null)
@@ -197,19 +197,18 @@ public class UyopyonState : NetworkBehaviour
             // OwnerPlayerがまだ同期されていない（PlayerRef.Noneの）場合は待つ
             if (OwnerPlayer == PlayerRef.None)
             {
-                Debug.Log($"[UyopyonState.Render] '{gameObject.name}' OwnerPlayerがまだ同期されていません。待機中...");
                 return; // 次のフレームで再試行
             }
 
             if (OwnerPlayer == Runner.LocalPlayer)
             {
                 _targetPosition = GameManager.Instance.player1SpawnPosition;
-                Debug.Log($"[UyopyonState.Render] '{gameObject.name}' (自分) OwnerPlayer={OwnerPlayer}, LocalPlayer={Runner.LocalPlayer} → 位置を設定: {_targetPosition}");
+                DebugLogger.Log($"[UyopyonState.Render] '{gameObject.name}' (自分) OwnerPlayer={OwnerPlayer}, LocalPlayer={Runner.LocalPlayer} → 位置を設定: {_targetPosition}");
             }
             else
             {
                 _targetPosition = GameManager.Instance.player2SpawnPosition;
-                Debug.Log($"[UyopyonState.Render] '{gameObject.name}' (相手) OwnerPlayer={OwnerPlayer}, LocalPlayer={Runner.LocalPlayer} → 位置を設定: {_targetPosition}");
+                DebugLogger.Log($"[UyopyonState.Render] '{gameObject.name}' (相手) OwnerPlayer={OwnerPlayer}, LocalPlayer={Runner.LocalPlayer} → 位置を設定: {_targetPosition}");
             }
 
             // UIオブジェクトの場合はRectTransformを使用
@@ -217,44 +216,17 @@ public class UyopyonState : NetworkBehaviour
             if (rectTransform != null)
             {
                 rectTransform.anchoredPosition = new Vector2(_targetPosition.x, _targetPosition.y);
-                Debug.Log($"[UyopyonState.Render] '{gameObject.name}' RectTransform.anchoredPositionを設定: {rectTransform.anchoredPosition}");
             }
             else
             {
                 transform.position = _targetPosition;
-                Debug.Log($"[UyopyonState.Render] '{gameObject.name}' Transform.positionを設定: {transform.position}");
             }
 
-            Debug.Log($"[UyopyonState.Render] '{gameObject.name}' 位置設定完了");
             _hasSetPosition = true;
         }
 
-        // 位置が設定されている場合、毎フレーム位置をチェック（何かが上書きしていないか確認）
-        if (_hasSetPosition)
-        {
-            RectTransform rectTransform = GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                Vector2 targetPos2D = new Vector2(_targetPosition.x, _targetPosition.y);
-                float distance = Vector2.Distance(rectTransform.anchoredPosition, targetPos2D);
-                if (distance > 0.1f)
-                {
-                    Debug.LogWarning($"[UyopyonState.Render] '{gameObject.name}' 位置がずれています！ 現在位置: {rectTransform.anchoredPosition}, ターゲット: {targetPos2D}, 距離: {distance} → 修正します");
-                    rectTransform.anchoredPosition = targetPos2D;
-                    Debug.Log($"[UyopyonState.Render] '{gameObject.name}' 位置修正後: {rectTransform.anchoredPosition}");
-                }
-            }
-            else
-            {
-                float distance = Vector3.Distance(transform.position, _targetPosition);
-                if (distance > 0.01f)
-                {
-                    Debug.LogWarning($"[UyopyonState.Render] '{gameObject.name}' 位置がずれています！ 現在位置: {transform.position}, ターゲット: {_targetPosition}, 距離: {distance} → 修正します");
-                    transform.position = _targetPosition;
-                    Debug.Log($"[UyopyonState.Render] '{gameObject.name}' 位置修正後: {transform.position}");
-                }
-            }
-        }
+        // 位置チェックは削除（毎フレーム実行する必要がないため）
+        // 位置がずれる問題が発生した場合は、イベントベースで修正する
 
         // Weight の変更をチェック
         if (_lastWeight != Weight)
@@ -297,7 +269,7 @@ public class UyopyonState : NetworkBehaviour
         string currentAbilityName = SpecialAbilityName.ToString();
         if (_lastSpecialAbilityName != currentAbilityName)
         {
-            Debug.Log($"[UyopyonState.Render] Player {OwnerPlayer} の SpecialAbilityName が変更されました: '{_lastSpecialAbilityName}' -> '{currentAbilityName}'");
+            DebugLogger.Log($"[UyopyonState.Render] Player {OwnerPlayer} の SpecialAbilityName が変更されました: '{_lastSpecialAbilityName}' -> '{currentAbilityName}'");
             UIController.Instance?.UpdateEvolutionDisplay(OwnerPlayer, HasEvolved, currentAbilityName);
             _lastSpecialAbilityName = currentAbilityName;
         }
@@ -331,12 +303,24 @@ public class UyopyonState : NetworkBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Despawn時にGameManagerから登録解除
+    /// </summary>
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UnregisterUyopyonState(OwnerPlayer);
+        }
+    }
+
     /// <summary>
     /// UIController に通知して表示を更新する補助メソッド（Spawned での初期表示用）
     /// </summary>
     private void UpdateDisplay()
     {
-        Debug.Log($"[UyopyonState] UpdateDisplay: OwnerPlayer={OwnerPlayer}, Weight={Weight}, Energy={Energy}");
+        DebugLogger.Log($"[UyopyonState] UpdateDisplay: OwnerPlayer={OwnerPlayer}, Weight={Weight}, Energy={Energy}");
 
         if (UIController.Instance != null)
         {

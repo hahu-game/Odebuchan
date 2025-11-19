@@ -56,6 +56,9 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         {
             // 【重要メモ】接続が成功しても即座にシーン遷移しない
             // ホストはマッチング完了(OnPlayerJoined)までタイトル画面に留まる
+
+            // マッチング開始SE再生
+            AudioManager.Instance?.PlayMatchingStartSE();
         }
         else
         {
@@ -89,6 +92,9 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         if (runner.IsSharedModeMasterClient && runner.ActivePlayers.Count() == 2)
         {
             Debug.Log("マッチング完了！2人目が参加しました。ゲームシーンへ遷移します。");
+
+            // マッチング成功SE再生
+            AudioManager.Instance?.PlayMatchingSuccessSE();
 
             // タイトル画面のUIを非表示にする
             TitleScreenManager.Instance?.HideMatchingUI();
@@ -201,6 +207,9 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
                                 }
                             }
                         );
+
+                        // Runner.GetPlayerObject()で取得できるようにSetPlayerObjectを呼ぶ
+                        runner.SetPlayerObject(p, networkPlayerObj);
 
                         Debug.Log($"[NetworkRunnerHandler] NetworkPlayerをスポーンしました: PlayerRef={p}");
                     }

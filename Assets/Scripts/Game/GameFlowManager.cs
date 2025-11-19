@@ -103,12 +103,32 @@ public class GameFlowManager : NetworkBehaviour
             }
         }
 
+        // BGMをゲームBGMに切り替え（全クライアントで実行）
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.FadeOutBGM(0.5f);
+            StartCoroutine(PlayGameBGMDelayed(0.5f));
+        }
+
         // ホストのみがゲーム開始処理を実行
         if (Object.HasStateAuthority && !_gameStarted)
         {
             _gameStarted = true;
             Debug.Log("[GameFlowManager] ホストとしてゲーム開始処理を開始します");
             _ = StartGame();
+        }
+    }
+
+    /// <summary>
+    /// 遅延後にゲームBGMを再生
+    /// </summary>
+    private System.Collections.IEnumerator PlayGameBGMDelayed(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayGameBGM();
+            Debug.Log("[GameFlowManager] ゲームBGMを再生開始");
         }
     }
 
@@ -233,7 +253,7 @@ public class GameFlowManager : NetworkBehaviour
 
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] 準備フェーズ開始前: Object無効");
+                Debug.LogWarning("[GameFlowManager] 準備フェーズ開始前: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -242,13 +262,16 @@ public class GameFlowManager : NetworkBehaviour
             // ブラックアウトで「〇日目」を表示
             RPC_ShowBlackout($"{CurrentDay}日目");
 
+            // 日の開始SE再生
+            AudioManager.Instance?.PlayDayStartSE();
+
             // ブラックアウト表示時間待機
             Debug.Log($"[GameFlowManager] ブラックアウト待機: {gameParams.BlackoutDuration}秒");
             await UniTask.Delay((int)(gameParams.BlackoutDuration * 1000));
 
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] 準備フェーズ待機後: Object無効");
+                Debug.LogWarning("[GameFlowManager] 準備フェーズ待機後: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -301,7 +324,7 @@ public class GameFlowManager : NetworkBehaviour
 
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] 選択フェーズ開始前: Object無効");
+                Debug.LogWarning("[GameFlowManager] 選択フェーズ開始前: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -331,10 +354,17 @@ public class GameFlowManager : NetworkBehaviour
             // 選択フェーズ終了
             _selectionPhaseActive = false;
 
-            // Object状態を再確認
+            // Object状態を再確認（シャットダウン時は警告レベル）
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] WaitForSelectionComplete後: Object無効");
+                Debug.LogWarning("[GameFlowManager] WaitForSelectionComplete後: Object無効（シャットダウン中の可能性）");
+                return;
+            }
+
+            // ゲーム終了チェック
+            if (IsGameEnded)
+            {
+                Debug.Log("[GameFlowManager] 選択フェーズ後: ゲーム終了のため処理を中断します");
                 return;
             }
 
@@ -368,7 +398,7 @@ public class GameFlowManager : NetworkBehaviour
 
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] 実行フェーズ開始前: Object無効");
+                Debug.LogWarning("[GameFlowManager] 実行フェーズ開始前: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -436,7 +466,7 @@ public class GameFlowManager : NetworkBehaviour
 
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError($"[GameFlowManager] 実行フェーズ待機後: Object無効");
+                Debug.LogWarning("[GameFlowManager] 実行フェーズ待機後: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -460,10 +490,17 @@ public class GameFlowManager : NetworkBehaviour
     {
         while (_selectionPhaseActive)
         {
-            // Objectの状態をチェック
+            // ゲーム終了チェック（シャットダウン時のグレースフル終了）
+            if (IsGameEnded)
+            {
+                Debug.Log("[GameFlowManager] WaitForSelectionComplete: ゲーム終了のため待機を終了します");
+                return;
+            }
+
+            // Objectの状態をチェック（シャットダウン時は警告レベル）
             if (!Object || !Object.IsValid)
             {
-                Debug.LogError("[GameFlowManager] WaitForSelectionComplete: Object無効");
+                Debug.LogWarning("[GameFlowManager] WaitForSelectionComplete: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -647,6 +684,9 @@ public class GameFlowManager : NetworkBehaviour
     {
         Debug.Log("[GameFlowManager] RPC_RevealAllActions が呼ばれました");
 
+        // 行動公開SE再生
+        AudioManager.Instance?.PlayActionRevealSE();
+
         if (GameManager.Instance == null || GameManager.Instance.playerActionDataDict == null)
         {
             Debug.LogWarning("[GameFlowManager] GameManager または playerActionDataDict が null です");
@@ -702,7 +742,10 @@ public class GameFlowManager : NetworkBehaviour
         SpecialAbilityType disabled1, SpecialAbilityType disabled2, int disabledCount)
     {
         Debug.Log($"[RPC] 特殊能力選択パネル表示: targetPlayer={targetPlayer.PlayerId}, choiceCount={choiceCount}, disabledCount={disabledCount}");
-        
+
+        // 特殊能力選択SE再生
+        AudioManager.Instance?.PlayAbilityChoiceSE();
+
         // NetworkArray を直接渡せないため、個別の引数で受け取り配列に変換
         var choices = new SpecialAbilityType[choiceCount];
         if (choiceCount >= 1) choices[0] = ability1;
@@ -929,6 +972,9 @@ public class GameFlowManager : NetworkBehaviour
         }
 
         Debug.Log($"[GameFlowManager] {candidates.Count}人が進化条件を満たしました");
+
+        // 進化SE再生
+        AudioManager.Instance?.PlayEvolutionSE();
 
         // 7.2: 優先順位を決定
         var orderedCandidates = DetermineEvolutionOrder(candidates);
@@ -1191,11 +1237,11 @@ public class GameFlowManager : NetworkBehaviour
             }
         }
 
-        // 方法2: シーン内の全NetworkPlayerから検索
-        var allNetworkPlayers = FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
-        foreach (var networkPlayer in allNetworkPlayers)
+        // 方法2: GameManagerのDictionaryから取得（FindObjectsByType削減）
+        if (GameManager.Instance != null)
         {
-            if (networkPlayer.OwnerPlayerRef == player)
+            NetworkPlayer networkPlayer = GameManager.Instance.GetNetworkPlayer(player);
+            if (networkPlayer != null)
             {
                 string name = networkPlayer.PlayerName.ToString();
                 if (!string.IsNullOrEmpty(name))
@@ -1267,9 +1313,6 @@ public class GameFlowManager : NetworkBehaviour
         RPC_PlayVictoryAnimation(winner);
         RPC_PlayDefeatAnimation(loser);
 
-        // TODO: BGM変更（AudioManager実装後、10.4で実装予定）
-        // AudioManager.Instance?.PlayBGM("GameEnd");
-
         // 8.2: 4秒待機
         await UniTask.Delay(4000);
         Debug.Log("[GameFlowManager] アニメーション再生完了、4秒待機後");
@@ -1311,6 +1354,11 @@ public class GameFlowManager : NetworkBehaviour
     private void RPC_ShowResultPanel(PlayerRef winner, int day, bool isMorning)
     {
         Debug.Log($"[GameFlowManager] RPC_ShowResultPanel: winner={winner}, day={day}, isMorning={isMorning}");
+
+        // リザルトBGM再生（全クライアントで実行）
+        AudioManager.Instance?.StopBGM();
+        AudioManager.Instance?.PlayResultBGM();
+
         if (UIController.Instance != null)
         {
             UIController.Instance.ShowResultPanel(winner, day, isMorning);

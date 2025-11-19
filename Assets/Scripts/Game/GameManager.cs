@@ -39,6 +39,10 @@ public class GameManager : MonoBehaviour
     // 投了フラグを管理（各プレイヤーごと）
     private Dictionary<PlayerRef, bool> _surrenderFlags = new Dictionary<PlayerRef, bool>();
 
+    // NetworkPlayerの参照を保持するDictionary
+    private Dictionary<PlayerRef, NetworkPlayer> _networkPlayers = new Dictionary<PlayerRef, NetworkPlayer>();
+    public IReadOnlyDictionary<PlayerRef, NetworkPlayer> networkPlayerDict => _networkPlayers;
+
     /// <summary>
     /// 全プレイヤーのUyopyonStateを取得するプロパティ
     /// </summary>
@@ -274,6 +278,83 @@ public class GameManager : MonoBehaviour
         Debug.Log($"[GameManager] Player {player} の PlayerActionData を登録しました。Total: {_playerActionData.Count}");
     }
 
+
+    /// <summary>
+    /// NetworkPlayerをDictionaryに登録する
+    /// </summary>
+    public void RegisterNetworkPlayer(NetworkPlayer networkPlayer)
+    {
+        if (networkPlayer == null)
+        {
+            Debug.LogWarning("[GameManager] NetworkPlayerがnullです");
+            return;
+        }
+
+        // OwnerPlayerRefを使用（Object.InputAuthorityはクライアント側で[Player:None]になる可能性があるため）
+        PlayerRef owner = networkPlayer.OwnerPlayerRef;
+        if (_networkPlayers.ContainsKey(owner))
+        {
+            Debug.LogWarning($"[GameManager] NetworkPlayer already registered for player {owner}");
+            return;
+        }
+
+        _networkPlayers[owner] = networkPlayer;
+        Debug.Log($"[GameManager] NetworkPlayer registered for player {owner}, total: {_networkPlayers.Count}");
+    }
+
+    /// <summary>
+    /// PlayerRefからNetworkPlayerを取得する
+    /// </summary>
+    public NetworkPlayer GetNetworkPlayer(PlayerRef player)
+    {
+        if (_networkPlayers.TryGetValue(player, out NetworkPlayer networkPlayer))
+        {
+            return networkPlayer;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// PlayerRefからプレイヤー名を取得する
+    /// </summary>
+    public string GetPlayerName(PlayerRef player)
+    {
+        // 方法1: Dictionaryから取得
+        NetworkPlayer networkPlayer = GetNetworkPlayer(player);
+        if (networkPlayer != null)
+        {
+            string name = networkPlayer.PlayerName.ToString();
+            if (!string.IsNullOrEmpty(name))
+            {
+                return name;
+            }
+        }
+
+        // 方法2: Runner.GetPlayerObjectから取得（フォールバック）
+        if (_runner != null)
+        {
+            var playerObj = _runner.GetPlayerObject(player);
+            if (playerObj != null && playerObj.TryGetBehaviour<NetworkPlayer>(out var np))
+            {
+                string name = np.PlayerName.ToString();
+                if (!string.IsNullOrEmpty(name))
+                {
+                    // Dictionaryにも登録
+                    if (!_networkPlayers.ContainsKey(player))
+                    {
+                        _networkPlayers[player] = np;
+                        Debug.Log($"[GameManager] GetPlayerName: フォールバックでNetworkPlayerを登録 player={player}");
+                    }
+                    return name;
+                }
+            }
+        }
+
+        // フォールバック: PlayerIDを表示
+        Debug.LogWarning($"[GameManager] Player {player} の名前が取得できませんでした");
+        return $"Player {player.PlayerId}";
+    }
+
     // === 9.2: 投了機能 ===
 
     /// <summary>
@@ -300,5 +381,64 @@ public class GameManager : MonoBehaviour
     {
         _surrenderFlags.Clear();
         Debug.Log("[GameManager] 投了フラグをリセットしました");
+    }
+
+
+    /// <summary>
+    /// 全てのDictionaryをクリアする（メモリリーク防止）
+    /// </summary>
+    public void ClearAllDictionaries()
+    {
+        _playerStates.Clear();
+        _playerActionData.Clear();
+        _networkPlayers.Clear();
+        _surrenderFlags.Clear();
+        Debug.Log("[GameManager] 全てのDictionaryをクリアしました");
+    }
+
+    /// <summary>
+    /// UyopyonStateをDictionaryから削除する
+    /// </summary>
+    public void UnregisterUyopyonState(PlayerRef player)
+    {
+        if (_playerStates.ContainsKey(player))
+        {
+            _playerStates.Remove(player);
+            Debug.Log($"[GameManager] UyopyonState unregistered for player {player}");
+        }
+    }
+
+    /// <summary>
+    /// PlayerActionDataをDictionaryから削除する
+    /// </summary>
+    public void UnregisterPlayerActionData(PlayerRef player)
+    {
+        if (_playerActionData.ContainsKey(player))
+        {
+            _playerActionData.Remove(player);
+            Debug.Log($"[GameManager] PlayerActionData unregistered for player {player}");
+        }
+    }
+
+    /// <summary>
+    /// NetworkPlayerをDictionaryから削除する
+    /// </summary>
+    public void UnregisterNetworkPlayer(PlayerRef player)
+    {
+        if (_networkPlayers.ContainsKey(player))
+        {
+            _networkPlayers.Remove(player);
+            Debug.Log($"[GameManager] NetworkPlayer unregistered for player {player}");
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // シングルトンがこのインスタンスの場合のみクリア
+        if (Instance == this)
+        {
+            ClearAllDictionaries();
+            Instance = null;
+        }
     }
 }
