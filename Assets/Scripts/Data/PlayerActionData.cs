@@ -1,4 +1,4 @@
-using Fusion;
+﻿using Fusion;
 using UnityEngine;
 
 /// <summary>
@@ -76,7 +76,7 @@ public class PlayerActionData : NetworkBehaviour
             GameManager.Instance.RegisterPlayerActionData(this);
         }
 
-        Debug.Log($"[PlayerActionData] Player {OwnerPlayer} Spawned: Morning={MorningAction.Type}, Afternoon={AfternoonAction.Type}");
+        DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} Spawned: Morning={MorningAction.Type}, Afternoon={AfternoonAction.Type}");
     }
 
     /// <summary>
@@ -84,9 +84,8 @@ public class PlayerActionData : NetworkBehaviour
     /// </summary>
     public override void Render()
     {
-        // 自分のプレイヤーのデータかどうかをチェック
-        var runner = FindFirstObjectByType<NetworkRunner>();
-        bool isMyPlayer = (runner != null && runner.LocalPlayer == OwnerPlayer);
+        // 自分のプレイヤーのデータかどうかをチェック（Runnerプロパティを使用）
+        bool isMyPlayer = (Runner != null && Runner.LocalPlayer == OwnerPlayer);
 
         // GameFlowManagerから現在のフェーズを取得
         bool isExecutionPhase = (GameFlowManager.Instance != null &&
@@ -95,7 +94,7 @@ public class PlayerActionData : NetworkBehaviour
         // 午前の行動が変更された場合
         if (!_lastMorningAction.Equals(MorningAction))
         {
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の午前の行動が変更されました: {_lastMorningAction.Type} -> {MorningAction.Type}");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の午前の行動が変更されました: {_lastMorningAction.Type} -> {MorningAction.Type}");
 
             if (UIController.Instance != null)
             {
@@ -120,7 +119,7 @@ public class PlayerActionData : NetworkBehaviour
         // 午後の行動が変更された場合
         if (!_lastAfternoonAction.Equals(AfternoonAction))
         {
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の午後の行動が変更されました: {_lastAfternoonAction.Type} -> {AfternoonAction.Type}");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の午後の行動が変更されました: {_lastAfternoonAction.Type} -> {AfternoonAction.Type}");
 
             if (UIController.Instance != null)
             {
@@ -145,7 +144,7 @@ public class PlayerActionData : NetworkBehaviour
         // 確定フラグが変更された場合
         if (_lastIsActionFixed != IsActionFixed)
         {
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の確定フラグが変更されました: {_lastIsActionFixed} -> {IsActionFixed}");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の確定フラグが変更されました: {_lastIsActionFixed} -> {IsActionFixed}");
 
             // 確定フラグが変更された場合、UIを更新
             if (UIController.Instance != null)
@@ -174,7 +173,7 @@ public class PlayerActionData : NetworkBehaviour
         // 昨日の午後の行動が変更された場合
         if (!_lastLastAfternoonAction.Equals(LastAfternoonAction))
         {
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の昨日の午後の行動が変更されました: {_lastLastAfternoonAction.Type} -> {LastAfternoonAction.Type}");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の昨日の午後の行動が変更されました: {_lastLastAfternoonAction.Type} -> {LastAfternoonAction.Type}");
 
             if (UIController.Instance != null)
             {
@@ -183,6 +182,18 @@ public class PlayerActionData : NetworkBehaviour
             }
 
             _lastLastAfternoonAction = LastAfternoonAction;
+        }
+    }
+
+
+    /// <summary>
+    /// Despawn時にGameManagerから登録解除
+    /// </summary>
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.UnregisterPlayerActionData(OwnerPlayer);
         }
     }
 
@@ -209,7 +220,7 @@ public class PlayerActionData : NetworkBehaviour
             // 全クライアントで自分と相手の今日の行動を空欄にする
             RPC_ClearActionDisplay();
 
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動をリセットしました");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の行動をリセットしました");
         }
     }
 
@@ -221,7 +232,7 @@ public class PlayerActionData : NetworkBehaviour
     {
         if (UIController.Instance != null)
         {
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動表示を空欄にクリアします");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の行動表示を空欄にクリアします");
 
             // 午前・午後の行動表示を空欄に
             UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionData.Empty());
@@ -245,7 +256,7 @@ public class PlayerActionData : NetworkBehaviour
         if (!MorningActionLocked)
         {
             MorningAction = action;
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の午前の行動を設定: {action.Type}");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の午前の行動を設定: {action.Type}");
         }
         else
         {
@@ -269,7 +280,7 @@ public class PlayerActionData : NetworkBehaviour
         if (!AfternoonActionLocked)
         {
             AfternoonAction = action;
-            Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の午後の行動を設定: {action.Type}");
+            DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の午後の行動を設定: {action.Type}");
         }
         else
         {
@@ -291,7 +302,7 @@ public class PlayerActionData : NetworkBehaviour
         }
 
         IsActionFixed = true;
-        Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動が確定されました");
+        DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の行動が確定されました");
     }
 
     /// <summary>
@@ -316,6 +327,6 @@ public class PlayerActionData : NetworkBehaviour
             AfternoonAction = ActionData.Empty();
         }
         IsActionFixed = false;
-        Debug.Log($"[PlayerActionData] Player {OwnerPlayer} の行動がクリアされました");
+        DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の行動がクリアされました");
     }
 }

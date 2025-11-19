@@ -9,6 +9,7 @@ public static class ActionCalculator
     /// <summary>
     /// 行動による元気変化を計算（連続使用デバフ、バフ、状態異常を含む）
     /// 9.3修正: BuffMultiplierの適用を追加
+    /// 9.3修正: 選択フェーズ用にローカルの午前行動を渡せるようにlocalMorningActionパラメータを追加
     /// </summary>
     public static int CalculateEnergyChange(
         ActionType action,
@@ -16,7 +17,8 @@ public static class ActionCalculator
         UyopyonState state,
         PlayerActionData actionData,
         GameParameters gameParams,
-        bool isMorning)
+        bool isMorning,
+        ActionData? localMorningAction = null)
     {
         int energyChange = 0;
 
@@ -50,7 +52,7 @@ public static class ActionCalculator
         }
 
         // 連続使用ペナルティ
-        if (IsConsecutiveAction(action, specialAbilityName, actionData, isMorning))
+        if (IsConsecutiveAction(action, specialAbilityName, actionData, isMorning, localMorningAction))
         {
             energyChange -= gameParams.ConsecutiveActionPenalty; // -20
         }
@@ -125,12 +127,14 @@ public static class ActionCalculator
 
     /// <summary>
     /// 連続使用かどうかを判定
+    /// 9.3修正: 選択フェーズ用にローカルの午前行動を渡せるようにlocalMorningActionパラメータを追加
     /// </summary>
     private static bool IsConsecutiveAction(
         ActionType action,
         string specialAbilityName,
         PlayerActionData actionData,
-        bool isMorning)
+        bool isMorning,
+        ActionData? localMorningAction = null)
     {
         if (action == ActionType.None) return false;
 
@@ -149,10 +153,23 @@ public static class ActionCalculator
         else
         {
             // 午後：今日午前と比較
-            compareAction = actionData.MorningAction.Type;
-            if (compareAction == ActionType.SpecialAbility)
+            // 9.3修正: localMorningActionが渡された場合はそれを優先（選択フェーズ用）
+            if (localMorningAction.HasValue)
             {
-                compareAbilityName = actionData.MorningAction.SpecialAbilityName.ToString();
+                compareAction = localMorningAction.Value.Type;
+                if (compareAction == ActionType.SpecialAbility)
+                {
+                    compareAbilityName = localMorningAction.Value.SpecialAbilityName.ToString();
+                }
+            }
+            else
+            {
+                // フォールバック：ネットワーク同期された午前の行動を使用
+                compareAction = actionData.MorningAction.Type;
+                if (compareAction == ActionType.SpecialAbility)
+                {
+                    compareAbilityName = actionData.MorningAction.SpecialAbilityName.ToString();
+                }
             }
         }
 
@@ -168,7 +185,7 @@ public static class ActionCalculator
             isConsecutive = compareAction == ActionType.SpecialAbility && specialAbilityName == compareAbilityName;
         }
 
-        UnityEngine.Debug.Log($"[ActionCalculator] IsConsecutive: isMorning={isMorning}, action={action}, specialAbility={specialAbilityName}, compareAction={compareAction}, compareAbility={compareAbilityName}, result={isConsecutive}");
+        DebugLogger.Log($"[ActionCalculator] IsConsecutive: isMorning={isMorning}, action={action}, specialAbility={specialAbilityName}, compareAction={compareAction}, compareAbility={compareAbilityName}, result={isConsecutive}");
         return isConsecutive;
     }
 

@@ -197,8 +197,15 @@ public class UIController : MonoBehaviour
     public UnityEngine.UI.ScrollRect logScrollRect;
     public Transform logContent;
     public GameObject logTextPrefab; // TextMeshProUGUIを持つプレハブ
+    
+    [Header("Log Settings")]
+    [Tooltip("ログエントリの最大数（この数を超えると古いエントリが自動削除されます）")]
+    public int maxLogEntries = 100; // デフォルト100件
 
     private Dictionary<PlayerRef, UyopyonState> _uyopyons = new Dictionary<PlayerRef, UyopyonState>();
+    
+    // スクロールコルーチンの参照（重複実行を防ぐため）
+    private Coroutine _scrollToBottomCoroutine = null;
     
 
     // === 3.2で追加: 行動選択状態 ===
@@ -247,6 +254,9 @@ public class UIController : MonoBehaviour
             resultPanel.SetActive(false);
             Debug.Log("[UIController] リザルトパネルを非表示に設定");
         }
+        
+        // ゲーム開始時にログをクリア（メモリリーク防止）
+        ClearLog();
 
         // 9.3: 6つの特殊能力ボタンにクリックリスナーを追加（それぞれの特殊能力タイプを指定）
         // 古いリスナーを削除してから新しいリスナーを追加
@@ -330,25 +340,27 @@ public class UIController : MonoBehaviour
 
     public void UpdateWeightDisplay(PlayerRef player, int weight)
     {
+        string weightText = $"{weight}";
         if (player == _localPlayerRef)
         {
-            myWeightText.text = $"{weight}";
+            SetTextIfChanged(myWeightText, weightText);
         }
         else
         {
-            opponentWeightText.text = $"{weight}";
+            SetTextIfChanged(opponentWeightText, weightText);
         }
     }
 
     public void UpdateEnergyDisplay(PlayerRef player, int energy)
     {
+        string energyText = $"{energy}";
         if (player == _localPlayerRef)
         {
-            myEnergyText.text = $"{energy}";
+            SetTextIfChanged(myEnergyText, energyText);
         }
         else
         {
-            opponentEnergyText.text = $"{energy}";
+            SetTextIfChanged(opponentEnergyText, energyText);
         }
     }
 
@@ -443,6 +455,23 @@ public class UIController : MonoBehaviour
             return;
         }
 
+        // ログエントリの最大数を超えている場合、古いエントリを削除
+        int currentLogCount = logContent.childCount;
+        if (currentLogCount >= maxLogEntries)
+        {
+            // 古いエントリを削除（最初の子要素から順に削除）
+            int entriesToRemove = currentLogCount - maxLogEntries + 1; // +1は新しいエントリの分
+            for (int i = 0; i < entriesToRemove; i++)
+            {
+                Transform oldestChild = logContent.GetChild(0);
+                if (oldestChild != null)
+                {
+                    Destroy(oldestChild.gameObject);
+                }
+            }
+            Debug.Log($"[UIController] ログエントリが最大数({maxLogEntries})を超えたため、古いエントリ{entriesToRemove}件を削除しました");
+        }
+
         // ログテキストのプレハブをインスタンス化
         GameObject logObj = Instantiate(logTextPrefab, logContent);
         RectTransform rectTransform = logObj.GetComponent<RectTransform>();
@@ -507,8 +536,12 @@ public class UIController : MonoBehaviour
         layoutElement.minHeight = 20f;
         // preferredHeightやflexibleWidthは設定しない（ContentSizeFitterに任せる）
 
-        // 自動的に最下部にスクロール
-        StartCoroutine(ScrollToBottom());
+        // 自動的に最下部にスクロール（重複実行を防ぐ）
+        if (_scrollToBottomCoroutine != null)
+        {
+            StopCoroutine(_scrollToBottomCoroutine);
+        }
+        _scrollToBottomCoroutine = StartCoroutine(ScrollToBottom());
     }
 
     /// <summary>
@@ -531,6 +564,9 @@ public class UIController : MonoBehaviour
             yield return null;
             logScrollRect.verticalNormalizedPosition = 0f;
         }
+        
+        // コルーチン完了時に参照をクリア
+        _scrollToBottomCoroutine = null;
     }
 
     /// <summary>
@@ -642,22 +678,8 @@ public class UIController : MonoBehaviour
 
         PlayerRef localPlayer = runner.LocalPlayer;
 
-        // 自分のPlayerActionDataを取得（OwnerPlayerで判定）
-        PlayerActionData myActionData = null;
-        if (GameManager.Instance != null)
-        {
-            var allActionData = FindObjectsByType<PlayerActionData>(FindObjectsSortMode.None);
-            
-            foreach (var actionData in allActionData)
-            {
-                // OwnerPlayerがLocalPlayerと一致するものを探す
-                if (actionData.OwnerPlayer == localPlayer)
-                {
-                    myActionData = actionData;
-                    break;
-                }
-            }
-        }
+        // 自分のPlayerActionDataを取得（GameManagerのDictionaryから直接取得）
+        PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(localPlayer);
 
         if (myActionData != null)
         {
@@ -670,6 +692,9 @@ public class UIController : MonoBehaviour
 
             // LogAreaに確定メッセージを表示
             AddLog("行動を確定しました。対戦相手の選択を待っています。");
+
+            // 確定SE再生
+            AudioManager.Instance?.PlayActionConfirmSE();
 
             // 確定後、行動ボタンと確定・クリアボタンを無効化（ロック）
             LockActionButtons();
@@ -707,6 +732,9 @@ public class UIController : MonoBehaviour
 
         Debug.Log("[UIController] 選択をクリアしました");
 
+        // クリアSE再生
+        AudioManager.Instance?.PlayActionClearSE();
+
         // パネル表示もクリア
         if (myTodayMorningActionText != null)
         {
@@ -728,23 +756,18 @@ public class UIController : MonoBehaviour
         {
             PlayerRef localPlayer = runner.LocalPlayer;
 
-            // 自分のPlayerActionDataを取得（OwnerPlayerで判定）
-            if (GameManager.Instance != null)
+            // 自分のPlayerActionDataを取得（GameManagerのDictionaryから直接取得）
+            PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(localPlayer);
+            if (myActionData != null)
             {
-                var allActionData = FindObjectsByType<PlayerActionData>(FindObjectsSortMode.None);
-                foreach (var actionData in allActionData)
-                {
-                    if (actionData.OwnerPlayer == localPlayer)
-                    {
-                        actionData.RPC_ClearActions();
-                        break;
-                    }
-                }
+                myActionData.RPC_ClearActions();
             }
         }
 
         // 行動クリア後、元気チェックを選択フェーズ開始時点（午前選択状態）にリセット
         UpdateActionButtonsBasedOnEnergy();
+        // 9.3修正: 行動ボタンの効果表示を更新（午前選択状態に戻すので連続使用デバフをリセット）
+        UpdateAllActionEffectDisplay();
         Debug.Log("[UIController] クリアボタン押下後、元気チェックをリセットしました");
     }
 
@@ -759,6 +782,9 @@ public class UIController : MonoBehaviour
     private void OnActionButtonClicked(ActionType actionType, SpecialAbilityType abilityType)
     {
         Debug.Log($"[UIController] OnActionButtonClicked 開始: actionType={actionType}, abilityType={abilityType}");
+
+        // 行動選択SE再生
+        AudioManager.Instance?.PlayActionSelectSE();
 
         // ActionDataを生成
         ActionData selectedAction = ActionData.CreateSpecialAbility(abilityType);
@@ -782,6 +808,8 @@ public class UIController : MonoBehaviour
 
             // 午前の行動が選択されたので、午後のボタン状態を更新
             UpdateActionButtonsBasedOnEnergy();
+            // 9.3修正: 午後の行動ボタンの効果表示を更新（連続使用デバフを反映）
+            UpdateAllActionEffectDisplay();
             Debug.Log($"[UIController] 午前の行動選択後、午後のボタン状態を更新しました");
         }
         else
@@ -808,6 +836,9 @@ public class UIController : MonoBehaviour
     private void OnActionButtonClicked(ActionType actionType)
     {
         Debug.Log($"[UIController] OnActionButtonClicked 開始: actionType={actionType}");
+
+        // 行動選択SE再生
+        AudioManager.Instance?.PlayActionSelectSE();
 
         // ActionTypeに対応するActionDataを生成
         ActionData selectedAction;
@@ -878,6 +909,8 @@ public class UIController : MonoBehaviour
 
             // 午前の行動が選択されたので、午後の選択肢を午前+午後の合計で再チェック
             UpdateActionButtonsBasedOnEnergy();
+            // 9.3修正: 午後の行動ボタンの効果表示を更新（連続使用デバフを反映）
+            UpdateAllActionEffectDisplay();
             Debug.Log($"[UIController] 午前の行動選択後、午後のボタン状態を更新しました");
         }
         else
@@ -2135,8 +2168,8 @@ public class UIController : MonoBehaviour
             Debug.LogWarning($"[UIController] Player {player} のUyopyonStateが見つかりません");
         }
 
-        // TODO: SE再生（AudioManager実装後）
-        // AudioManager.Instance?.PlaySE("Victory");
+        // 勝利SE再生
+        AudioManager.Instance?.PlayVictorySE();
     }
 
     /// <summary>
@@ -2160,8 +2193,8 @@ public class UIController : MonoBehaviour
             Debug.LogWarning($"[UIController] Player {player} のUyopyonStateが見つかりません");
         }
 
-        // TODO: SE再生（AudioManager実装後）
-        // AudioManager.Instance?.PlaySE("Defeat");
+        // 敗北SE再生
+        AudioManager.Instance?.PlayDefeatSE();
     }
 
     // === 8.3: リザルト画面 ===
@@ -2363,7 +2396,25 @@ public class UIController : MonoBehaviour
             resultReturnToTitleButton.interactable = false;
         }
 
+        // クライアントの場合、コルーチンが中断される可能性があるため
+        // フォールバックとしてInvokeでシーン遷移をスケジュール
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner != null && !runner.IsSharedModeMasterClient)
+        {
+            // クライアントの場合は1秒後にシーン遷移（フォールバック）
+            Invoke(nameof(ForceReturnToTitle), 1.0f);
+        }
+
         StartCoroutine(ReturnToTitleCoroutine());
+    }
+
+    /// <summary>
+    /// 強制的にタイトルに戻る（フォールバック用）
+    /// </summary>
+    private void ForceReturnToTitle()
+    {
+        Debug.Log("[UIController] ForceReturnToTitle: フォールバックによるタイトル遷移");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 
     /// <summary>
@@ -2372,27 +2423,78 @@ public class UIController : MonoBehaviour
     /// </summary>
     private IEnumerator ReturnToTitleCoroutine()
     {
+        Debug.Log("[UIController] ReturnToTitleCoroutine: タイトルへの遷移を開始します");
+
+        // GameFlowManagerのゲーム終了フラグを設定（非同期処理を止める）
+        var gameFlowManager = FindFirstObjectByType<GameFlowManager>();
+        if (gameFlowManager != null && gameFlowManager.Object != null && gameFlowManager.Object.IsValid)
+        {
+            // ホストの場合のみフラグを設定可能
+            if (gameFlowManager.Object.HasStateAuthority)
+            {
+                gameFlowManager.IsGameEnded = true;
+                Debug.Log("[UIController] ReturnToTitleCoroutine: IsGameEndedをtrueに設定しました");
+            }
+        }
+
+        // 少し待機してフラグの伝播を待つ
+        yield return new WaitForSeconds(0.1f);
+
         // NetworkRunnerを取得
         var runner = FindFirstObjectByType<NetworkRunner>();
         if (runner != null)
         {
-            runner.Shutdown();
+            Debug.Log("[UIController] ReturnToTitleCoroutine: NetworkRunnerをシャットダウンします");
 
-            // Shutdownの完了を待つ（最大3秒）
-            float timeout = 3f;
-            float elapsed = 0f;
+            // クライアントかホストかを判定
+            bool isHost = runner.IsSharedModeMasterClient;
+            Debug.Log($"[UIController] ReturnToTitleCoroutine: IsHost={isHost}");
 
-            while (runner != null && runner.IsRunning && elapsed < timeout)
+            try
             {
+                runner.Shutdown();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[UIController] ReturnToTitleCoroutine: Shutdown中に例外発生: {e.Message}");
+            }
+
+            if (isHost)
+            {
+                // ホストの場合はシャットダウン完了を待つ（最大3秒）
+                float timeout = 3f;
+                float elapsed = 0f;
+
+                while (runner != null && runner.IsRunning && elapsed < timeout)
+                {
+                    yield return null;
+                    elapsed += Time.deltaTime;
+                }
+
+                Debug.Log($"[UIController] ReturnToTitleCoroutine: シャットダウン待機完了 (elapsed={elapsed:F2}秒)");
+
+                // ホストは追加で0.5秒待機
+                yield return new WaitForSeconds(0.5f);
+            }
+            else
+            {
+                // クライアントの場合は即座にシーン遷移（Fusionの切断処理でコルーチンが中断される可能性があるため）
+                Debug.Log("[UIController] ReturnToTitleCoroutine: クライアントのため即座にシーン遷移します");
+                // 1フレーム待機してシャットダウン処理を開始させる
                 yield return null;
-                elapsed += Time.deltaTime;
             }
         }
-
-        // 念のため追加で0.5秒待機
-        yield return new WaitForSeconds(0.5f);
+        else
+        {
+            Debug.LogWarning("[UIController] ReturnToTitleCoroutine: NetworkRunnerが見つかりません");
+        }
 
         // TitleSceneに遷移
+        Debug.Log("[UIController] ReturnToTitleCoroutine: TitleSceneに遷移します");
+
+        // フォールバックのInvokeをキャンセル（正常に遷移できた場合）
+        CancelInvoke(nameof(ForceReturnToTitle));
+
         UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 
@@ -2401,13 +2503,10 @@ public class UIController : MonoBehaviour
     /// </summary>
     private string GetPlayerName(PlayerRef player)
     {
-        var networkPlayers = FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
-        foreach (var np in networkPlayers)
+        // GameManagerのDictionaryから直接取得（FindObjectsByType削減）
+        if (GameManager.Instance != null)
         {
-            if (np.OwnerPlayerRef == player)
-            {
-                return np.PlayerName.ToString();
-            }
+            return GameManager.Instance.GetPlayerName(player);
         }
         return $"Player {player}";
     }
@@ -2561,25 +2660,25 @@ public class UIController : MonoBehaviour
 
         Debug.Log($"[UIController] データ取得成功: Weight={myState.Weight}, BuffWeight={myState.PlayBuffWeight}, BuffEnergy={myState.PlayBuffEnergy}");
 
-        // 午前か午後かを判定
-        bool isMorning = (GameFlowManager.Instance.CurrentPhase == GamePhase.Selection &&
-                          myActionData.MorningAction.Type == ActionType.None);
+        // 9.3修正: 午前か午後かを判定（ローカルの選択状態を使用）
+        bool isMorning = !_isMorningSelected;
+        Debug.Log($"[UIController] UpdateAllActionEffectDisplay: isMorning={isMorning}, _isMorningSelected={_isMorningSelected}");
 
         // たべる：元気増減量、重さ増減量、病気にかかる確率
         UpdateActionEffectDisplay(ActionType.Eat,
             eatEnergyValueText, eatWeightValueText,
-            myState, myActionData, gameParams, isMorning,
+            myState, myActionData, gameParams, isMorning, _morningAction,
             sicknessProbabilityText: eatSicknessProbabilityText);
 
         // ねむる：元気増減量のみ
         UpdateActionEffectDisplay(ActionType.Sleep,
             sleepEnergyValueText, null,
-            myState, myActionData, gameParams, isMorning);
+            myState, myActionData, gameParams, isMorning, _morningAction);
 
         // あそぶ：元気増減量、元気バフ量、重さバフ量、ケガにかかる確率
         UpdateActionEffectDisplay(ActionType.Play,
             playEnergyValueText, null,
-            myState, myActionData, gameParams, isMorning,
+            myState, myActionData, gameParams, isMorning, _morningAction,
             energyBuffText: playEnergyBuffText,
             weightBuffText: playWeightBuffText,
             injuryProbabilityText: playInjuryProbabilityText);
@@ -2587,18 +2686,19 @@ public class UIController : MonoBehaviour
         // つういん：元気増減量のみ
         UpdateActionEffectDisplay(ActionType.Clinic,
             clinicEnergyValueText, null,
-            myState, myActionData, gameParams, isMorning);
+            myState, myActionData, gameParams, isMorning, _morningAction);
 
         // 特殊能力の表示を更新（進化後のみ）
         if (myState.HasEvolved && !string.IsNullOrEmpty(myState.SpecialAbilityName.ToString()))
         {
             UpdateSpecialAbilityButtons(myState.SpecialAbilityName.ToString(),
-                myState, myActionData, gameParams, isMorning);
+                myState, myActionData, gameParams, isMorning, _morningAction);
         }
     }
 
     /// <summary>
     /// 個別の行動ボタンの常時表示を更新（数値テキストのみ）
+    /// 9.3修正: ローカルの午前行動を渡せるようにlocalMorningActionパラメータを追加
     /// </summary>
     private void UpdateActionEffectDisplay(
         ActionType action,
@@ -2608,36 +2708,28 @@ public class UIController : MonoBehaviour
         PlayerActionData actionData,
         GameParameters gameParams,
         bool isMorning,
+        ActionData? localMorningAction = null,
         TextMeshProUGUI sicknessProbabilityText = null,
         TextMeshProUGUI injuryProbabilityText = null,
         TextMeshProUGUI energyBuffText = null,
         TextMeshProUGUI weightBuffText = null)
     {
-        int energyChange = ActionCalculator.CalculateEnergyChange(action, null, state, actionData, gameParams, isMorning);
+        int energyChange = ActionCalculator.CalculateEnergyChange(action, null, state, actionData, gameParams, isMorning, localMorningAction);
         int weightChange = ActionCalculator.CalculateWeightChange(action, null, state, gameParams);
-
-        Debug.Log($"[UIController] {action} - Energy: {energyChange}, Weight: {weightChange}, BuffWeight: {state.PlayBuffWeight}");
 
         // 元気値テキストの更新
         if (energyValueText != null)
         {
-            Debug.Log($"[UIController] {action} EnergyText GameObject名: {energyValueText.gameObject.name}, 更新前Active: {energyValueText.gameObject.activeSelf}");
             if (energyChange != 0)
             {
                 energyValueText.gameObject.SetActive(true);
-                energyValueText.text = FormatChange(energyChange);
-                Debug.Log($"[UIController] {action} Energy表示更新: {energyValueText.text}, 更新後Active: {energyValueText.gameObject.activeSelf}");
+                SetTextIfChanged(energyValueText, FormatChange(energyChange));
             }
             else
             {
                 // 元気変化が0の場合は非表示
                 energyValueText.gameObject.SetActive(false);
-                Debug.Log($"[UIController] {action} Energy値が0のため非表示");
             }
-        }
-        else
-        {
-            Debug.LogWarning($"[UIController] {action} のenergyValueTextがnullです");
         }
 
         // 重さ値テキストの更新
@@ -2646,8 +2738,7 @@ public class UIController : MonoBehaviour
             if (weightChange != 0)
             {
                 weightValueText.gameObject.SetActive(true);
-                weightValueText.text = FormatChange(weightChange);
-                Debug.Log($"[UIController] {action} Weight表示更新: {weightValueText.text}");
+                SetTextIfChanged(weightValueText, FormatChange(weightChange));
             }
             else
             {
@@ -2661,7 +2752,7 @@ public class UIController : MonoBehaviour
         {
             var (sicknessProbability, _) = ActionCalculator.CalculateAilmentProbability(state, gameParams);
             sicknessProbabilityText.gameObject.SetActive(true);
-            sicknessProbabilityText.text = ActionCalculator.FormatProbability(sicknessProbability);
+            SetTextIfChanged(sicknessProbabilityText, ActionCalculator.FormatProbability(sicknessProbability));
         }
 
         // ケガ発症確率の更新（あそぶ用）
@@ -2669,7 +2760,7 @@ public class UIController : MonoBehaviour
         {
             var (_, injuryProbability) = ActionCalculator.CalculateAilmentProbability(state, gameParams);
             injuryProbabilityText.gameObject.SetActive(true);
-            injuryProbabilityText.text = ActionCalculator.FormatProbability(injuryProbability);
+            SetTextIfChanged(injuryProbabilityText, ActionCalculator.FormatProbability(injuryProbability));
         }
 
         // バフ量の更新（あそぶ用）
@@ -2680,13 +2771,13 @@ public class UIController : MonoBehaviour
             if (energyBuffText != null)
             {
                 energyBuffText.gameObject.SetActive(true);
-                energyBuffText.text = FormatChange(energyBuff);
+                SetTextIfChanged(energyBuffText, FormatChange(energyBuff));
             }
 
             if (weightBuffText != null)
             {
                 weightBuffText.gameObject.SetActive(true);
-                weightBuffText.text = FormatChange(weightBuff);
+                SetTextIfChanged(weightBuffText, FormatChange(weightBuff));
             }
         }
     }
@@ -2702,13 +2793,15 @@ public class UIController : MonoBehaviour
     /// </summary>
     /// <summary>
     /// 特殊能力ボタンの表示を更新（6つのボタンのうち1つをSetActiveにする）
+    /// 9.3修正: ローカルの午前行動を渡せるようにlocalMorningActionパラメータを追加
     /// </summary>
     private void UpdateSpecialAbilityButtons(
         string abilityName,
         UyopyonState state,
         PlayerActionData actionData,
         GameParameters gameParams,
-        bool isMorning)
+        bool isMorning,
+        ActionData? localMorningAction = null)
     {
         // すべてのボタンを非表示
         if (gaishokuButton != null) gaishokuButton.gameObject.SetActive(false);
@@ -2722,22 +2815,22 @@ public class UIController : MonoBehaviour
         switch (abilityName)
         {
             case "Gaishoku":
-                UpdateGaishokuButton(state, actionData, gameParams, isMorning);
+                UpdateGaishokuButton(state, actionData, gameParams, isMorning, localMorningAction);
                 break;
             case "Kintre":
-                UpdateKintreButton(state, actionData, gameParams, isMorning);
+                UpdateKintreButton(state, actionData, gameParams, isMorning, localMorningAction);
                 break;
             case "Gamushara":
-                UpdateGamusharaButton(state, actionData, gameParams, isMorning);
+                UpdateGamusharaButton(state, actionData, gameParams, isMorning, localMorningAction);
                 break;
             case "Benkyou":
-                UpdateBenkyouButton(state, actionData, gameParams, isMorning);
+                UpdateBenkyouButton(state, actionData, gameParams, isMorning, localMorningAction);
                 break;
             case "Jukusui":
-                UpdateJukusuiButton(state, actionData, gameParams, isMorning);
+                UpdateJukusuiButton(state, actionData, gameParams, isMorning, localMorningAction);
                 break;
             case "Dokagui":
-                UpdateDokaguiButton(state, actionData, gameParams, isMorning);
+                UpdateDokaguiButton(state, actionData, gameParams, isMorning, localMorningAction);
                 break;
         }
     }
@@ -2745,13 +2838,13 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// がいしょくボタンの表示を更新
     /// </summary>
-    private void UpdateGaishokuButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    private void UpdateGaishokuButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning, ActionData? localMorningAction = null)
     {
         if (gaishokuButton == null) return;
         gaishokuButton.gameObject.SetActive(true);
 
         // 元気増減量
-        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Gaishoku", state, actionData, gameParams, isMorning);
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Gaishoku", state, actionData, gameParams, isMorning, localMorningAction);
         if (gaishokuEnergyValueText != null)
             gaishokuEnergyValueText.text = FormatChange(energyChange);
 
@@ -2769,13 +2862,13 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// きんとれボタンの表示を更新
     /// </summary>
-    private void UpdateKintreButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    private void UpdateKintreButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning, ActionData? localMorningAction = null)
     {
         if (kintreButton == null) return;
         kintreButton.gameObject.SetActive(true);
 
         // 元気増減量
-        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Kintre", state, actionData, gameParams, isMorning);
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Kintre", state, actionData, gameParams, isMorning, localMorningAction);
         if (kintreEnergyValueText != null)
             kintreEnergyValueText.text = FormatChange(energyChange);
 
@@ -2800,7 +2893,7 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// がむしゃらボタンの表示を更新
     /// </summary>
-    private void UpdateGamusharaButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    private void UpdateGamusharaButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning, ActionData? localMorningAction = null)
     {
         if (gamusharaButton == null) return;
         gamusharaButton.gameObject.SetActive(true);
@@ -2810,13 +2903,13 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// べんきょうボタンの表示を更新
     /// </summary>
-    private void UpdateBenkyouButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    private void UpdateBenkyouButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning, ActionData? localMorningAction = null)
     {
         if (benkyouButton == null) return;
         benkyouButton.gameObject.SetActive(true);
 
         // 元気増減量
-        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Benkyou", state, actionData, gameParams, isMorning);
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Benkyou", state, actionData, gameParams, isMorning, localMorningAction);
         if (benkyouEnergyValueText != null)
             benkyouEnergyValueText.text = FormatChange(energyChange);
 
@@ -2834,13 +2927,13 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// じゅくすいボタンの表示を更新
     /// </summary>
-    private void UpdateJukusuiButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    private void UpdateJukusuiButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning, ActionData? localMorningAction = null)
     {
         if (jukusuiButton == null) return;
         jukusuiButton.gameObject.SetActive(true);
 
         // 元気増減量のみ
-        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Jukusui", state, actionData, gameParams, isMorning);
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Jukusui", state, actionData, gameParams, isMorning, localMorningAction);
         if (jukusuiEnergyValueText != null)
             jukusuiEnergyValueText.text = FormatChange(energyChange);
     }
@@ -2848,13 +2941,13 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// どかぐいボタンの表示を更新
     /// </summary>
-    private void UpdateDokaguiButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning)
+    private void UpdateDokaguiButton(UyopyonState state, PlayerActionData actionData, GameParameters gameParams, bool isMorning, ActionData? localMorningAction = null)
     {
         if (dokaguiButton == null) return;
         dokaguiButton.gameObject.SetActive(true);
 
         // 元気増減量
-        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Dokagui", state, actionData, gameParams, isMorning);
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Dokagui", state, actionData, gameParams, isMorning, localMorningAction);
         if (dokaguiEnergyValueText != null)
             dokaguiEnergyValueText.text = FormatChange(energyChange);
 
@@ -2930,6 +3023,19 @@ public class UIController : MonoBehaviour
         else
         {
             return "±0";
+        }
+    }
+
+
+    /// <summary>
+    /// TextMeshProのテキストを更新（変更がある場合のみ）
+    /// メッシュ再生成を最小化するための最適化
+    /// </summary>
+    private void SetTextIfChanged(TextMeshProUGUI textComponent, string newText)
+    {
+        if (textComponent != null && textComponent.text != newText)
+        {
+            textComponent.text = newText;
         }
     }
 

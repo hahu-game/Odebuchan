@@ -357,11 +357,11 @@ public class TurnProcessor : NetworkBehaviour
             }
         }
 
-        // 方法2: シーン内の全NetworkPlayerから検索
-        var allNetworkPlayers = FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
-        foreach (var networkPlayer in allNetworkPlayers)
+        // 方法2: GameManagerのDictionaryから取得（FindObjectsByType削減）
+        if (GameManager.Instance != null)
         {
-            if (networkPlayer.OwnerPlayerRef == player)
+            NetworkPlayer networkPlayer = GameManager.Instance.GetNetworkPlayer(player);
+            if (networkPlayer != null)
             {
                 string name = networkPlayer.PlayerName.ToString();
                 if (!string.IsNullOrEmpty(name))
@@ -485,6 +485,9 @@ public class TurnProcessor : NetworkBehaviour
 
         Debug.Log($"[TurnProcessor] {log}");
 
+        // たべるSE再生
+        AudioManager.Instance?.PlayEatSE();
+
         // 病気発症判定
         CheckSickness(player, state.Weight);
     }
@@ -515,6 +518,9 @@ public class TurnProcessor : NetworkBehaviour
         RPC_AddLog(log);
 
         Debug.Log($"[TurnProcessor] {log}");
+
+        // ねむるSE再生
+        AudioManager.Instance?.PlaySleepSE();
     }
 
     /// <summary>
@@ -548,6 +554,9 @@ public class TurnProcessor : NetworkBehaviour
         RPC_AddLog(log);
 
         Debug.Log($"[TurnProcessor] {log}");
+
+        // あそぶSE再生
+        AudioManager.Instance?.PlayPlaySE();
 
         // ケガ発症判定
         CheckInjury(player, state.Weight, isMorning);
@@ -585,10 +594,15 @@ public class TurnProcessor : NetworkBehaviour
         if (hadAilment)
         {
             log += "、全ての状態異常が治療されました！";
+            // 状態異常回復SE再生
+            AudioManager.Instance?.PlayAilmentCureSE();
         }
         RPC_AddLog(log);
 
         Debug.Log($"[TurnProcessor] {log}");
+
+        // つういんSE再生
+        AudioManager.Instance?.PlayClinicSE();
     }
     // ========== 特殊能力実行メソッド (7.3-7.7) ==========
 
@@ -614,6 +628,9 @@ public class TurnProcessor : NetworkBehaviour
         }
 
         Debug.Log($"[TurnProcessor] {playerName}が特殊能力 {abilityType} を実行");
+
+        // 特殊能力SE再生
+        AudioManager.Instance?.PlaySpecialAbilitySE();
 
         // StudyComboリセット（べんきょう以外の行動を実行した場合）
         if (abilityType != SpecialAbilityType.Benkyou)
@@ -725,8 +742,11 @@ public class TurnProcessor : NetworkBehaviour
             // ログに追加
             string log = $"{playerName}は<color=red><b>{ailmentName}</b></color>を発症した！";
             RPC_AddLog(log);
-            
+
             Debug.Log($"[TurnProcessor] {playerName} が {ailmentName} を発症");
+
+            // 病気発症SE再生
+            AudioManager.Instance?.PlaySicknessOnsetSE();
         }
     }
 
@@ -804,6 +824,9 @@ public class TurnProcessor : NetworkBehaviour
             RPC_AddLog(log);
 
             Debug.Log($"[TurnProcessor] {playerName} が {ailmentName} を発症");
+
+            // ケガ発症SE再生
+            AudioManager.Instance?.PlayInjuryOnsetSE();
 
             // 熱中症の場合、強制つういん処理
             if (newAilment == StatusAilment.Heatstroke)

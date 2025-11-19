@@ -117,9 +117,8 @@ public class SettingController : MonoBehaviour
         }
 
         // AudioManagerがあれば対応音量を適用
-        // TODO: AudioManager実装後にコメント解除
-        // AudioManager.Instance?.SetBGMVolume(bgmVolume);
-        // AudioManager.Instance?.SetSEVolume(seVolume);
+        AudioManager.Instance?.SetBGMVolume(bgmVolume);
+        AudioManager.Instance?.SetSEVolume(seVolume);
 
         Debug.Log($"[SettingController] 音量設定を読み込み: BGM={bgmVolume}, SE={seVolume}");
     }
@@ -133,8 +132,7 @@ public class SettingController : MonoBehaviour
         PlayerPrefs.Save();
 
         // AudioManagerがあれば対応音量を適用
-        // TODO: AudioManager実装後にコメント解除
-        // AudioManager.Instance?.SetBGMVolume(volume);
+        AudioManager.Instance?.SetBGMVolume(volume);
 
         Debug.Log($"[SettingController] BGM音量を変更: {volume}");
     }
@@ -148,8 +146,7 @@ public class SettingController : MonoBehaviour
         PlayerPrefs.Save();
 
         // AudioManagerがあれば対応音量を適用
-        // TODO: AudioManager実装後にコメント解除
-        // AudioManager.Instance?.SetSEVolume(volume);
+        AudioManager.Instance?.SetSEVolume(volume);
 
         Debug.Log($"[SettingController] SE音量を変更: {volume}");
     }
