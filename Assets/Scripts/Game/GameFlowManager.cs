@@ -110,6 +110,12 @@ public class GameFlowManager : NetworkBehaviour
             StartCoroutine(PlayGameBGMDelayed(0.5f));
         }
 
+        // 降参ボタンを表示（GameSceneでは表示する）
+        if (SettingController.Instance != null)
+        {
+            SettingController.Instance.SetSurrenderButtonVisible(true);
+        }
+
         // ホストのみがゲーム開始処理を実行
         if (Object.HasStateAuthority && !_gameStarted)
         {
@@ -128,7 +134,6 @@ public class GameFlowManager : NetworkBehaviour
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayGameBGM();
-            Debug.Log("[GameFlowManager] ゲームBGMを再生開始");
         }
     }
 
@@ -159,6 +164,9 @@ public class GameFlowManager : NetworkBehaviour
             {
                 _selectionPhaseTickCounter = 0;
                 SelectionTimeRemaining--;
+
+                // タイマーUI更新（全クライアント）
+                RPC_UpdateTimer(SelectionTimeRemaining);
 
                 // 残り時間が10秒になったら警告ログ
                 if (SelectionTimeRemaining == 10)
@@ -342,6 +350,11 @@ public class GameFlowManager : NetworkBehaviour
             // 行動ボタンのOutlineを表示
             RPC_ShowActionButtonOutlines();
 
+            // タイマー表示を開始（全クライアント）
+            RPC_ShowTimer();
+            // タイマーの初期値を設定（「時間切れ」が一瞬表示されるのを防ぐ）
+            RPC_UpdateTimer(SelectionTimeRemaining);
+
             // ログに選択フェーズ開始を追加
             RPC_AddLog($"行動を選択してください（制限時間: {SelectionTimeRemaining}秒）");
 
@@ -367,6 +380,9 @@ public class GameFlowManager : NetworkBehaviour
                 Debug.Log("[GameFlowManager] 選択フェーズ後: ゲーム終了のため処理を中断します");
                 return;
             }
+
+            // タイマー非表示（全クライアント）
+            RPC_HideTimer();
 
             // 行動ボタンのOutlineを非表示
             RPC_HideActionButtonOutlines();
@@ -1425,5 +1441,34 @@ public class GameFlowManager : NetworkBehaviour
         {
             Debug.LogError("[GameFlowManager] turnProcessor が null です");
         }
+    }
+
+    // === タイマー表示関連RPC ===
+
+    /// <summary>
+    /// タイマー表示RPC
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_ShowTimer()
+    {
+        UIController.Instance?.ShowTimer();
+    }
+
+    /// <summary>
+    /// タイマー非表示RPC
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_HideTimer()
+    {
+        UIController.Instance?.HideTimer();
+    }
+
+    /// <summary>
+    /// タイマー更新RPC（毎秒呼び出し）
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_UpdateTimer(int remainingTime)
+    {
+        UIController.Instance?.UpdateTimerDisplay(remainingTime, gameParams.SelectionPhaseTimeLimit);
     }
 }

@@ -158,3 +158,4 @@ private bool IsObjectValid()
 - マジックナンバーが存在
 
 
+

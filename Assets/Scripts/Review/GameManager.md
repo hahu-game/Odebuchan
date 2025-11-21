@@ -152,3 +152,4 @@ private void RegisterPlayerData<T>(Dictionary<PlayerRef, T> dict, PlayerRef play
 - 依存関係の管理が不十分（DIP違反）
 
 
+

@@ -118,8 +118,8 @@ public class UIController : MonoBehaviour
     public UnityEngine.UI.Button resultReturnToTitleButton;
 
     // === 9.2で追加: 設定パネル ===
-    [Header("Setting Panel")]
-    public SettingController settingController;
+    // SettingControllerはシングルトン（DontDestroyOnLoad）になったため、
+    // SettingController.Instanceを使用する
 
     // === 9.3で追加: 行動選択時の効果予測表示（アイコン+数値分離表示） ===
     // アイコンは常に表示されるため、数値テキストのみをスクリプトから制御
@@ -2526,31 +2526,9 @@ public class UIController : MonoBehaviour
         return path;
     }
 
-    // === 9.2: 設定パネル表示メソッド ===
-
-    /// <summary>
-    /// 設定パネルを表示
-    /// </summary>
-    public void ShowSettingPanel()
-    {
-        if (settingController != null)
-        {
-            settingController.ShowSettingPanel();
-            Debug.Log("[UIController] 設定パネル表示を要求しました");
-        }
-        else
-        {
-            Debug.LogWarning("[UIController] SettingControllerが設定されていません");
-        }
-    }
-
-    /// <summary>
-    /// 設定ボタンクリック時の処理（Inspectorから設定）
-    /// </summary>
-    public void OnSettingButtonClicked()
-    {
-        ShowSettingPanel();
-    }
+    // === 9.2: 設定パネル ===
+    // 設定パネルはSettingController（シングルトン）で管理されるため、
+    // UIControllerでは設定ボタンの制御は不要
 
     // === 9.3: 行動選択時の効果予測表示メソッド ===
 
@@ -3049,6 +3027,45 @@ public class UIController : MonoBehaviour
         if (playTooltipPanel != null) playTooltipPanel.SetActive(false);
         if (clinicTooltipPanel != null) clinicTooltipPanel.SetActive(false);
         if (specialAbilityTooltipPanel != null) specialAbilityTooltipPanel.SetActive(false);
+    }
+
+    // === タイマー表示関連 ===
+
+    [Header("Timer UI")]
+    [SerializeField] private TimerDisplay timerDisplay;
+
+    /// <summary>
+    /// タイマー表示を更新
+    /// GameFlowManagerから呼び出される（RPCまたはRender）
+    /// </summary>
+    public void UpdateTimerDisplay(int remainingTime, int maxTime)
+    {
+        if (timerDisplay != null)
+        {
+            timerDisplay.UpdateTimer(remainingTime, maxTime);
+        }
+    }
+
+    /// <summary>
+    /// タイマーパネルを表示
+    /// </summary>
+    public void ShowTimer()
+    {
+        if (timerDisplay != null)
+        {
+            timerDisplay.Show();
+        }
+    }
+
+    /// <summary>
+    /// タイマーパネルを非表示
+    /// </summary>
+    public void HideTimer()
+    {
+        if (timerDisplay != null)
+        {
+            timerDisplay.Hide();
+        }
     }
 
 

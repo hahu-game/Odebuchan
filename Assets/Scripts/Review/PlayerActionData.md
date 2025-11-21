@@ -132,3 +132,4 @@ private bool CanModifyAfternoonAction()
 **全体的に良好な設計です。**
 
 
+

@@ -117,3 +117,4 @@ private static SpecialAbilityType? ParseSpecialAbilityName(string abilityName)
 **全体的に良好な設計です。**
 
 
+

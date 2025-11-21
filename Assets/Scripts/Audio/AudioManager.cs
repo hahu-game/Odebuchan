@@ -87,8 +87,6 @@ public class AudioManager : MonoBehaviour
         {
             seSource.volume = seVolume;
         }
-
-        Debug.Log($"[AudioManager] 初期化完了: BGM音量={bgmVolume}, SE音量={seVolume}");
     }
 
     #region BGM Methods

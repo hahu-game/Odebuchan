@@ -198,3 +198,4 @@ private string GetPlayerName(PlayerRef player)
 このクラスは最も優先的にリファクタリングが必要です。
 
 
+
