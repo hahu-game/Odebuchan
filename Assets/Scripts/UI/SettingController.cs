@@ -5,10 +5,14 @@ using Fusion;
 /// <summary>
 /// 設定パネルの制御
 /// 音量調整と投了機能を含む
+/// シーン間で永続化される（DontDestroyOnLoad）
 /// </summary>
 public class SettingController : MonoBehaviour
 {
+    public static SettingController Instance { get; private set; }
+
     [Header("UI References")]
+    public Button settingButton;        // 設定ボタン（歯車アイコン）
     public GameObject settingPanel;
     public Slider bgmVolumeSlider;
     public Slider seVolumeSlider;
@@ -23,21 +27,38 @@ public class SettingController : MonoBehaviour
     private const string BGM_VOLUME_KEY = "BGMVolume";
     private const string SE_VOLUME_KEY = "SEVolume";
 
+    void Awake()
+    {
+        Debug.Log($"[SettingController] Awake() called. gameObject.name={gameObject.name}, activeInHierarchy={gameObject.activeInHierarchy}");
+
+        // シングルトンパターン + DontDestroyOnLoad
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        // 設定パネルを非表示にする（初期状態）
+        if (settingPanel != null)
+        {
+            settingPanel.SetActive(false);
+        }
+
+        // TitleSceneでは降参ボタンを非表示
+        SetSurrenderButtonVisible(false);
+
+        // ボタンのイベント設定（Awakeで行うことで、GameObjectがinactiveでも確実に実行される）
+        RegisterButtonEvents();
+    }
+
     void Start()
     {
+        Debug.Log($"[SettingController] Start() called.");
+
         // 保存された音量設定を読み込み
         LoadVolumeSettings();
-
-        // ボタンのイベント設定
-        if (surrenderButton != null)
-        {
-            surrenderButton.onClick.AddListener(OnSurrenderButtonClicked);
-        }
-
-        if (closeButton != null)
-        {
-            closeButton.onClick.AddListener(CloseSettingPanel);
-        }
 
         // スライダーのイベント設定
         if (bgmVolumeSlider != null)
@@ -63,14 +84,60 @@ public class SettingController : MonoBehaviour
     }
 
     /// <summary>
+    /// ボタンのイベントを登録
+    /// </summary>
+    private void RegisterButtonEvents()
+    {
+        Debug.Log($"[SettingController] RegisterButtonEvents() called.");
+        Debug.Log($"[SettingController] settingButton null check: {(settingButton == null ? "NULL" : "OK")}");
+
+        if (settingButton != null)
+        {
+            settingButton.onClick.AddListener(ShowSettingPanel);
+            Debug.Log($"[SettingController] settingButton.onClick.AddListener completed.");
+            Debug.Log($"[SettingController] Button name: {settingButton.gameObject.name}");
+            Debug.Log($"[SettingController] Button activeInHierarchy: {settingButton.gameObject.activeInHierarchy}");
+            Debug.Log($"[SettingController] Button interactable: {settingButton.interactable}");
+            Debug.Log($"[SettingController] Button enabled: {settingButton.enabled}");
+
+            // 親オブジェクトも確認
+            Transform parent = settingButton.transform.parent;
+            if (parent != null)
+            {
+                Debug.Log($"[SettingController] Button parent: {parent.name}, activeInHierarchy: {parent.gameObject.activeInHierarchy}");
+            }
+        }
+        else
+        {
+            Debug.LogError("[SettingController] settingButton が null です。Inspectorで設定してください。");
+        }
+
+        if (surrenderButton != null)
+        {
+            surrenderButton.onClick.AddListener(OnSurrenderButtonClicked);
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(CloseSettingPanel);
+        }
+    }
+
+    /// <summary>
     /// 設定パネルを表示
     /// </summary>
     public void ShowSettingPanel()
     {
+        Debug.Log("[SettingController] ShowSettingPanel() called!");
+
         if (settingPanel != null)
         {
             settingPanel.SetActive(true);
             Debug.Log("[SettingController] 設定パネルを表示しました");
+        }
+        else
+        {
+            Debug.LogError("[SettingController] settingPanel が null です");
         }
 
         // 確認パネルは常に非表示にする
@@ -229,6 +296,18 @@ public class SettingController : MonoBehaviour
         else
         {
             Debug.LogError("[SettingController] GameFlowManager.Instanceが見つかりません");
+        }
+    }
+
+    /// <summary>
+    /// 降参ボタンの表示/非表示を設定
+    /// </summary>
+    public void SetSurrenderButtonVisible(bool visible)
+    {
+        if (surrenderButton != null)
+        {
+            surrenderButton.gameObject.SetActive(visible);
+            Debug.Log($"[SettingController] 降参ボタンの表示を設定: {visible}");
         }
     }
 }

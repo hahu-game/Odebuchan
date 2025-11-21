@@ -195,3 +195,4 @@ private void CheckAilment(
 - マジックナンバーが存在
 
 
+

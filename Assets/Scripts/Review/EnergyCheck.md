@@ -111,3 +111,4 @@ private static bool IsConsecutiveAction(
 - メソッドの複雑さ
 
 
+
