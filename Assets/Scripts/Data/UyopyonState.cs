@@ -1,5 +1,6 @@
 ﻿using Fusion;
 using UnityEngine;
+using TMPro;
 
 /// <summary>
 /// プレイヤーのアバターであるうーぴょんのステータスをネットワーク同期する
@@ -7,6 +8,11 @@ using UnityEngine;
 // Trigger recompilation
 public class UyopyonState : NetworkBehaviour
 {
+    // === UI参照 ===
+    [SerializeField]
+    [Tooltip("プレイヤー名を表示するTextMeshProコンポーネント")]
+    private TextMeshProUGUI playerNameText;
+
     // === 既存プロパティ ===
     [Networked]
     public PlayerRef OwnerPlayer { get; set; }
@@ -83,6 +89,7 @@ public class UyopyonState : NetworkBehaviour
     private string _lastVisualType;
     private string _lastSpecialAbilityName = "";
     private byte[] _lastStatusAilments = new byte[4];
+    private string _lastPlayerName = "";
 
     // === 位置管理 ===
     private bool _hasSetPosition = false;
@@ -161,6 +168,9 @@ public class UyopyonState : NetworkBehaviour
         {
             _lastStatusAilments[i] = StatusAilments[i];
         }
+
+        // プレイヤー名の初期表示
+        UpdatePlayerNameDisplay();
 
         // UI の初期表示をトリガー
         UpdateDisplay();
@@ -301,6 +311,17 @@ public class UyopyonState : NetworkBehaviour
             }
             UIController.Instance?.UpdateStatusAilmentDisplay(OwnerPlayer, ailments);
         }
+
+        // プレイヤー名の変更をチェック（NetworkPlayerの名前が後から設定される場合に対応）
+        if (GameManager.Instance != null)
+        {
+            string currentPlayerName = GameManager.Instance.GetPlayerName(OwnerPlayer);
+            if (_lastPlayerName != currentPlayerName)
+            {
+                UpdatePlayerNameDisplay();
+                _lastPlayerName = currentPlayerName;
+            }
+        }
     }
 
 
@@ -371,6 +392,41 @@ public class UyopyonState : NetworkBehaviour
             {
                 StatusAilments.Set(i, 0);
             }
+        }
+    }
+
+    /// <summary>
+    /// プレイヤー名表示を更新する
+    /// 全クライアントで実行され、各クライアントのローカルUIに反映される
+    /// </summary>
+    private void UpdatePlayerNameDisplay()
+    {
+        if (playerNameText == null)
+        {
+            // TextMeshProコンポーネントが未設定の場合は警告を出して終了
+            // （エディタでアサインするまではこの警告が出る）
+            return;
+        }
+
+        if (GameManager.Instance == null)
+        {
+            Debug.LogWarning("[UyopyonState] GameManager.Instance が null のため、プレイヤー名を取得できません");
+            return;
+        }
+
+        // GameManagerからプレイヤー名を取得
+        string playerName = GameManager.Instance.GetPlayerName(OwnerPlayer);
+
+        if (!string.IsNullOrEmpty(playerName))
+        {
+            playerNameText.text = playerName;
+            DebugLogger.Log($"[UyopyonState] プレイヤー名を表示: OwnerPlayer={OwnerPlayer}, Name='{playerName}'");
+        }
+        else
+        {
+            // 名前がまだ設定されていない場合は空白にする
+            playerNameText.text = "";
+            DebugLogger.Log($"[UyopyonState] プレイヤー名がまだ設定されていません: OwnerPlayer={OwnerPlayer}");
         }
     }
 }

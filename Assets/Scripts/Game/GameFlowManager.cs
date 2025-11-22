@@ -587,12 +587,48 @@ public class GameFlowManager : NetworkBehaviour
 
             if (!kvp.Value.IsActionFixed)
             {
-                Debug.Log($"[GameFlowManager] プレイヤー {kvp.Key} の行動をデフォルト（ねむる）に設定します");
+                Debug.Log($"[GameFlowManager] プレイヤー {kvp.Key} の行動を確認します");
 
-                // 直接プロパティを変更（StateAuthorityがあるため）
-                kvp.Value.MorningAction = ActionData.Default();
-                kvp.Value.AfternoonAction = ActionData.Default();
-                kvp.Value.IsActionFixed = true;
+                // プレイヤー名を取得
+                string playerName = GameManager.Instance.GetPlayerName(kvp.Key);
+
+                // 現在の選択状態をチェック
+                bool morningSelected = kvp.Value.MorningAction.Type != ActionType.None;
+                bool afternoonSelected = kvp.Value.AfternoonAction.Type != ActionType.None;
+
+                if (morningSelected && afternoonSelected)
+                {
+                    // ケース1: 午前・午後両方選択済み → そのまま確定
+                    Debug.Log($"[GameFlowManager] プレイヤー {kvp.Key} は午前・午後両方選択済みのため、そのまま確定します");
+                    kvp.Value.IsActionFixed = true;
+                    RPC_AddLog($"{playerName}は時間切れのため、現在選択中の行動が確定されました。");
+                }
+                else if (morningSelected || afternoonSelected)
+                {
+                    // ケース2: 午前または午後のどちらか一方のみ選択済み → 未選択を「ねむる」に
+                    Debug.Log($"[GameFlowManager] プレイヤー {kvp.Key} は一部のみ選択済みのため、未選択を「ねむる」に設定します");
+
+                    if (!morningSelected)
+                    {
+                        kvp.Value.MorningAction = ActionData.Default();
+                    }
+                    if (!afternoonSelected)
+                    {
+                        kvp.Value.AfternoonAction = ActionData.Default();
+                    }
+
+                    kvp.Value.IsActionFixed = true;
+                    RPC_AddLog($"{playerName}は時間切れのため、未選択の行動にねむるがセットされました。");
+                }
+                else
+                {
+                    // ケース3: 午前・午後両方未選択 → 両方「ねむる」に
+                    Debug.Log($"[GameFlowManager] プレイヤー {kvp.Key} は午前・午後両方未選択のため、両方「ねむる」に設定します");
+                    kvp.Value.MorningAction = ActionData.Default();
+                    kvp.Value.AfternoonAction = ActionData.Default();
+                    kvp.Value.IsActionFixed = true;
+                    RPC_AddLog($"{playerName}は時間切れのため、未選択の行動にねむるがセットされました。");
+                }
 
                 Debug.Log($"[GameFlowManager] Player {kvp.Key} にデフォルト行動を設定完了: Morning={kvp.Value.MorningAction.Type}/{kvp.Value.MorningAction.Genre}, Afternoon={kvp.Value.AfternoonAction.Type}/{kvp.Value.AfternoonAction.Genre}, IsActionFixed={kvp.Value.IsActionFixed}");
             }
