@@ -683,9 +683,7 @@ public class UIController : MonoBehaviour
 
         if (myActionData != null)
         {
-            // RPC経由で行動を送信
-            myActionData.RPC_SetMorningAction(_morningAction.Value);
-            myActionData.RPC_SetAfternoonAction(_afternoonAction.Value);
+            // 行動を確定（行動は既に選択時に送信済み）
             myActionData.RPC_FixActions();
 
             Debug.Log($"[UIController] 行動を確定しました: Player={myActionData.OwnerPlayer}, 午前={_morningAction.Value.Type}, 午後={_afternoonAction.Value.Type}");
@@ -797,10 +795,18 @@ public class UIController : MonoBehaviour
             _isMorningSelected = true;
             Debug.Log($"[UIController] 午前の行動を選択: {abilityType}");
 
-            // パネル表示を更新（自分の午前）
+                        // パネル表示を更新（自分の午前）
             var runner = FindFirstObjectByType<NetworkRunner>();
             if (runner != null)
             {
+                // PlayerActionDataに即座に反映（時間切れ時の判定用）
+                PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+                if (myActionData != null)
+                {
+                    myActionData.RPC_SetMorningAction(selectedAction);
+                    Debug.Log($"[UIController] 午前の行動をPlayerActionDataに送信: {selectedAction.Type}");
+                }
+
                 UpdateActionDisplay(runner.LocalPlayer, true, selectedAction);
             }
 
@@ -817,10 +823,18 @@ public class UIController : MonoBehaviour
             _afternoonAction = selectedAction;
             Debug.Log($"[UIController] 午後の行動を選択: {abilityType}");
 
-            // パネル表示を更新（自分の午後）
+                        // パネル表示を更新（自分の午後）
             var runner = FindFirstObjectByType<NetworkRunner>();
             if (runner != null)
             {
+                // PlayerActionDataに即座に反映（時間切れ時の判定用）
+                PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+                if (myActionData != null)
+                {
+                    myActionData.RPC_SetAfternoonAction(selectedAction);
+                    Debug.Log($"[UIController] 午後の行動をPlayerActionDataに送信: {selectedAction.Type}");
+                }
+
                 UpdateActionDisplay(runner.LocalPlayer, false, selectedAction);
             }
 
@@ -880,30 +894,19 @@ public class UIController : MonoBehaviour
             _isMorningSelected = true;
             Debug.Log($"[UIController] 午前の行動を選択: {actionType}");
 
-            // パネル表示を更新（自分の午前）
+                        // パネル表示を更新（自分の午前）
             var runner = FindFirstObjectByType<NetworkRunner>();
             if (runner != null)
             {
-                // TODO 5: 特殊能力の場合は具体的な特殊能力名を表示
-                if (actionType == ActionType.SpecialAbility)
+                // PlayerActionDataに即座に反映（時間切れ時の判定用）
+                PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+                if (myActionData != null)
                 {
-                    // 自分の特殊能力を取得してActionDataを作成
-                    string abilityName = GetMySpecialAbilityName();
-                    if (!string.IsNullOrEmpty(abilityName) && System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
-                    {
-                        UpdateActionDisplay(runner.LocalPlayer, true, ActionData.CreateSpecialAbility(abilityType));
-                    }
-                    else
-                    {
-                        // フォールバック
-                        UpdateActionDisplay(runner.LocalPlayer, true, new ActionData(ActionType.SpecialAbility, Genre.None, abilityName));
-                    }
+                    myActionData.RPC_SetMorningAction(selectedAction);
+                    Debug.Log($"[UIController] 午前の行動をPlayerActionDataに送信: {selectedAction.Type}");
                 }
-                else
-                {
-                    // 通常の行動（たべる、ねむる等）
-                    UpdateActionDisplay(runner.LocalPlayer, true, CreateActionDataFromType(actionType));
-                }
+
+                UpdateActionDisplay(runner.LocalPlayer, true, selectedAction);
                 HighlightCurrentSelection(false); // 午前選択中を表示
             }
 
@@ -918,30 +921,19 @@ public class UIController : MonoBehaviour
             _afternoonAction = selectedAction;
             Debug.Log($"[UIController] 午後の行動を選択: {actionType}");
 
-            // パネル表示を更新（自分の午後）
+                        // パネル表示を更新（自分の午後）
             var runner = FindFirstObjectByType<NetworkRunner>();
             if (runner != null)
             {
-                // TODO 5: 特殊能力の場合は具体的な特殊能力名を表示
-                if (actionType == ActionType.SpecialAbility)
+                // PlayerActionDataに即座に反映（時間切れ時の判定用）
+                PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+                if (myActionData != null)
                 {
-                    // 自分の特殊能力を取得してActionDataを作成
-                    string abilityName = GetMySpecialAbilityName();
-                    if (!string.IsNullOrEmpty(abilityName) && System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
-                    {
-                        UpdateActionDisplay(runner.LocalPlayer, false, ActionData.CreateSpecialAbility(abilityType));
-                    }
-                    else
-                    {
-                        // フォールバック
-                        UpdateActionDisplay(runner.LocalPlayer, false, new ActionData(ActionType.SpecialAbility, Genre.None, abilityName));
-                    }
+                    myActionData.RPC_SetAfternoonAction(selectedAction);
+                    Debug.Log($"[UIController] 午後の行動をPlayerActionDataに送信: {selectedAction.Type}");
                 }
-                else
-                {
-                    // 通常の行動（たべる、ねむる等）
-                    UpdateActionDisplay(runner.LocalPlayer, false, CreateActionDataFromType(actionType));
-                }
+
+                UpdateActionDisplay(runner.LocalPlayer, false, selectedAction);
                 HighlightCurrentSelection(true); // 午後選択中を表示
             }
         }

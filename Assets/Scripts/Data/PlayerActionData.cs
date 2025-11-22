@@ -101,15 +101,8 @@ public class PlayerActionData : NetworkBehaviour
                 // 自分のプレイヤー、または実行フェーズの場合のみ表示
                 if (isMyPlayer || isExecutionPhase)
                 {
-                    // 確定していない場合は空欄を表示
-                    if (!IsActionFixed)
-                    {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionData.Empty());
-                    }
-                    else
-                    {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction);
-                    }
+                    // 確定状態に関わらず、現在の行動を表示
+                    UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction);
                 }
             }
 
@@ -126,15 +119,8 @@ public class PlayerActionData : NetworkBehaviour
                 // 自分のプレイヤー、または実行フェーズの場合のみ表示
                 if (isMyPlayer || isExecutionPhase)
                 {
-                    // 確定していない場合は空欄を表示
-                    if (!IsActionFixed)
-                    {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionData.Empty());
-                    }
-                    else
-                    {
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction);
-                    }
+                    // 確定状態に関わらず、現在の行動を表示
+                    UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction);
                 }
             }
 
@@ -152,18 +138,9 @@ public class PlayerActionData : NetworkBehaviour
                 // 自分のプレイヤー、または実行フェーズの場合のみ表示
                 if (isMyPlayer || isExecutionPhase)
                 {
-                    if (!IsActionFixed)
-                    {
-                        // 確定解除された場合は空欄を表示
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, ActionData.Empty());
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, ActionData.Empty());
-                    }
-                    else
-                    {
-                        // 確定された場合は現在の行動を表示
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction);
-                        UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction);
-                    }
+                    // 確定状態に関わらず、現在の行動を表示
+                    UIController.Instance.UpdateActionDisplay(OwnerPlayer, true, MorningAction);
+                    UIController.Instance.UpdateActionDisplay(OwnerPlayer, false, AfternoonAction);
                 }
             }
 
