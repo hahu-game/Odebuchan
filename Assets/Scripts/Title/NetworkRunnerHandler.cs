@@ -17,38 +17,141 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     private bool _started = false;
     public NetworkObject playerPrefab;
 
-    // 【テスト用】Playボタンで自動起動するロジック
-    private void Start()
+    private void Awake()
     {
-        if (Application.isEditor && !_started)
+        // 既存の NetworkRunnerHandler を探して破棄する
+        var existingHandlers = FindObjectsOfType<NetworkRunnerHandler>();
+        foreach (var handler in existingHandlers)
         {
-            Debug.Log("【テストモード】ホストとして自動起動します。");
-            // StartGameはasyncなので、タスクとして実行
-            _ = StartGame(Fusion.GameMode.Shared,"RANDOM_POOL_UYOPYON");
+            if (handler != this)
+            {
+                Debug.LogWarning($"[NetworkRunnerHandler] 既存のNetworkRunnerHandlerを発見したため破棄します: {handler.gameObject.name}");
+
+                // 既存の Runner をシャットダウン
+                if (handler._runner != null && handler._runner.IsRunning)
+                {
+                    Debug.Log("[NetworkRunnerHandler] 既存のRunnerをシャットダウンします。");
+                    handler._runner.Shutdown();
+                }
+
+                Destroy(handler.gameObject);
+            }
         }
+
+        // シーン遷移時にこのGameObjectが破壊されないようにする
+        DontDestroyOnLoad(gameObject);
+        Debug.Log("[NetworkRunnerHandler] DontDestroyOnLoadを設定しました。");
     }
+
+    // 【テスト用】Playボタンで自動起動するロジック
+    // 【重要】現在は無効化しています。ランダムマッチングのテストは手動でボタンを押してください。
+    // private void Start()
+    // {
+    //     if (Application.isEditor && !_started)
+    //     {
+    //         // ParallelSyncのクローンかどうかを判定
+    //         // クローンの場合はプロジェクトパスに "_clone_" が含まれる
+    //         string projectPath = Application.dataPath;
+    //         bool isClone = projectPath.Contains("_clone_");
+    //
+    //         if (isClone)
+    //         {
+    //             Debug.Log("【テストモード】ParallelSyncクローン側のため、自動起動をスキップします。手動でランダムマッチボタンを押してください。");
+    //         }
+    //         else
+    //         {
+    //             Debug.Log("【テストモード】メインエディタでランダムマッチを自動起動します。");
+    //             // StartGameはasyncなので、タスクとして実行
+    //             // null を渡すことでランダムマッチングモードになる
+    //             _ = StartGame(Fusion.GameMode.Shared, null);
+    //         }
+    //     }
+    // }
     // 【テスト終了後】本番に戻す際は上記 Start() メソッドを削除すること
 
     /// <summary>
     /// ネットワーク接続を開始する。(async Task に変更)
+    /// sessionName が null または空文字の場合はランダムマッチング、それ以外はフレンドマッチング
     /// </summary>
     public async Task StartGame(GameMode mode, string sessionName)
     {
-        if (_started) return;
+        Debug.Log($"[StartGame] ===== 開始 =====");
+        Debug.Log($"[StartGame] GameObject: {gameObject.name}");
+        Debug.Log($"[StartGame] sessionName: '{sessionName ?? "null"}'");
+        Debug.Log($"[StartGame] IsRandomMatch: {string.IsNullOrEmpty(sessionName)}");
+
+        // シーン内の全ての NetworkRunner を検索
+        var allRunners = FindObjectsOfType<NetworkRunner>();
+        Debug.Log($"[StartGame] シーン内に {allRunners.Length} 個のNetworkRunnerが見つかりました。");
+
+        // 実行中のRunnerをシャットダウン
+        foreach (var runner in allRunners)
+        {
+            if (runner != null && runner.IsRunning)
+            {
+                Debug.Log($"[StartGame] NetworkRunnerをシャットダウンします: {runner.gameObject.name}");
+                await runner.Shutdown();
+            }
+        }
+
+        // このGameObjectのNetworkRunnerコンポーネントを取得または追加
+        _runner = gameObject.GetComponent<NetworkRunner>();
+        if (_runner == null)
+        {
+            Debug.Log("[StartGame] NetworkRunnerコンポーネントを新規作成します。");
+            _runner = gameObject.AddComponent<NetworkRunner>();
+        }
+        else
+        {
+            Debug.Log("[StartGame] 既存のNetworkRunnerコンポーネントを再利用します。");
+        }
+
+        _runner.ProvideInput = true;
+        _started = false;  // フラグをリセット
         _started = true;
 
-        _runner = GetComponent<NetworkRunner>() ?? gameObject.AddComponent<NetworkRunner>();
-        _runner.ProvideInput = true;
+        Debug.Log($"[StartGame] NetworkRunnerの準備完了。GameObject: {gameObject.name}");
 
         var sceneManager = GetComponent<NetworkSceneManagerDefault>();
+
+        // NetworkSceneManagerDefaultの存在確認
+        if (sceneManager == null)
+        {
+            Debug.LogError("[StartGame] CRITICAL ERROR: NetworkSceneManagerDefaultが見つかりません！シーン遷移ができません。");
+            Debug.LogError("[StartGame] このGameObjectにNetworkSceneManagerDefaultコンポーネントを追加してください。");
+            _started = false;
+            TitleScreenManager.Instance?.HideMatchingUI();
+            return;
+        }
+        else
+        {
+            Debug.Log("[StartGame] NetworkSceneManagerDefaultを取得しました。");
+        }
+
+        // ランダムマッチかフレンドマッチかを判定
+        bool isRandomMatch = string.IsNullOrEmpty(sessionName);
 
         var startGameArgs = new StartGameArgs
         {
             GameMode = mode,
-            SessionName = sessionName,
+            SessionName = isRandomMatch ? null : sessionName,  // ランダムマッチの場合はnull
             SceneManager = sceneManager,
             PlayerCount = 2,
         };
+
+        Debug.Log($"[StartGame] StartGameArgs作成完了: SessionName={startGameArgs.SessionName ?? "null"}, GameMode={startGameArgs.GameMode}");
+
+        // ログ出力
+        if (isRandomMatch)
+        {
+            Debug.Log("[StartGame] ランダムマッチモードで接続を開始します。SessionName=null（自動マッチング）");
+        }
+        else
+        {
+            Debug.Log($"[StartGame] フレンドマッチモードで接続を開始します。SessionName={sessionName}");
+        }
+
+        Debug.Log($"[StartGame] GameMode={mode}, IsRandomMatch={isRandomMatch}");
 
         var result = await _runner.StartGame(startGameArgs);
 
@@ -86,12 +189,15 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     void INetworkRunnerCallbacks.OnPlayerJoined(NetworkRunner runner, PlayerRef player)
     {
-        Debug.Log($"プレイヤーが参加しました: PlayerRef={player}");
+        Debug.Log($"=== プレイヤーが参加しました: PlayerRef={player} ===");
+        Debug.Log($"現在のプレイヤー数: {runner.ActivePlayers.Count()}人");
+        Debug.Log($"IsSharedModeMasterClient: {runner.IsSharedModeMasterClient}");
+        Debug.Log($"SessionInfo.Name: {runner.SessionInfo.Name}");
 
         // 【重要】2人目のプレイヤーが参加したら、シーン遷移を開始する
         if (runner.IsSharedModeMasterClient && runner.ActivePlayers.Count() == 2)
         {
-            Debug.Log("マッチング完了！2人目が参加しました。ゲームシーンへ遷移します。");
+            Debug.Log("=== マッチング完了！2人目が参加しました。ゲームシーンへ遷移します。 ===");
 
             // マッチング成功SE再生
             AudioManager.Instance?.PlayMatchingSuccessSE();
@@ -102,19 +208,45 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             // WebGL接続を安定するまで1秒間待機する (非同期実行のためブロックしない)
             _ = DelayedSceneLoad(runner);
         }
+        else
+        {
+            Debug.Log($"まだ1人しかいないため、2人目のプレイヤーを待機中...");
+        }
     }
 
     // 【新規追加メソッド】
     private async Task DelayedSceneLoad(NetworkRunner runner)
     {
-        // WebGLクライアントとの接続が完全に安定するまで、1000ミリ秒 (1秒) 待機
-        await Task.Delay(1000);
-
-        if (runner != null)
+        try
         {
+            Debug.Log("[DelayedSceneLoad] シーン遷移を開始します。");
+            // WebGL環境でTask.Delayが動作しないため、待機を削除し即座にシーンロードを実行
+            Debug.Log("[DelayedSceneLoad] シーンロードを実行します。");
+
+            if (runner == null)
+            {
+                Debug.LogError("[DelayedSceneLoad] エラー: runnerがnullです！");
+                return;
+            }
+
+            Debug.Log($"[DelayedSceneLoad] runner.IsRunning: {runner.IsRunning}");
+            Debug.Log($"[DelayedSceneLoad] runner.IsSharedModeMasterClient: {runner.IsSharedModeMasterClient}");
+
             const string GAME_SCENE_NAME = "GameScene";
-            // シーンロードを非同期で開始
-            await runner.LoadScene(GAME_SCENE_NAME);
+            Debug.Log($"[DelayedSceneLoad] runner.LoadScene(\"{GAME_SCENE_NAME}\")を呼び出します...");
+            Debug.Log($"[DelayedSceneLoad] 現在のアクティブシーン: {UnityEngine.SceneManagement.SceneManager.GetActiveScene().name}");
+
+            // シーンロードを開始
+            // 注意: Fusion 2.0のLoadSceneはvoidを返す可能性があります
+            runner.LoadScene(GAME_SCENE_NAME);
+
+            Debug.Log($"[DelayedSceneLoad] LoadScene呼び出し完了。シーン遷移はコールバックで処理されます。");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[DelayedSceneLoad] シーンロード中に例外が発生しました: {ex.GetType().Name}");
+            Debug.LogError($"[DelayedSceneLoad] メッセージ: {ex.Message}");
+            Debug.LogError($"[DelayedSceneLoad] スタックトレース: {ex.StackTrace}");
         }
     }
 
@@ -139,7 +271,17 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // 以前は無かったメソッドの追加
     void INetworkRunnerCallbacks.OnConnectedToServer(NetworkRunner runner)
     {
-        Debug.Log("サーバーに接続しました");
+        Debug.Log("=== サーバーに接続しました ===");
+        Debug.Log($"Runner GameObject: {runner.gameObject.name}");
+        Debug.Log($"このHandlerのRunner: {(_runner == runner ? "一致" : "不一致！")}");
+        Debug.Log($"SessionInfo.Name: {runner.SessionInfo.Name}");
+        Debug.Log($"SessionInfo.PlayerCount: {runner.SessionInfo.PlayerCount}");
+        Debug.Log($"SessionInfo.MaxPlayers: {runner.SessionInfo.MaxPlayers}");
+        Debug.Log($"SessionInfo.IsOpen: {runner.SessionInfo.IsOpen}");
+        Debug.Log($"SessionInfo.IsVisible: {runner.SessionInfo.IsVisible}");
+        Debug.Log($"Runner.IsServer: {runner.IsServer}");
+        Debug.Log($"Runner.IsClient: {runner.IsClient}");
+        Debug.Log($"Runner.IsSharedModeMasterClient: {runner.IsSharedModeMasterClient}");
     }
 
     // 以前は無かったメソッドの追加
@@ -161,7 +303,14 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     void INetworkRunnerCallbacks.OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }
 
-    void INetworkRunnerCallbacks.OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList) { }
+    void INetworkRunnerCallbacks.OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
+    {
+        Debug.Log($"=== セッションリスト更新: {sessionList.Count}個のセッション ===");
+        foreach (var session in sessionList)
+        {
+            Debug.Log($"  - Session: {session.Name}, Players: {session.PlayerCount}/{session.MaxPlayers}, IsOpen: {session.IsOpen}, IsVisible: {session.IsVisible}");
+        }
+    }
 
     void INetworkRunnerCallbacks.OnCustomAuthenticationResponse(NetworkRunner runner, Dictionary<string, object> data) { }
 

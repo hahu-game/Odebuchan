@@ -59,7 +59,7 @@ public class AudioManager : MonoBehaviour
     public AudioClip seSurrender;
 
     [Header("Volume Settings")]
-    [Range(0f, 1f)] public float bgmVolume = 0.5f;
+    [Range(0f, 1f)] public float bgmVolume = 0.3f;  // デフォルト30%（旧50%の60%）
     [Range(0f, 1f)] public float seVolume = 0.7f;
 
     private void Awake()
@@ -73,8 +73,8 @@ public class AudioManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // PlayerPrefsから音量設定を読み込む
-        bgmVolume = PlayerPrefs.GetFloat("BGMVolume", 0.5f);
+        // PlayerPrefsから音量設定を読み込む（デフォルト: BGM 30%, SE 70%）
+        bgmVolume = PlayerPrefs.GetFloat("BGMVolume", 0.3f);
         seVolume = PlayerPrefs.GetFloat("SEVolume", 0.7f);
 
         // AudioSourceの初期設定
