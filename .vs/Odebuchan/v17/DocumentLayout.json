@@ -3,7 +3,11 @@
   "WorkspaceRootPath": "C:\\Users\\helic\\Odebuchan\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\title\\titlescreenmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{E01FAEFB-CD65-15C6-1CBE-60F6BB56577D}|Assembly-CSharp-Editor.csproj|C:\\Users\\helic\\Odebuchan\\assets\\editor\\consolecopytool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E01FAEFB-CD65-15C6-1CBE-60F6BB56577D}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\consolecopytool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|c:\\users\\helic\\odebuchan\\assets\\scripts\\title\\titlescreenmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\title\\titlescreenmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -51,10 +55,6 @@
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\data\\actiondata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E01FAEFB-CD65-15C6-1CBE-60F6BB56577D}|Assembly-CSharp-Editor.csproj|C:\\Users\\helic\\Odebuchan\\assets\\editor\\consolecopytool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E01FAEFB-CD65-15C6-1CBE-60F6BB56577D}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\consolecopytool.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\data\\gameenums.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\data\\gameenums.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -94,11 +94,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "ActionCulculater.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\ActionCulculater.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\ActionCulculater.cs",
@@ -109,7 +109,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "GameManager.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameManager.cs",
@@ -121,7 +121,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "UIController.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\UIController.cs",
@@ -133,7 +133,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "TitleScreenManager.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\TitleScreenManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Title\\TitleScreenManager.cs",
@@ -146,15 +146,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 0,
               "Title": "ConsoleCopyTool.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Editor\\ConsoleCopyTool.cs",
               "RelativeDocumentMoniker": "Assets\\Editor\\ConsoleCopyTool.cs",
               "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Editor\\ConsoleCopyTool.cs",
               "RelativeToolTip": "Assets\\Editor\\ConsoleCopyTool.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAAqwDEAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABgAAAAAAAAAAAAqwDUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-06T07:43:17.543Z"
+              "WhenOpened": "2025-11-06T07:43:17.543Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -182,7 +183,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "ActionData.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\ActionData.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\ActionData.cs",
@@ -194,7 +195,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "GameFlowManager.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameFlowManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameFlowManager.cs",
@@ -206,7 +207,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "EnergyCheck.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\EnergyCheck.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\EnergyCheck.cs",
@@ -218,7 +219,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "GameParameters.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\GameParameters.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\GameParameters.cs",
@@ -230,7 +231,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "SpecialAbilityExecutor.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\SpecialAbilityExecutor.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\SpecialAbilityExecutor.cs",
@@ -242,7 +243,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "TurnProcessor.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\TurnProcessor.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\TurnProcessor.cs",
@@ -254,7 +255,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "UIRaycastDebugger.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Test\\UIRaycastDebugger.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Test\\UIRaycastDebugger.cs",
@@ -266,7 +267,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "SettingController.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\SettingController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\SettingController.cs",

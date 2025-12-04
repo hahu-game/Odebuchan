@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 
 /// <summary>
 /// 1日の処理（午前・午後の行動実行）を管理するクラス
@@ -189,7 +190,7 @@ public class TurnProcessor : NetworkBehaviour
 
         // エフェクト・効果音再生（2秒待機）
         RPC_ShowJankenResult(winner, winGenre);
-        await Task.Delay((int)(gameParams.ActionWaitDuration * 1000));
+        await UniTask.Delay((int)(gameParams.ActionWaitDuration * 1000));
     }
 
     /// <summary>
@@ -261,7 +262,7 @@ public class TurnProcessor : NetworkBehaviour
 
         // アニメーション再生（2秒待機）
         RPC_PlayActionAnimation(player, action.Type);
-        await Task.Delay((int)(gameParams.ActionWaitDuration * 1000));
+        await UniTask.Delay((int)(gameParams.ActionWaitDuration * 1000));
     }
 
     /// <summary>

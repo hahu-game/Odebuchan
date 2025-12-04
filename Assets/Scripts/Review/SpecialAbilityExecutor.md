@@ -118,3 +118,5 @@ private interface IGamusharaPattern
 
 
 
+
+

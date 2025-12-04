@@ -180,21 +180,34 @@ public class TitleScreenManager : MonoBehaviour
 
     public async void OnRandomMatchClicked()
     {
-        Debug.Log($"[OnRandomMatchClicked] ボタンクリック時のInputField.text: '{playerNameInputField.text}'");
+        Debug.Log($"[OnRandomMatchClicked] ===== ボタンクリック =====");
+        Debug.Log($"[OnRandomMatchClicked] InputField.text: '{playerNameInputField.text}'");
 
         // プレイヤー名のバリデーション
         if (!ValidatePlayerName())
         {
+            Debug.LogWarning("[OnRandomMatchClicked] バリデーション失敗。処理を中断します。");
             return; // バリデーションエラーの場合、処理を中断
         }
 
-        if (!CheckAndRestoreRunnerHandler()) return;
+        Debug.Log("[OnRandomMatchClicked] CheckAndRestoreRunnerHandler() を呼び出します。");
+        if (!CheckAndRestoreRunnerHandler())
+        {
+            Debug.LogError("[OnRandomMatchClicked] CheckAndRestoreRunnerHandler() が false を返しました。処理を中断します。");
+            return;
+        }
 
+        Debug.Log("[OnRandomMatchClicked] SavePlayerName() を呼び出します。");
         SavePlayerName();
+
+        Debug.Log("[OnRandomMatchClicked] SetMatchingUIActive(true) を呼び出します。");
         SetMatchingUIActive(true);
 
-        // _activeRunnerHandlerInstanceを使用
-        await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, "RANDOM_POOL_UYOPYON");
+        Debug.Log("[OnRandomMatchClicked] StartGame() を呼び出します。sessionName=null");
+        // ランダムマッチング：sessionName に null を渡す
+        await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, null);
+
+        Debug.Log("[OnRandomMatchClicked] StartGame() が完了しました。");
     }
 
     public async void OnFriendMatchClicked()
@@ -315,7 +328,7 @@ public class TitleScreenManager : MonoBehaviour
     /// <summary>
     /// エラーメッセージを指定秒数だけ表示する
     /// </summary>
-    private async void ShowErrorMessage(string message, float duration)
+    private void ShowErrorMessage(string message, float duration)
     {
         if (errorMessageText == null)
         {
@@ -323,6 +336,15 @@ public class TitleScreenManager : MonoBehaviour
             return;
         }
 
+        // コルーチンでメッセージ表示処理を開始（WebGL互換性のため）
+        StartCoroutine(ShowErrorMessageCoroutine(message, duration));
+    }
+
+    /// <summary>
+    /// エラーメッセージ表示のコルーチン（WebGL互換性のため）
+    /// </summary>
+    private System.Collections.IEnumerator ShowErrorMessageCoroutine(string message, float duration)
+    {
         // Raycast Targetをオフにして、クリックをブロックしないようにする
         errorMessageText.raycastTarget = false;
 
@@ -330,8 +352,8 @@ public class TitleScreenManager : MonoBehaviour
         errorMessageText.text = message;
         errorMessageText.gameObject.SetActive(true);
 
-        // 指定秒数待機
-        await Task.Delay((int)(duration * 1000));
+        // 指定秒数待機（WebGL環境でも動作する）
+        yield return new WaitForSeconds(duration);
 
         // メッセージを非表示にする
         HideErrorMessage();
@@ -378,7 +400,7 @@ public class TitleScreenManager : MonoBehaviour
     /// <summary>
     /// プレイヤー名エラーメッセージを指定秒数だけ表示する
     /// </summary>
-    private async void ShowPlayerNameError(string message, float duration)
+    private void ShowPlayerNameError(string message, float duration)
     {
         Debug.Log($"[ShowPlayerNameError] 開始: message='{message}', duration={duration}");
         Debug.Log($"[ShowPlayerNameError] playerNameErrorMessageText null check: {(playerNameErrorMessageText == null ? "NULL" : "OK")}");
@@ -389,6 +411,15 @@ public class TitleScreenManager : MonoBehaviour
             return;
         }
 
+        // コルーチンでメッセージ表示処理を開始（WebGL互換性のため）
+        StartCoroutine(ShowPlayerNameErrorCoroutine(message, duration));
+    }
+
+    /// <summary>
+    /// プレイヤー名エラーメッセージ表示のコルーチン（WebGL互換性のため）
+    /// </summary>
+    private System.Collections.IEnumerator ShowPlayerNameErrorCoroutine(string message, float duration)
+    {
         Debug.Log($"[ShowPlayerNameError] GameObject名: {playerNameErrorMessageText.gameObject.name}");
         Debug.Log($"[ShowPlayerNameError] GameObject active before: {playerNameErrorMessageText.gameObject.activeSelf}");
 
@@ -402,8 +433,8 @@ public class TitleScreenManager : MonoBehaviour
         Debug.Log($"[ShowPlayerNameError] GameObject active after: {playerNameErrorMessageText.gameObject.activeSelf}");
         Debug.Log($"[ShowPlayerNameError] Text設定完了: '{playerNameErrorMessageText.text}'");
 
-        // 指定秒数待機
-        await Task.Delay((int)(duration * 1000));
+        // 指定秒数待機（WebGL環境でも動作する）
+        yield return new WaitForSeconds(duration);
 
         // メッセージを非表示にする
         Debug.Log($"[ShowPlayerNameError] {duration}秒経過、非表示にします");

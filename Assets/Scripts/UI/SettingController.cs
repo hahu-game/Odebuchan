@@ -170,8 +170,8 @@ public class SettingController : MonoBehaviour
     /// </summary>
     private void LoadVolumeSettings()
     {
-        float bgmVolume = PlayerPrefs.GetFloat(BGM_VOLUME_KEY, 0.5f);
-        float seVolume = PlayerPrefs.GetFloat(SE_VOLUME_KEY, 0.5f);
+        float bgmVolume = PlayerPrefs.GetFloat(BGM_VOLUME_KEY, 0.3f);  // デフォルト30%
+        float seVolume = PlayerPrefs.GetFloat(SE_VOLUME_KEY, 0.7f);    // デフォルト70%
 
         if (bgmVolumeSlider != null)
         {
