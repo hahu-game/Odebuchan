@@ -164,6 +164,7 @@ public class UyopyonState : NetworkBehaviour
         _lastPlayBuffEnergy = PlayBuffEnergy;
         _lastHasEvolved = HasEvolved;
         _lastVisualType = VisualType.ToString();
+        _lastSpecialAbilityName = SpecialAbilityName.ToString(); // 7.2修正: 初期化を追加
         for (int i = 0; i < 4; i++)
         {
             _lastStatusAilments[i] = StatusAilments[i];
@@ -191,7 +192,8 @@ public class UyopyonState : NetworkBehaviour
         {
             Debug.LogWarning("GameParameters is not set! Weight and Energy will remain at default (0).");
         }
-        VisualType = "UyopyonBaby";
+        VisualType = "UyopyonBaby"; // 7.2修正: NetworkString型に直接代入
+        Debug.Log($"[UyopyonState.InitializeValues] VisualType設定後: '{VisualType.ToString()}'");
     }
 
     /// <summary>
