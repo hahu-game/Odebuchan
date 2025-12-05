@@ -590,6 +590,18 @@ public class TurnProcessor : NetworkBehaviour
 
         state.ClearAllStatusAilments();
 
+        // 熱中症によるロックフラグを解除（つついんで治療されたため）
+        PlayerActionData playerActionData = GameManager.Instance?.GetPlayerActionData(player);
+        if (playerActionData != null)
+        {
+            if (playerActionData.MorningActionLocked || playerActionData.AfternoonActionLocked)
+            {
+                playerActionData.MorningActionLocked = false;
+                playerActionData.AfternoonActionLocked = false;
+                Debug.Log($"[TurnProcessor] {playerName} の行動ロックフラグを解除しました（つついん実行後）");
+            }
+        }
+
         // ログに追加
         string log = $"{playerName}は「つういん」を実行！元気{FormatNumber(energyChange)}";
         if (hadAilment)

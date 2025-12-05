@@ -724,49 +724,91 @@ public class UIController : MonoBehaviour
     /// </summary>
     public void OnClearButtonClicked()
     {
-        _morningAction = null;
-        _afternoonAction = null;
-        _isMorningSelected = false;
-
-        Debug.Log("[UIController] 選択をクリアしました");
-
-        // クリアSE再生
-        AudioManager.Instance?.PlayActionClearSE();
-
-        // パネル表示もクリア
-        if (myTodayMorningActionText != null)
-        {
-            myTodayMorningActionText.text = "";
-            myTodayMorningActionText.fontSize = _defaultActionTextSize; // デフォルトサイズに戻す
-        }
-        if (myTodayAfternoonActionText != null)
-        {
-            myTodayAfternoonActionText.text = "";
-            myTodayAfternoonActionText.fontSize = _defaultActionTextSize; // デフォルトサイズに戻す
-        }
-
-        // 午前選択中のハイライトに戻す
-        HighlightCurrentSelection(false);
-
-        // NetworkRunnerから現在のLocalPlayerを取得
+        // バグ4対応: 熱中症による午前ロックをチェック
         var runner = FindFirstObjectByType<NetworkRunner>();
+        bool isMorningLocked = false;
+        PlayerActionData myActionData = null;
+
         if (runner != null)
         {
-            PlayerRef localPlayer = runner.LocalPlayer;
+            myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+            if (myActionData != null && myActionData.MorningActionLocked)
+            {
+                isMorningLocked = true;
+                Debug.Log("[UIController] 熱中症により午前がロックされています（クリア時）");
+            }
+        }
 
-            // 自分のPlayerActionDataを取得（GameManagerのDictionaryから直接取得）
-            PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(localPlayer);
+        if (isMorningLocked)
+        {
+            // 熱中症時: 午後の選択のみクリア、午前はつういん固定のまま
+            _afternoonAction = null;
+            // _morningAction と _isMorningSelected はそのまま維持
+
+            Debug.Log("[UIController] 熱中症対応: 午後の選択のみクリアしました");
+
+            // クリアSE再生
+            AudioManager.Instance?.PlayActionClearSE();
+
+            // 午後のパネル表示のみクリア
+            if (myTodayAfternoonActionText != null)
+            {
+                myTodayAfternoonActionText.text = "";
+                myTodayAfternoonActionText.fontSize = _defaultActionTextSize;
+            }
+
+            // 午後選択中のハイライトを維持
+            HighlightCurrentSelection(true);
+
+            // PlayerActionDataの午後のみクリア
+            if (myActionData != null)
+            {
+                myActionData.RPC_ClearAfternoonAction();
+            }
+
+            // 午後選択状態で元気チェックを再実行
+            UpdateActionButtonsBasedOnEnergy();
+            UpdateAllActionEffectDisplay();
+            Debug.Log("[UIController] 熱中症対応: 午後のみクリア完了");
+        }
+        else
+        {
+            // 通常時: すべてクリア
+            _morningAction = null;
+            _afternoonAction = null;
+            _isMorningSelected = false;
+
+            Debug.Log("[UIController] 選択をクリアしました");
+
+            // クリアSE再生
+            AudioManager.Instance?.PlayActionClearSE();
+
+            // パネル表示もクリア
+            if (myTodayMorningActionText != null)
+            {
+                myTodayMorningActionText.text = "";
+                myTodayMorningActionText.fontSize = _defaultActionTextSize;
+            }
+            if (myTodayAfternoonActionText != null)
+            {
+                myTodayAfternoonActionText.text = "";
+                myTodayAfternoonActionText.fontSize = _defaultActionTextSize;
+            }
+
+            // 午前選択中のハイライトに戻す
+            HighlightCurrentSelection(false);
+
+            // PlayerActionDataをクリア
             if (myActionData != null)
             {
                 myActionData.RPC_ClearActions();
             }
-        }
 
-        // 行動クリア後、元気チェックを選択フェーズ開始時点（午前選択状態）にリセット
-        UpdateActionButtonsBasedOnEnergy();
-        // 9.3修正: 行動ボタンの効果表示を更新（午前選択状態に戻すので連続使用デバフをリセット）
-        UpdateAllActionEffectDisplay();
-        Debug.Log("[UIController] クリアボタン押下後、元気チェックをリセットしました");
+            // 行動クリア後、元気チェックを選択フェーズ開始時点（午前選択状態）にリセット
+            UpdateActionButtonsBasedOnEnergy();
+            UpdateAllActionEffectDisplay();
+            Debug.Log("[UIController] クリアボタン押下後、元気チェックをリセットしました");
+        }
     }
 
     // ... その他、ラウンド表示、メッセージ表示などのメソッド ...
@@ -1463,12 +1505,48 @@ public class UIController : MonoBehaviour
     {
         Debug.Log("[UIController] 行動選択状態をリセット");
 
-        _morningAction = null;
-        _afternoonAction = null;
-        _isMorningSelected = false;
+        // バグ4対応: 熱中症による午前ロックをチェック
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        bool isMorningLocked = false;
+        if (runner != null)
+        {
+            PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+            if (myActionData != null && myActionData.MorningActionLocked)
+            {
+                isMorningLocked = true;
+                Debug.Log("[UIController] 熱中症により午前がロックされています");
+            }
+        }
 
-        // 午前選択中のハイライトに戻す
-        HighlightCurrentSelection(false);
+        if (isMorningLocked)
+        {
+            // 熱中症時: 午前はつういん固定、午後から選択開始
+            _morningAction = new ActionData(ActionType.Clinic, Genre.Rock);
+            _afternoonAction = null;
+            _isMorningSelected = true; // 午後選択中の状態にする
+
+            // 午前に「つういん」を表示
+            if (myTodayMorningActionText != null)
+            {
+                myTodayMorningActionText.text = "つういん";
+                myTodayMorningActionText.fontSize = _defaultActionTextSize;
+            }
+
+            // 午後選択中のハイライト
+            HighlightCurrentSelection(true);
+
+            Debug.Log("[UIController] 熱中症対応: 午前=つういん固定、午後から選択開始");
+        }
+        else
+        {
+            // 通常時: すべてクリア
+            _morningAction = null;
+            _afternoonAction = null;
+            _isMorningSelected = false;
+
+            // 午前選択中のハイライトに戻す
+            HighlightCurrentSelection(false);
+        }
 
         // 行動選択状態をリセットした後、元気チェックを再実行
         UpdateActionButtonsBasedOnEnergy();

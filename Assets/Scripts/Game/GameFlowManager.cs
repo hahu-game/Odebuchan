@@ -60,7 +60,7 @@ public class GameFlowManager : NetworkBehaviour
     // === ローカル変数 ===
     private bool _gameStarted = false;
     private bool _selectionPhaseActive = false;
-    private int _selectionPhaseTickCounter = 0;
+    private float _selectionPhaseElapsedTime = 0f;
 
     // === 7.2で追加: 特殊能力選択完了フラグ ===
     private bool _abilitySelectionComplete = false;
@@ -157,12 +157,12 @@ public class GameFlowManager : NetworkBehaviour
         // 選択フェーズ中のタイマー処理
         if (CurrentPhase == GamePhase.Selection && _selectionPhaseActive)
         {
-            _selectionPhaseTickCounter++;
+            _selectionPhaseElapsedTime += Runner.DeltaTime;
 
-            // 60ティック = 1秒（TickRate = 60の場合）
-            if (_selectionPhaseTickCounter >= 60)
+            // 1秒経過したらカウントダウン
+            if (_selectionPhaseElapsedTime >= 1f)
             {
-                _selectionPhaseTickCounter = 0;
+                _selectionPhaseElapsedTime -= 1f;
                 SelectionTimeRemaining--;
 
                 // タイマーUI更新（全クライアント）
@@ -338,7 +338,7 @@ public class GameFlowManager : NetworkBehaviour
 
             CurrentPhase = GamePhase.Selection;
             SelectionTimeRemaining = gameParams.SelectionPhaseTimeLimit; // 60秒
-            _selectionPhaseTickCounter = 0; // ティックカウンターをリセット
+            _selectionPhaseElapsedTime = 0f; // タイマーをリセット
 
             // UIの行動選択状態をリセット（2日目以降で午前から選択できるように）
             // ※先にリセットしてから元気チェックを実行する必要がある
@@ -966,8 +966,7 @@ public class GameFlowManager : NetworkBehaviour
 
                 Debug.Log($"[GameFlowManager] {playerName} の午前の行動を「つういん」に設定");
 
-                // ロックフラグを解除（つういん実行後に熱中症が治るため）
-                actionData.MorningActionLocked = false;
+                // ロックフラグは選択フェーズ中はtrueのまま、実行フェーズでつういん実行後に解除される
             }
         }
     }
@@ -1046,14 +1045,13 @@ public class GameFlowManager : NetworkBehaviour
             RPC_HideWaitingPanel(currentPlayer);
             Debug.Log($"[GameFlowManager] Player {currentPlayer.PlayerId} の待機パネルを非表示（選択開始前）");
 
-            // 7.2: 他のプレイヤーに待機パネルを表示
-            for (int j = 0; j < orderedCandidates.Count; j++)
+            // 7.2修正: 全プレイヤーに待機パネルを表示（現在選択中のプレイヤーを除く）
+            foreach (var kvpAll in allUyopyons)
             {
-                if (i != j)
+                if (kvpAll.Key != currentPlayer)
                 {
-                    PlayerRef waitingPlayer = orderedCandidates[j].Key;
-                    RPC_ShowWaitingPanel(waitingPlayer, "対戦相手が特殊能力を選択中です。");
-                    Debug.Log($"[GameFlowManager] Player {waitingPlayer.PlayerId} に待機パネルを表示");
+                    RPC_ShowWaitingPanel(kvpAll.Key, "対戦相手が特殊能力を選択中です。");
+                    Debug.Log($"[GameFlowManager] Player {kvpAll.Key.PlayerId} に待機パネルを表示");
                 }
             }
 
@@ -1065,7 +1063,11 @@ public class GameFlowManager : NetworkBehaviour
             for (int k = 0; k < AvailableSpecialAbilities.Length; k++)
             {
                 var ability = AvailableSpecialAbilities[k];
-                availableChoices.Add(ability);
+                // 既に選ばれた特殊能力は除外
+                if (!_selectedAbilities.Contains(ability))
+                {
+                    availableChoices.Add(ability);
+                }
             }
 
             // 最大3つの選択肢を準備
@@ -1122,10 +1124,25 @@ public class GameFlowManager : NetworkBehaviour
             {
                 Debug.Log($"[GameFlowManager] プレイヤー {currentPlayer} が {selectedAbility.Value} を選択しました");
 
+                // デバッグ: stateオブジェクトの情報を確認
+                Debug.Log($"[GameFlowManager] state.OwnerPlayer={state.OwnerPlayer}, Object.Id={state.Object.Id}, HasStateAuthority={state.Object.HasStateAuthority}");
+
+                // デバッグ: ToString()の結果を確認
+                string abilityName = selectedAbility.Value.ToString();
+                Debug.Log($"[GameFlowManager] ToString()の結果: '{abilityName}' (長さ: {abilityName.Length})");
+
                 // UyopyonStateを更新（ネットワーク同期される）
-                state.SpecialAbilityName = selectedAbility.Value.ToString();
+                Debug.Log($"[GameFlowManager] .Set()呼び出し前: SpecialAbilityName='{state.SpecialAbilityName.ToString()}'");
+
+                // 直接代入を試す
+                state.SpecialAbilityName = abilityName;
+                Debug.Log($"[GameFlowManager] 直接代入後: SpecialAbilityName='{state.SpecialAbilityName.ToString()}'");
+
                 state.HasEvolved = true;
+
+                Debug.Log($"[GameFlowManager] .Set()呼び出し前: VisualType='{state.VisualType.ToString()}'");
                 state.VisualType = "Evolved"; // 進化後のビジュアルタイプ
+                Debug.Log($"[GameFlowManager] 直接代入後: VisualType='{state.VisualType.ToString()}'");
 
                 Debug.Log($"[GameFlowManager] UyopyonState更新完了: HasEvolved={state.HasEvolved}, SpecialAbilityName={state.SpecialAbilityName}");
 
@@ -1146,12 +1163,11 @@ public class GameFlowManager : NetworkBehaviour
                 Debug.Log($"[GameFlowManager] タイムアウトのためHasEvolved=trueに設定");
             }
 
-            // 7.2: 全プレイヤーの待機パネルを非表示
-            for (int j = 0; j < orderedCandidates.Count; j++)
+            // 7.2修正: 全プレイヤーの待機パネルを非表示
+            foreach (var kvpAll in allUyopyons)
             {
-                PlayerRef player = orderedCandidates[j].Key;
-                RPC_HideWaitingPanel(player);
-                Debug.Log($"[GameFlowManager] Player {player.PlayerId} の待機パネルを非表示（選択完了後）");
+                RPC_HideWaitingPanel(kvpAll.Key);
+                Debug.Log($"[GameFlowManager] Player {kvpAll.Key.PlayerId} の待機パネルを非表示（選択完了後）");
             }
 
             // UIの更新を確実にするため少し待機

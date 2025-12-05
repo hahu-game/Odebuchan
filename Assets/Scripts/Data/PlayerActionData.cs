@@ -306,4 +306,25 @@ public class PlayerActionData : NetworkBehaviour
         IsActionFixed = false;
         DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の行動がクリアされました");
     }
+
+    /// <summary>
+    /// 午後の行動のみクリア（熱中症で午前がロックされている場合用）
+    /// </summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_ClearAfternoonAction(RpcInfo info = default)
+    {
+        // セキュリティチェック: 送信元が自分のOwnerPlayerの場合のみ許可
+        if (info.Source != OwnerPlayer)
+        {
+            Debug.LogWarning($"[PlayerActionData] 不正なRPC: Player={info.Source}が Player={OwnerPlayer}の午後の行動をクリアしようとしました");
+            return;
+        }
+
+        if (!AfternoonActionLocked)
+        {
+            AfternoonAction = ActionData.Empty();
+        }
+        IsActionFixed = false;
+        DebugLogger.Log($"[PlayerActionData] Player {OwnerPlayer} の午後の行動のみクリアされました");
+    }
 }
