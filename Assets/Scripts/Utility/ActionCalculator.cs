@@ -215,24 +215,13 @@ public static class ActionCalculator
         UyopyonState state,
         GameParameters gameParams)
     {
-        // 新しい倍率を計算
-        float newMultiplier = state.BuffMultiplier * 1.5f;
+        // 現在のバフ量を1.5倍にするための増加量（= 現在のバフ量の0.5倍）
+        int energyBuffIncrement = (int)(state.PlayBuffEnergy * 0.5f);
+        int weightBuffIncrement = (int)(state.PlayBuffWeight * 0.5f);
         
-        // 基本増加量
-        int baseEnergyInc = gameParams.PlayEnergyBuffIncrement;
-        int baseWeightInc = gameParams.PlayWeightBuffIncrement;
-        
-        // 現在のバフ（倍率適用済み）
-        int currentEnergyBuff = state.PlayBuffEnergy;
-        int currentWeightBuff = state.PlayBuffWeight;
-        
-        // 新しいバフ（新倍率適用）
-        int newEnergyBuff = (int)(baseEnergyInc * newMultiplier);
-        int newWeightBuff = (int)(baseWeightInc * newMultiplier);
-        
-        // 差分を返す
-        return (newEnergyBuff - currentEnergyBuff, newWeightBuff - currentWeightBuff);
+        return (energyBuffIncrement, weightBuffIncrement);
     }
+
 
     /// <summary>
     /// べんきょうによるバフ増加量を計算（15 × 連続使用数）

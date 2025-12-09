@@ -22,9 +22,9 @@ public class SpecialAbilityExecutor
     /// </summary>
     public void ExecuteGaishoku(PlayerRef player, UyopyonState state, string playerName)
     {
-        // たべると同じ効果（BuffMultiplier適用）
-        int energyChange = gameParams.EatEnergyChange;
-        int weightChange = (int)((gameParams.EatWeightChange + state.PlayBuffWeight) * state.BuffMultiplier);
+        // がいしょくの効果（BuffMultiplier適用）
+        int energyChange = (int)(gameParams.GaishokuEnergyChange * state.BuffMultiplier);
+        int weightChange = (int)((gameParams.GaishokuWeightChange + state.PlayBuffWeight) * state.BuffMultiplier);
 
         state.Energy += energyChange;
         state.Weight += weightChange;
@@ -156,9 +156,9 @@ public class SpecialAbilityExecutor
     /// </summary>
     public void ExecuteDokagui(PlayerRef player, UyopyonState state, string playerName)
     {
-        // たべるの効果 +30（BuffMultiplier適用）
-        int energyChange = gameParams.EatEnergyChange;
-        int weightChange = (int)((gameParams.EatWeightChange + 30 + state.PlayBuffWeight) * state.BuffMultiplier);
+        // どかぐいの効果（BuffMultiplier適用）
+        int energyChange = (int)(gameParams.DokaguiEnergyCost * state.BuffMultiplier);
+        int weightChange = (int)((gameParams.EatWeightChange + gameParams.DokaguiWeightBonus + state.PlayBuffWeight) * state.BuffMultiplier);
 
         state.Energy += energyChange;
         state.Weight += weightChange;
@@ -187,6 +187,10 @@ public class SpecialAbilityExecutor
         int oldWeight = state.Weight;
         state.Weight = (int)(state.Weight * 0.5f);
         int weightChange = state.Weight - oldWeight;
+
+        // 既存のバフ量を1.5倍に増加
+        state.PlayBuffEnergy = (int)(state.PlayBuffEnergy * 1.5f);
+        state.PlayBuffWeight = (int)(state.PlayBuffWeight * 1.5f);
 
         // バフ倍率を1.5倍に増加（現在の値に1.5を掛ける）
         state.BuffMultiplier *= 1.5f;
