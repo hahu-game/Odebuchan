@@ -694,10 +694,10 @@ public class GameFlowManager : NetworkBehaviour
     {
         if (interactable)
         {
-            // 有効化の場合は、元気チェックを行う
-            UIController.Instance?.UpdateActionButtonsBasedOnEnergy();
-            // 9.3: 行動効果予測表示を更新
+            // 9.3: 行動効果予測表示を更新（特殊能力ボタンを表示）
             UIController.Instance?.UpdateAllActionEffectDisplay();
+            // 有効化の場合は、元気チェックを行う（ボタン表示後に実行）
+            UIController.Instance?.UpdateActionButtonsBasedOnEnergy();
             Debug.Log($"[RPC] 行動ボタンの操作: 可能（元気チェック済み）");
         }
         else
