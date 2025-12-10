@@ -175,7 +175,7 @@ public class SpecialAbilityExecutor
 
     /// <summary>
     /// 7.7 特殊能力: きんとれの実行
-    /// 効果: 元気-120、重さ半減、BuffMultiplier *= 1.5
+    /// 効果: 元気-120、重さ半減、BuffMultiplier *= 2.5
     /// ジャンル: Scissors（チョキ）
     /// </summary>
     public void ExecuteKintre(PlayerRef player, UyopyonState state, string playerName, bool isMorning)
@@ -188,18 +188,18 @@ public class SpecialAbilityExecutor
         state.Weight = (int)(state.Weight * 0.5f);
         int weightChange = state.Weight - oldWeight;
 
-        // 既存のバフ量を1.5倍に増加
-        state.PlayBuffEnergy = (int)(state.PlayBuffEnergy * 1.5f);
-        state.PlayBuffWeight = (int)(state.PlayBuffWeight * 1.5f);
+        // 既存のバフ量を2.5倍に増加
+        state.PlayBuffEnergy = (int)(state.PlayBuffEnergy * 2.5f);
+        state.PlayBuffWeight = (int)(state.PlayBuffWeight * 2.5f);
 
-        // バフ倍率を1.5倍に増加（現在の値に1.5を掛ける）
-        state.BuffMultiplier *= 1.5f;
+        // バフ倍率を2.5倍に増加（現在の値に2.5を掛ける）
+        state.BuffMultiplier *= 2.5f;
 
         // ケガ判定（あそぶと同じ判定）
         turnProcessor.CheckInjury(player, state.Weight, isMorning);
 
         // ログに追加
-        string log = $"{playerName}は「きんとれ」を実行！元気-120、重さ{turnProcessor.FormatNumber(weightChange)}、今後の重さ増加が1.5倍に！";
+        string log = $"{playerName}は「きんとれ」を実行！元気-120、重さ{turnProcessor.FormatNumber(weightChange)}、今後の重さ増加が2.5倍に！";
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");

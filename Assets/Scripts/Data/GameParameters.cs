@@ -9,7 +9,7 @@ public class GameParameters : ScriptableObject
 {
     [Header("=== 基本設定 ===")]
     [Tooltip("ゲーム開始時の重さ（kg）")]
-    public int InitialWeight = 1;
+    public int InitialWeight = 10;
 
     [Tooltip("ゲーム開始時の元気（HP）")]
     public int InitialEnergy = 100;
@@ -75,7 +75,7 @@ public class GameParameters : ScriptableObject
     [Header("きんとれ")]
     public int KintreEnergyCost = -120;
     public float KintreWeightMultiplier = 0.5f;
-    public float KintreBuffMultiplier = 1.5f;
+    public float KintreBuffMultiplier = 2.5f;
 
     [Header("がむしゃら")]
     public int GamushuraEnergyCost = -40;

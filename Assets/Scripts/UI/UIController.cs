@@ -140,6 +140,14 @@ public class UIController : MonoBehaviour
     [Header("Action Effect Display - Clinic (つういん)")]
     public TextMeshProUGUI clinicEnergyValueText;
 
+    // === 連続使用デバフ表示 ===
+    [Header("Consecutive Use Penalty Indicators - Basic Actions")]
+    public GameObject eatConsecutiveIndicator;
+    public GameObject sleepConsecutiveIndicator;
+    public GameObject playConsecutiveIndicator;
+    public GameObject clinicConsecutiveIndicator;
+
+
     // === 9.3で追加: 特殊能力ボタン（6つの個別ボタン） ===
     [Header("Special Ability Buttons (がいしょく)")]
     public UnityEngine.UI.Button gaishokuButton;
@@ -173,6 +181,10 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI dokaguiEnergyValueText;
     public TextMeshProUGUI dokaguiWeightValueText;
     public TextMeshProUGUI dokaguiSicknessProbabilityText;
+
+    [Header("Consecutive Use Penalty Indicators - Special Abilities")]
+    public GameObject specialAbilityConsecutiveIndicator;
+
 
     [Header("Action Tooltip Panels (ホバー時の詳細表示)")]
     public GameObject eatTooltipPanel;
@@ -709,6 +721,9 @@ public class UIController : MonoBehaviour
     /// </summary>
     public void OnClearButtonClicked()
     {
+        // 連続使用表示を全て非表示にする
+        HideAllConsecutiveUseIndicators();
+
         // バグ4対応: 熱中症による午前ロックをチェック
         var runner = FindFirstObjectByType<NetworkRunner>();
         bool isMorningLocked = false;
@@ -751,9 +766,9 @@ public class UIController : MonoBehaviour
                 myActionData.RPC_ClearAfternoonAction();
             }
 
-            // 午後選択状態で元気チェックを再実行
-            UpdateActionButtonsBasedOnEnergy();
+            // 午後選択状態で表示を更新してから元気チェックを再実行
             UpdateAllActionEffectDisplay();
+            UpdateActionButtonsBasedOnEnergy();
             Debug.Log("[UIController] 熱中症対応: 午後のみクリア完了");
         }
         else
@@ -789,9 +804,9 @@ public class UIController : MonoBehaviour
                 myActionData.RPC_ClearActions();
             }
 
-            // 行動クリア後、元気チェックを選択フェーズ開始時点（午前選択状態）にリセット
-            UpdateActionButtonsBasedOnEnergy();
+            // 行動クリア後、表示を更新してから元気チェックを再実行
             UpdateAllActionEffectDisplay();
+            UpdateActionButtonsBasedOnEnergy();
             Debug.Log("[UIController] クリアボタン押下後、元気チェックをリセットしました");
         }
     }
@@ -840,9 +855,9 @@ public class UIController : MonoBehaviour
             HighlightCurrentSelection(false); // 午前選択中を表示
 
             // 午前の行動が選択されたので、午後のボタン状態を更新
-            UpdateActionButtonsBasedOnEnergy();
             // 9.3修正: 午後の行動ボタンの効果表示を更新（連続使用デバフを反映）
             UpdateAllActionEffectDisplay();
+            UpdateActionButtonsBasedOnEnergy();
             Debug.Log($"[UIController] 午前の行動選択後、午後のボタン状態を更新しました");
         }
         else
@@ -938,9 +953,9 @@ public class UIController : MonoBehaviour
             }
 
             // 午前の行動が選択されたので、午後の選択肢を午前+午後の合計で再チェック
-            UpdateActionButtonsBasedOnEnergy();
             // 9.3修正: 午後の行動ボタンの効果表示を更新（連続使用デバフを反映）
             UpdateAllActionEffectDisplay();
+            UpdateActionButtonsBasedOnEnergy();
             Debug.Log($"[UIController] 午前の行動選択後、午後のボタン状態を更新しました");
         }
         else
@@ -1489,6 +1504,9 @@ public class UIController : MonoBehaviour
     public void ResetActionSelection()
     {
         Debug.Log("[UIController] 行動選択状態をリセット");
+
+        // 連続使用表示を全て非表示にする
+        HideAllConsecutiveUseIndicators();
 
         // バグ4対応: 熱中症による午前ロックをチェック
         var runner = FindFirstObjectByType<NetworkRunner>();
@@ -2726,7 +2744,10 @@ public class UIController : MonoBehaviour
         {
             UpdateSpecialAbilityButtons(myState.SpecialAbilityName.ToString(),
                 myState, myActionData, gameParams, isMorning, _morningAction);
-        }
+                }
+
+        // 連続使用デバフ表示を更新
+        UpdateConsecutiveUseIndicators();
     }
 
     /// <summary>
@@ -3038,6 +3059,113 @@ public class UIController : MonoBehaviour
                 weightValueText.gameObject.SetActive(false);
             }
         }
+    }
+
+    // === 連続使用デバフ表示関連メソッド ===
+
+    /// <summary>
+    /// 指定された行動が連続使用デバフの対象かどうかを判定する
+    /// 連続使用表示: 1つ前に選択した行動と同じ行動に表示される
+    /// - 午前選択中: 前日午後と同じ行動に表示
+    /// - 午後選択中: 今日午前と同じ行動に表示
+    /// </summary>
+    /// <param name="actionType">判定する行動タイプ</param>
+    /// <param name="abilityName">特殊能力の場合の特殊能力名</param>
+    /// <returns>連続使用表示の対象であればtrue</returns>
+    private bool IsConsecutiveUse(ActionType actionType, string abilityName = null)
+    {
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null) return false;
+
+        PlayerActionData myActionData = GameManager.Instance?.GetPlayerActionData(runner.LocalPlayer);
+        if (myActionData == null) return false;
+
+        ActionData? previousAction = null;
+
+        // 午前選択中か午後選択中かで、比較対象を変える
+        if (!_isMorningSelected)
+        {
+            // 午前選択中: 前日午後の行動と比較
+            previousAction = myActionData.LastAfternoonAction;
+        }
+        else
+        {
+            // 午後選択中: 今日午前の行動と比較（ローカルの_morningActionを使用）
+            previousAction = _morningAction;
+        }
+
+        // 比較対象の行動がない場合は表示しない
+        if (!previousAction.HasValue) return false;
+
+        // 判定する行動タイプと前回の行動タイプが一致するかチェック
+        if (actionType != previousAction.Value.Type)
+        {
+            return false;
+        }
+
+        // 特殊能力の場合は特殊能力名も同じかどうかをチェック
+        if (actionType == ActionType.SpecialAbility)
+        {
+            if (string.IsNullOrEmpty(abilityName)) return false;
+            if (previousAction.Value.SpecialAbilityName.ToString() != abilityName)
+            {
+                return false;
+            }
+        }
+
+        // 前回と同じ行動なので連続使用表示の対象
+        return true;
+    }
+
+    /// <summary>
+    /// 全ての行動ボタンの連続使用表示を更新する
+    /// </summary>
+    private void UpdateConsecutiveUseIndicators()
+    {
+        // 基本行動
+        UpdateConsecutiveIndicator(ActionType.Eat, null, eatConsecutiveIndicator);
+        UpdateConsecutiveIndicator(ActionType.Sleep, null, sleepConsecutiveIndicator);
+        UpdateConsecutiveIndicator(ActionType.Play, null, playConsecutiveIndicator);
+        UpdateConsecutiveIndicator(ActionType.Clinic, null, clinicConsecutiveIndicator);
+
+        // 特殊能力（進化後のみ、共通のIndicatorを使用）
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner != null)
+        {
+            UyopyonState myState = GameManager.Instance?.GetUyopyonState(runner.LocalPlayer);
+            if (myState != null && myState.HasEvolved && !string.IsNullOrEmpty(myState.SpecialAbilityName.ToString()))
+            {
+                string abilityName = myState.SpecialAbilityName.ToString();
+                // どの特殊能力でも共通のIndicatorを使用
+                UpdateConsecutiveIndicator(ActionType.SpecialAbility, abilityName, specialAbilityConsecutiveIndicator);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 個別の行動ボタンの連続使用表示を更新する
+    /// </summary>
+    private void UpdateConsecutiveIndicator(ActionType actionType, string abilityName, GameObject consecutiveIndicator)
+    {
+        if (consecutiveIndicator == null) return;
+
+        bool isConsecutive = IsConsecutiveUse(actionType, abilityName);
+        consecutiveIndicator.SetActive(isConsecutive);
+    }
+
+    /// <summary>
+    /// 全ての連続使用表示を非表示にする
+    /// </summary>
+    private void HideAllConsecutiveUseIndicators()
+    {
+        // 基本行動
+        if (eatConsecutiveIndicator != null) eatConsecutiveIndicator.SetActive(false);
+        if (sleepConsecutiveIndicator != null) sleepConsecutiveIndicator.SetActive(false);
+        if (playConsecutiveIndicator != null) playConsecutiveIndicator.SetActive(false);
+        if (clinicConsecutiveIndicator != null) clinicConsecutiveIndicator.SetActive(false);
+
+        // 特殊能力（共通Indicator）
+        if (specialAbilityConsecutiveIndicator != null) specialAbilityConsecutiveIndicator.SetActive(false);
     }
 
     /// <summary>
