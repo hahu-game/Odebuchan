@@ -96,6 +96,12 @@ public class TitleScreenManager : MonoBehaviour
 
     private void Start()
     {
+        // タイトル画面では降参ボタンを非表示にする
+        if (SettingController.Instance != null)
+        {
+            SettingController.Instance.SetSurrenderButtonVisible(false);
+        }
+
         // タイトルBGM再生（AudioManagerが見つかるまで待機）
         StartCoroutine(PlayTitleBGMCoroutine());
     }
