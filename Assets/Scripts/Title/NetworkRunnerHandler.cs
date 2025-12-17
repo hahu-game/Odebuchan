@@ -288,6 +288,33 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     void INetworkRunnerCallbacks.OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
         Debug.Log($"サーバーから切断されました: {reason}");
+
+        // GameFlowManagerが存在し、ゲーム終了フラグが立っている場合は何もしない
+        // （UIController等から意図的にシャットダウンされた場合）
+        var gameFlowManager = FindFirstObjectByType<GameFlowManager>();
+        if (gameFlowManager != null && gameFlowManager.IsGameEnded)
+        {
+            Debug.Log("[NetworkRunnerHandler] ゲーム終了フラグが立っているため、タイトル遷移をスキップします");
+            return;
+        }
+
+        // GameScene中の切断の場合、タイトル画面に戻る
+        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (currentSceneName == "GameScene")
+        {
+            Debug.Log("[NetworkRunnerHandler] GameScene中の切断を検出。タイトル画面に戻ります");
+            // 0.5秒待機してからタイトルに戻る
+            StartCoroutine(ReturnToTitleAfterDisconnect());
+        }
+    }
+
+    /// <summary>
+    /// 切断後にタイトル画面に戻るコルーチン
+    /// </summary>
+    private System.Collections.IEnumerator ReturnToTitleAfterDisconnect()
+    {
+        yield return new WaitForSeconds(0.5f);
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 
     // 以下のメソッドはすべて明示的な実装に変更します

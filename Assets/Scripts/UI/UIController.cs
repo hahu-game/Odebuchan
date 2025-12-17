@@ -2469,30 +2469,24 @@ public class UIController : MonoBehaviour
             resultReturnToTitleButton.interactable = false;
         }
 
-        // クライアントの場合、コルーチンが中断される可能性があるため
-        // フォールバックとしてInvokeでシーン遷移をスケジュール
-        var runner = FindFirstObjectByType<NetworkRunner>();
-        if (runner != null && !runner.IsSharedModeMasterClient)
-        {
-            // クライアントの場合は1秒後にシーン遷移（フォールバック）
-            Invoke(nameof(ForceReturnToTitle), 1.0f);
-        }
+        Debug.Log("[UIController] OnReturnToTitleButtonClicked: ボタンがクリックされました");
 
+        // ボタンを押したプレイヤーだけがタイトルに戻る（RPCを使わない）
+        StartReturnToTitleProcess();
+    }
+
+    /// <summary>
+    /// タイトルに戻る処理を開始（ローカルプレイヤーのみ）
+    /// </summary>
+    public void StartReturnToTitleProcess()
+    {
+        Debug.Log("[UIController] StartReturnToTitleProcess: タイトル遷移処理を開始します");
         StartCoroutine(ReturnToTitleCoroutine());
     }
 
     /// <summary>
-    /// 強制的にタイトルに戻る（フォールバック用）
-    /// </summary>
-    private void ForceReturnToTitle()
-    {
-        Debug.Log("[UIController] ForceReturnToTitle: フォールバックによるタイトル遷移");
-        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
-    }
-
-    /// <summary>
     /// タイトルシーンに戻るコルーチン
-    /// NetworkRunnerのシャットダウンを待機してからシーン遷移を行う
+    /// GameFlowManagerのゲーム終了フラグを設定し、NetworkRunnerをシャットダウンしてから即座にシーン遷移を行う
     /// </summary>
     private IEnumerator ReturnToTitleCoroutine()
     {
@@ -2510,19 +2504,11 @@ public class UIController : MonoBehaviour
             }
         }
 
-        // 少し待機してフラグの伝播を待つ
-        yield return new WaitForSeconds(0.1f);
-
-        // NetworkRunnerを取得
-        var runner = FindFirstObjectByType<NetworkRunner>();
-        if (runner != null)
+        // NetworkRunnerをシャットダウン（完了を待たない）
+        NetworkRunner runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner != null && runner.IsRunning)
         {
-            Debug.Log("[UIController] ReturnToTitleCoroutine: NetworkRunnerをシャットダウンします");
-
-            // クライアントかホストかを判定
-            bool isHost = runner.IsSharedModeMasterClient;
-            Debug.Log($"[UIController] ReturnToTitleCoroutine: IsHost={isHost}");
-
+            Debug.Log("[UIController] ReturnToTitleCoroutine: NetworkRunnerのシャットダウンを開始します");
             try
             {
                 runner.Shutdown();
@@ -2531,43 +2517,13 @@ public class UIController : MonoBehaviour
             {
                 Debug.LogWarning($"[UIController] ReturnToTitleCoroutine: Shutdown中に例外発生: {e.Message}");
             }
-
-            if (isHost)
-            {
-                // ホストの場合はシャットダウン完了を待つ（最大3秒）
-                float timeout = 3f;
-                float elapsed = 0f;
-
-                while (runner != null && runner.IsRunning && elapsed < timeout)
-                {
-                    yield return null;
-                    elapsed += Time.deltaTime;
-                }
-
-                Debug.Log($"[UIController] ReturnToTitleCoroutine: シャットダウン待機完了 (elapsed={elapsed:F2}秒)");
-
-                // ホストは追加で0.5秒待機
-                yield return new WaitForSeconds(0.5f);
-            }
-            else
-            {
-                // クライアントの場合は即座にシーン遷移（Fusionの切断処理でコルーチンが中断される可能性があるため）
-                Debug.Log("[UIController] ReturnToTitleCoroutine: クライアントのため即座にシーン遷移します");
-                // 1フレーム待機してシャットダウン処理を開始させる
-                yield return null;
-            }
         }
-        else
-        {
-            Debug.LogWarning("[UIController] ReturnToTitleCoroutine: NetworkRunnerが見つかりません");
-        }
+
+        // 少し待機（シャットダウン開始を確実にする）
+        yield return new WaitForSeconds(0.1f);
 
         // TitleSceneに遷移
         Debug.Log("[UIController] ReturnToTitleCoroutine: TitleSceneに遷移します");
-
-        // フォールバックのInvokeをキャンセル（正常に遷移できた場合）
-        CancelInvoke(nameof(ForceReturnToTitle));
-
         UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 
