@@ -26,6 +26,38 @@ public class NetworkPlayer : NetworkBehaviour
     private string _lastPlayerName; // 前回の名前を保持
     private bool _hasSetPlayerName = false; // PlayerNameを設定済みかどうか
 
+    /// <summary>
+    /// プレイヤー名をサニタイズする（セキュリティ対策）
+    /// - TextMeshProリッチテキストタグをエスケープ
+    /// - 制御文字を除去
+    /// - 前後の空白をトリム
+    /// </summary>
+    private string SanitizePlayerName(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
+        // 1. 前後の空白を削除
+        string sanitized = input.Trim();
+
+        // 2. TextMeshProのリッチテキストタグで使用される特殊文字をエスケープ
+        sanitized = sanitized.Replace("<", "＜"); // 全角に置換
+        sanitized = sanitized.Replace(">", "＞"); // 全角に置換
+
+        // 3. 制御文字（改行、タブなど）を除去
+        sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"[\x00-\x1F\x7F]", "");
+
+        // 4. 連続する空白を単一の空白に変換
+        sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"\s+", " ");
+
+        // 5. 再度トリム
+        sanitized = sanitized.Trim();
+
+        return sanitized;
+    }
+
     public override void Spawned()
     {
         // OwnerPlayerRefが設定されている場合はそれを使用、未設定の場合はInputAuthorityを使用
@@ -61,8 +93,10 @@ public class NetworkPlayer : NetworkBehaviour
         // セキュリティチェック: 送信元が自分のNetworkPlayerの場合のみ許可
         if (info.Source == OwnerPlayerRef)
         {
-            PlayerName = playerName;
-            DebugLogger.Log($"[NetworkPlayer] RPC_SetPlayerName: Player={MyPlayerRef}, PlayerName='{playerName}'を設定しました");
+            // サニタイズ処理（二重防御: 改造されたクライアントからの不正な値を防ぐ）
+            string sanitizedName = SanitizePlayerName(playerName);
+            PlayerName = sanitizedName;
+            DebugLogger.Log($"[NetworkPlayer] RPC_SetPlayerName: Player={MyPlayerRef}, raw='{playerName}', sanitized='{sanitizedName}'を設定しました");
         }
         else
         {
@@ -84,19 +118,21 @@ public class NetworkPlayer : NetworkBehaviour
             if (isLocalPlayer)
             {
                 string playerPrefsKey = TitleScreenManager.GetPlayerNameKey();
-                string localName = PlayerPrefs.GetString(playerPrefsKey, "guest");
-                DebugLogger.Log($"[NetworkPlayer.Render] PlayerPrefsから読み込んだ名前: key='{playerPrefsKey}', name='{localName}'");
+                string rawName = PlayerPrefs.GetString(playerPrefsKey, "guest");
+                string sanitizedName = SanitizePlayerName(rawName);
+
+                DebugLogger.Log($"[NetworkPlayer.Render] PlayerPrefsから読み込んだ名前: key='{playerPrefsKey}', raw='{rawName}', sanitized='{sanitizedName}'");
 
                 // StateAuthorityがある場合は直接設定、ない場合はRPCでホストに設定してもらう
                 if (Object.HasStateAuthority)
                 {
-                    PlayerName = localName;
-                    DebugLogger.Log($"[NetworkPlayer.Render] StateAuthorityがあるので直接設定: PlayerName='{localName}'");
+                    PlayerName = sanitizedName;
+                    DebugLogger.Log($"[NetworkPlayer.Render] StateAuthorityがあるので直接設定: PlayerName='{sanitizedName}'");
                 }
                 else
                 {
-                    DebugLogger.Log($"[NetworkPlayer.Render] StateAuthorityがないのでRPCで設定: '{localName}'");
-                    RPC_SetPlayerName(localName);
+                    DebugLogger.Log($"[NetworkPlayer.Render] StateAuthorityがないのでRPCで設定: '{sanitizedName}'");
+                    RPC_SetPlayerName(sanitizedName);
                 }
             }
             else

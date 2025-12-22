@@ -58,6 +58,18 @@ public class TitleScreenManager : MonoBehaviour
         //デバッグ完了後、この行は削除またはコメントアウトしてください。
         //PlayerPrefs.DeleteKey(GetPlayerNameKey());
 
+        // TextMeshProリッチテキストタグを無効化（セキュリティ対策）
+        if (playerNameInputField != null)
+        {
+            playerNameInputField.richText = false;
+            Debug.Log("[Awake] playerNameInputField のリッチテキストを無効化しました");
+        }
+        if (sessionNameInputField != null)
+        {
+            sessionNameInputField.richText = false;
+            Debug.Log("[Awake] sessionNameInputField のリッチテキストを無効化しました");
+        }
+
         // プレイヤー名のロード（デフォルトは空欄）
         string key = GetPlayerNameKey();
         string loadedName = PlayerPrefs.GetString(key, "");
@@ -227,9 +239,17 @@ public class TitleScreenManager : MonoBehaviour
         }
 
         // 【修正箇所】: 合言葉の入力チェックを先に行う
-        string sessionName = sessionNameInputField.text;
+        string rawSessionName = sessionNameInputField.text;
+        string sanitizedSessionName = SanitizeSessionName(rawSessionName);
 
-        if (string.IsNullOrWhiteSpace(sessionName))
+        // サニタイズした値をInputFieldに反映
+        if (rawSessionName != sanitizedSessionName)
+        {
+            sessionNameInputField.text = sanitizedSessionName;
+            Debug.Log($"[OnFriendMatchClicked] セッション名をサニタイズして反映しました");
+        }
+
+        if (string.IsNullOrWhiteSpace(sanitizedSessionName))
         {
             Debug.LogWarning("フレンドマッチには合言葉（セッション名）の入力が必要です。");
             // エラーメッセージを3秒間表示
@@ -244,7 +264,7 @@ public class TitleScreenManager : MonoBehaviour
         SetMatchingUIActive(true); // マッチングUIを表示し、他を操作不可にする
 
         // マッチングが成功/失敗するまでこのメソッドはブロックされる（待機する）
-        await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, sessionName);
+        await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, sanitizedSessionName);
     }
 
     public void OnCancelMatchClicked()
@@ -377,6 +397,64 @@ public class TitleScreenManager : MonoBehaviour
     }
 
     // ------------------------------------------------------------------
+    // 文字列サニタイズ
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// 文字列をサニタイズして安全な形式に変換する
+    /// - TextMeshProリッチテキストタグをエスケープ
+    /// - 制御文字を除去
+    /// - 前後の空白をトリム
+    /// - 連続する空白を単一の空白に変換
+    /// </summary>
+    private string SanitizeString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+        {
+            return string.Empty;
+        }
+
+        // 1. 前後の空白を削除
+        string sanitized = input.Trim();
+
+        // 2. TextMeshProのリッチテキストタグで使用される特殊文字をエスケープ
+        // '<' と '>' をエスケープしてタグを無効化
+        sanitized = sanitized.Replace("<", "＜"); // 全角に置換
+        sanitized = sanitized.Replace(">", "＞"); // 全角に置換
+
+        // 3. 制御文字（改行、タブなど）を除去
+        sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"[\x00-\x1F\x7F]", "");
+
+        // 4. 連続する空白を単一の空白に変換
+        sanitized = System.Text.RegularExpressions.Regex.Replace(sanitized, @"\s+", " ");
+
+        // 5. 再度トリム（空白処理後に端に空白が残る可能性があるため）
+        sanitized = sanitized.Trim();
+
+        return sanitized;
+    }
+
+    /// <summary>
+    /// プレイヤー名をサニタイズする
+    /// </summary>
+    private string SanitizePlayerName(string playerName)
+    {
+        string sanitized = SanitizeString(playerName);
+        Debug.Log($"[SanitizePlayerName] 元の値: '{playerName}' → サニタイズ後: '{sanitized}'");
+        return sanitized;
+    }
+
+    /// <summary>
+    /// セッション名（合言葉）をサニタイズする
+    /// </summary>
+    private string SanitizeSessionName(string sessionName)
+    {
+        string sanitized = SanitizeString(sessionName);
+        Debug.Log($"[SanitizeSessionName] 元の値: '{sessionName}' → サニタイズ後: '{sanitized}'");
+        return sanitized;
+    }
+
+    // ------------------------------------------------------------------
     // プレイヤー名バリデーション
     // ------------------------------------------------------------------
 
@@ -386,13 +464,23 @@ public class TitleScreenManager : MonoBehaviour
     /// <returns>バリデーション成功でtrue、失敗でfalse</returns>
     private bool ValidatePlayerName()
     {
-        string playerName = playerNameInputField.text;
-        Debug.Log($"[ValidatePlayerName] プレイヤー名チェック: '{playerName}' ({playerName.Length}文字)");
+        // 入力値をサニタイズ
+        string rawPlayerName = playerNameInputField.text;
+        string sanitizedPlayerName = SanitizePlayerName(rawPlayerName);
+
+        // サニタイズした値をInputFieldに反映
+        if (rawPlayerName != sanitizedPlayerName)
+        {
+            playerNameInputField.text = sanitizedPlayerName;
+            Debug.Log($"[ValidatePlayerName] プレイヤー名をサニタイズして反映しました");
+        }
+
+        Debug.Log($"[ValidatePlayerName] プレイヤー名チェック: '{sanitizedPlayerName}' ({sanitizedPlayerName.Length}文字)");
 
         // プレイヤー名が8文字を超えている場合
-        if (!string.IsNullOrEmpty(playerName) && playerName.Length > 8)
+        if (!string.IsNullOrEmpty(sanitizedPlayerName) && sanitizedPlayerName.Length > 8)
         {
-            Debug.LogWarning($"プレイヤー名が8文字を超えています: {playerName.Length}文字");
+            Debug.LogWarning($"プレイヤー名が8文字を超えています: {sanitizedPlayerName.Length}文字");
             Debug.Log($"[ValidatePlayerName] ShowPlayerNameError()を呼び出します");
             // エラーメッセージを3秒間表示
             ShowPlayerNameError("プレイヤー名は８文字以下で入力してください。", 3f);
