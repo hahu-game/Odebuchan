@@ -244,6 +244,24 @@ public class UIController : MonoBehaviour
          _localPlayerRef = runner.LocalPlayer;
         }
 
+        // TextMeshProリッチテキストタグを無効化（セキュリティ対策）
+        if (myNameText != null)
+        {
+            myNameText.richText = false;
+        }
+        if (opponentNameText != null)
+        {
+            opponentNameText.richText = false;
+        }
+        if (selectMyNameText != null)
+        {
+            selectMyNameText.richText = false;
+        }
+        if (selectOppNameText != null)
+        {
+            selectOppNameText.richText = false;
+        }
+
         // デフォルトのフォントサイズを保存
         // 9.3: specialAbilityButtonText は削除されました
         if (myTodayMorningActionText != null)
@@ -514,9 +532,8 @@ public class UIController : MonoBehaviour
 
         if (logText != null)
         {
-            // タイムスタンプ付きでログを表示
-            string timestamp = System.DateTime.Now.ToString("HH:mm:ss");
-            logText.text = $"[{timestamp}] {message}";
+            // ログを表示（タイムスタンプなし）
+            logText.text = message;
 
             // ログテキストの色を黒に設定
             logText.color = Color.black;
