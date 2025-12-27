@@ -80,6 +80,12 @@ public class UyopyonState : NetworkBehaviour
     [Networked]
     public float BuffMultiplier { get; set; } = 1.0f;
 
+    /// <summary>
+    /// じゃんけん勝利数（ゲーム中に勝ったじゃんけんの回数）
+    /// </summary>
+    [Networked]
+    public int JankenWinCount { get; set; } = 0;
+
     // === 変更検知用の前回値 ===
     private int _lastWeight;
     private int _lastEnergy;
@@ -244,8 +250,8 @@ public class UyopyonState : NetworkBehaviour
         if (_lastWeight != Weight)
         {
             UIController.Instance?.UpdateWeightDisplay(OwnerPlayer, Weight);
-            // 重さが変わったら、じゅくすい・どかぐいのボタン状態を更新
-            UIController.Instance?.UpdateSpecialAbilityButtonState();
+            // 注: じゅくすい・どかぐいのボタン状態は選択フェーズ開始時にのみ更新される
+            // （選択フェーズ開始時の重さ合計で判定するため、途中で重さが変わっても再判定しない）
             _lastWeight = Weight;
         }
 
@@ -422,7 +428,18 @@ public class UyopyonState : NetworkBehaviour
         if (!string.IsNullOrEmpty(playerName))
         {
             playerNameText.text = playerName;
-            DebugLogger.Log($"[UyopyonState] プレイヤー名を表示: OwnerPlayer={OwnerPlayer}, Name='{playerName}'");
+
+            // 文字色を設定
+            if (UIController.Instance != null)
+            {
+                bool isHost = UIController.Instance.IsHostPlayer(OwnerPlayer);
+                playerNameText.color = isHost ? UIController.Instance.hostPlayerNameColor : UIController.Instance.clientPlayerNameColor;
+                DebugLogger.Log($"[UyopyonState] プレイヤー名を表示: OwnerPlayer={OwnerPlayer}, Name='{playerName}', IsHost={isHost}");
+            }
+            else
+            {
+                DebugLogger.Log($"[UyopyonState] プレイヤー名を表示(色設定なし): OwnerPlayer={OwnerPlayer}, Name='{playerName}'");
+            }
         }
         else
         {
