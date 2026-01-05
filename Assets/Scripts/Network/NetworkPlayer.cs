@@ -191,12 +191,12 @@ public class NetworkPlayer : NetworkBehaviour
             if (Runner.LocalPlayer == OwnerPlayerRef)
             {
                 DebugLogger.Log($"[NetworkPlayer] 自分の名前を更新: {newName}");
-                UIController.Instance.UpdateMyName(newName);
+                UIController.Instance.UpdateMyName(newName, OwnerPlayerRef);
             }
             else
             {
                 DebugLogger.Log($"[NetworkPlayer] 相手の名前を更新: {newName}");
-                UIController.Instance.UpdateOpponentName(newName);
+                UIController.Instance.UpdateOpponentName(newName, OwnerPlayerRef);
             }
         }
     }

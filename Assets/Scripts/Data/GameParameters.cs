@@ -9,110 +9,110 @@ public class GameParameters : ScriptableObject
 {
     [Header("=== 基本設定 ===")]
     [Tooltip("ゲーム開始時の重さ（kg）")]
-    public int InitialWeight = 10;
+    public int InitialWeight;
 
     [Tooltip("ゲーム開始時の元気（HP）")]
-    public int InitialEnergy = 100;
+    public int InitialEnergy;
 
     [Tooltip("進化に必要な重さ（kg）")]
-    public int EvolutionWeightThreshold = 200;
+    public int EvolutionWeightThreshold;
 
     [Tooltip("勝利条件の重さ（kg）")]
-    public int VictoryWeightThreshold = 700;
+    public int VictoryWeightThreshold;
 
     [Header("=== 行動パラメーター ===")]
     [Header("たべる")]
-    public int EatEnergyChange = -15;
-    public int EatWeightChange = 50;
+    public int EatEnergyChange;
+    public int EatWeightChange;
 
     [Header("ねむる")]
-    public int SleepEnergyChange = 50;
+    public int SleepEnergyChange;
 
     [Header("あそぶ")]
-    public int PlayEnergyChange = -30;
-    public int PlayWeightBuffIncrement = 10;
-    public int PlayEnergyBuffIncrement = 10;
+    public int PlayEnergyChange;
+    public int PlayWeightBuffIncrement;
+    public int PlayEnergyBuffIncrement;
 
     [Header("つういん")]
-    public int ClinicEnergyChange = -20;
+    public int ClinicEnergyChange;
 
     [Header("連続使用ペナルティ")]
-    public int ConsecutiveActionPenalty = 20;
+    public int ConsecutiveActionPenalty;
 
     [Header("=== 状態異常 ===")]
     [Header("発症確率")]
     [Tooltip("病気・ケガの発症確率（重さ÷10 = %）")]
-    public float SicknessProbabilityPerWeight = 0.1f;
-    public float InjuryProbabilityPerWeight = 0.1f;
+    public float SicknessProbabilityPerWeight;
+    public float InjuryProbabilityPerWeight;
 
     [Header("病気の種類別確率")]
-    public float SicknessSleepApneaProbability = 0.5f;
-    public float SicknessDiabetesProbability = 0.5f;
+    public float SicknessSleepApneaProbability;
+    public float SicknessDiabetesProbability;
 
     [Header("ケガの種類別確率")]
-    public float InjuryBackPainProbability = 0.5f;
-    public float InjuryHeatstrokeProbability = 0.5f;
+    public float InjuryBackPainProbability;
+    public float InjuryHeatstrokeProbability;
 
     [Header("状態異常の効果")]
-    public int SleepApneaRecoveryReduction = -20;
-    public int DiabetesMorningWeightChange = -20;
-    public int DiabetesMorningEnergyChange = -20;
-    public float BackPainCancelProbability = 0.3f;
-    public float HeatstrokeForcedClinicProbability = 1.0f;
+    public int SleepApneaRecoveryReduction;
+    public int DiabetesMorningWeightChange;
+    public int DiabetesMorningEnergyChange;
+    public float BackPainCancelProbability;
+    public float HeatstrokeForcedClinicProbability;
     
     [Header("=== ジャンケン効果 ===")]
-    public int JankenWinEnergyBase = 10;
-    public int JankenLoseEnergyBase = -10;
-    public int JankenEnergyIncrementPerDay = 5;
-    public int JankenBuffDebuffAmount = 10;
+    public int JankenWinEnergyBase;
+    public int JankenLoseEnergyBase;
+    public int JankenEnergyIncrementPerDay;
+    public int JankenBuffDebuffAmount;
 
     [Header("=== 特殊能力パラメーター ===")]
     [Header("がいしょく")]
     [Tooltip("がいしょくはたべると同じ効果だが、ジャンルがパー")]
-    public int GaishokuEnergyChange = -15;
-    public int GaishokuWeightChange = 50;
+    public int GaishokuEnergyChange;
+    public int GaishokuWeightChange;
 
     [Header("きんとれ")]
-    public int KintreEnergyCost = -120;
-    public float KintreWeightMultiplier = 0.5f;
-    public float KintreBuffMultiplier = 2.5f;
+    public int KintreEnergyCost;
+    public float KintreWeightMultiplier;
+    public float KintreBuffMultiplier;
 
     [Header("がむしゃら")]
-    public int GamushuraEnergyCost = -40;
-    public float GamushuraWeightMultiplier = 1.2f;
-    public float GamushuraEnergyMultiplier = 1.2f;
-    public int GamushuraBuffWeightIncrement = 15;
-    public int GamushuraBuffEnergyIncrement = 15;
-    public float GamusharaMixWeightMultiplier = 0f;
-    public float GamusharaMixEnergyMultiplier = 0.5f;
-    public int GamusharaMixBuffWeightIncrement = 15;
-    public int GamusharaMixBuffEnergyIncrement = 15;
+    public int GamushuraEnergyCost;
+    public float GamushuraWeightMultiplier;
+    public float GamushuraEnergyMultiplier;
+    public int GamushuraBuffWeightIncrement;
+    public int GamushuraBuffEnergyIncrement;
+    public float GamusharaMixWeightMultiplier;
+    public float GamusharaMixEnergyMultiplier;
+    public int GamusharaMixBuffWeightIncrement;
+    public int GamusharaMixBuffEnergyIncrement;
 
     [Header("べんきょう")]
-    public int BenkyouEnergyCost = -25;
-    public int BenkyouBuffWeightIncrement = 10;
-    public int BenkyouComboBuffIncrement = 10;
+    public int BenkyouEnergyCost;
+    public int BenkyouBuffWeightIncrement;
+    public int BenkyouComboBuffIncrement;
 
     [Header("じゅくすい")]
-    public int JukusuiEnergyBonus = 20;
+    public int JukusuiEnergyBonus;
 
     [Header("どかぐい")]
-    public int DokaguiEnergyCost = -15;
-    public int DokaguiWeightBonus = 30;
+    public int DokaguiEnergyCost;
+    public int DokaguiWeightBonus;
 
     [Header("=== タイミング設定 ===")]
     [Tooltip("ブラックアウトパネルの表示時間（秒）")]
-    public float BlackoutDuration = 1f;
+    public float BlackoutDuration;
 
     [Tooltip("行動実行後の待機時間（秒）")]
-    public float ActionWaitDuration = 2f;
+    public float ActionWaitDuration;
 
     [Tooltip("選択フェーズの制限時間（秒）")]
-    public int SelectionPhaseTimeLimit = 60;
+    public int SelectionPhaseTimeLimit;
 
     [Header("=== その他 ===")]
-    public int TotalSpecialAbilities = 6;
-    public int SelectedSpecialAbilitiesCount = 3;
+    public int TotalSpecialAbilities;
+    public int SelectedSpecialAbilitiesCount;
 
     /// <summary>
     /// Inspector上で値が変更されたときに呼ばれる

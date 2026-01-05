@@ -589,8 +589,10 @@ public class GameFlowManager : NetworkBehaviour
             {
                 Debug.Log($"[GameFlowManager] プレイヤー {kvp.Key} の行動を確認します");
 
-                // プレイヤー名を取得
-                string playerName = GameManager.Instance.GetPlayerName(kvp.Key);
+                // プレイヤー名を取得（色付き）
+                string rawPlayerName = GameManager.Instance.GetPlayerName(kvp.Key);
+                string playerName = UIController.Instance != null ?
+                    UIController.Instance.FormatPlayerNameForLog(rawPlayerName, kvp.Key) : rawPlayerName;
 
                 // 現在の選択状態をチェック
                 bool morningSelected = kvp.Value.MorningAction.Type != ActionType.None;
@@ -907,8 +909,8 @@ public class GameFlowManager : NetworkBehaviour
                 state.Weight += gameParams.DiabetesMorningWeightChange;
                 state.Energy += gameParams.DiabetesMorningEnergyChange;
 
-                // プレイヤー名を取得
-                string playerName = GetPlayerName(player);
+                // プレイヤー名を取得（色付き）
+                string playerName = GetColoredPlayerName(player);
 
                 // ログに追加
                 string log = $"{playerName}は糖尿病の影響を受けた！重さ{FormatNumber(gameParams.DiabetesMorningWeightChange)}、元気{FormatNumber(gameParams.DiabetesMorningEnergyChange)}";
@@ -957,8 +959,8 @@ public class GameFlowManager : NetworkBehaviour
             {
                 actionData.MorningAction = new ActionData(ActionType.Clinic, Genre.Rock);
 
-                // プレイヤー名を取得
-                string playerName = GetPlayerName(player);
+                // プレイヤー名を取得（色付き）
+                string playerName = GetColoredPlayerName(player);
 
                 // ログに追加
                 string log = $"{playerName}は熱中症の影響で午前の行動が「つういん」に固定されました";
@@ -1037,7 +1039,7 @@ public class GameFlowManager : NetworkBehaviour
             var kvp = orderedCandidates[i];
             PlayerRef currentPlayer = kvp.Key;
             UyopyonState state = kvp.Value;
-            string playerName = GetPlayerName(currentPlayer);
+            string playerName = GetColoredPlayerName(currentPlayer);
 
             Debug.Log($"[GameFlowManager] Player {currentPlayer} ({playerName}) の進化処理開始 (順位: {i + 1}/{orderedCandidates.Count})");
 
@@ -1088,16 +1090,18 @@ public class GameFlowManager : NetworkBehaviour
             _abilitySelectionComplete = false;
             _selectedAbilityFromClient = null;
 
-            // 7.2: RPC経由で特殊能力選択UIを表示（無効化リストも渡す）
+            // 7.2: RPC経由で特殊能力選択UIを表示
+            // 既に選択済みの特殊能力は availableChoices から除外済みなので、無効化リストは不要
             SpecialAbilityType ability1 = choices.Length > 0 ? choices[0] : SpecialAbilityType.Gaishoku;
             SpecialAbilityType ability2 = choices.Length > 1 ? choices[1] : SpecialAbilityType.Gaishoku;
             SpecialAbilityType ability3 = choices.Length > 2 ? choices[2] : SpecialAbilityType.Gaishoku;
-            // 無効化する特殊能力を設定
-            
-            SpecialAbilityType disabled1 = _selectedAbilities.Count > 0 ? _selectedAbilities[0] : SpecialAbilityType.Gaishoku;
-            SpecialAbilityType disabled2 = _selectedAbilities.Count > 1 ? _selectedAbilities[1] : SpecialAbilityType.Gaishoku;
-            
-            RPC_ShowSpecialAbilityChoice(currentPlayer, ability1, ability2, ability3, choices.Length, disabled1, disabled2, _selectedAbilities.Count);
+
+            // 無効化リストは空で渡す（選択肢から既に除外済み）
+            SpecialAbilityType disabled1 = SpecialAbilityType.Gaishoku;
+            SpecialAbilityType disabled2 = SpecialAbilityType.Gaishoku;
+            int disabledCount = 0;
+
+            RPC_ShowSpecialAbilityChoice(currentPlayer, ability1, ability2, ability3, choices.Length, disabled1, disabled2, disabledCount);
 
             // 選択完了を待機（RPCベース）
             Debug.Log($"[GameFlowManager] プレイヤー {currentPlayer} の特殊能力選択を待機中...");
@@ -1325,6 +1329,21 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// プレイヤー名を色付きで取得するヘルパーメソッド（ログ表示用）
+    /// </summary>
+    private string GetColoredPlayerName(PlayerRef player)
+    {
+        string playerName = GetPlayerName(player);
+
+        if (UIController.Instance != null)
+        {
+            return UIController.Instance.FormatPlayerNameForLog(playerName, player);
+        }
+
+        return playerName;
+    }
+
+    /// <summary>
     /// 数値を色付きフォーマットで返す（正の値は青、負の値は赤）
     /// </summary>
     private string FormatNumber(int value)
@@ -1362,13 +1381,13 @@ public class GameFlowManager : NetworkBehaviour
         Winner = winner;
         CurrentPhase = GamePhase.GameEnd;
 
-        // 勝者・敗者の名前を取得
-        string winnerName = GetPlayerName(winner);
+        // 勝者・敗者の名前を取得（色付き）
+        string winnerName = GetColoredPlayerName(winner);
 
         // 敗者を特定
         var allPlayers = GameManager.Instance.uyopyonStateDict.Keys.ToList();
         PlayerRef loser = allPlayers.FirstOrDefault(p => p != winner);
-        string loserName = GetPlayerName(loser);
+        string loserName = GetColoredPlayerName(loser);
 
         // ログに記録
         RPC_AddLog($"=== ゲーム終了 ===");
@@ -1471,8 +1490,8 @@ public class GameFlowManager : NetworkBehaviour
     /// </summary>
     private async UniTask ProcessSurrenderAsync(PlayerRef player)
     {
-        // プレイヤー名を取得
-        string playerName = GetPlayerName(player);
+        // プレイヤー名を取得（色付き）
+        string playerName = GetColoredPlayerName(player);
 
         // 投了メッセージをログに表示
         string surrenderMessage = $"=== {playerName}が降参しました。ゲームを終了します。 ===";

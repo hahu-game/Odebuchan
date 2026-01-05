@@ -12,15 +12,27 @@ public class UIController : MonoBehaviour
 {
     public static UIController Instance { get; private set; }
 
+    // === プレイヤー名の文字色設定 ===
+    [Header("Player Name Text Colors")]
+    [Tooltip("ホストプレイヤーの名前文字色（デフォルト: #800000 濃い赤）")]
+    public Color hostPlayerNameColor = new Color(0.502f, 0.0f, 0.0f, 1.0f); // #800000
+
+    [Tooltip("クライアントプレイヤーの名前文字色（デフォルト: #008000 緑）")]
+    public Color clientPlayerNameColor = new Color(0.0f, 0.502f, 0.0f, 1.0f); // #008000
+
     // === 自分のUI要素 ===
     public TextMeshProUGUI myNameText;
     public TextMeshProUGUI myWeightText;
     public TextMeshProUGUI myEnergyText;
+    public TextMeshProUGUI myEatWeightGainText;
+    public TextMeshProUGUI mySleepEnergyGainText;
 
     // === 相手のUI要素 ===
     public TextMeshProUGUI opponentNameText;
     public TextMeshProUGUI opponentWeightText;
     public TextMeshProUGUI opponentEnergyText;
+    public TextMeshProUGUI opponentEatWeightGainText;
+    public TextMeshProUGUI opponentSleepEnergyGainText;
 
     // === 行動選択エリアの名前表示 ===
     public TextMeshProUGUI selectMyNameText;    // 行動選択エリアの自分の名前
@@ -111,10 +123,12 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI resultMyWeightText;
     public TextMeshProUGUI resultMyEnergyText;
     public TextMeshProUGUI resultMyAbilityText;
+    public TextMeshProUGUI resultMyJankenWinText;
     public TextMeshProUGUI resultOppNameText;
     public TextMeshProUGUI resultOppWeightText;
     public TextMeshProUGUI resultOppEnergyText;
     public TextMeshProUGUI resultOppAbilityText;
+    public TextMeshProUGUI resultOppJankenWinText;
     public UnityEngine.UI.Button resultReturnToTitleButton;
 
     // === 9.2で追加: 設定パネル ===
@@ -218,13 +232,33 @@ public class UIController : MonoBehaviour
     
     // スクロールコルーチンの参照（重複実行を防ぐため）
     private Coroutine _scrollToBottomCoroutine = null;
-    
+
+    // === パラメータアニメーション関連 ===
+    private ParameterAnimation _parameterAnimation;
+    private Dictionary<PlayerRef, int> _lastWeights = new Dictionary<PlayerRef, int>();
+    private Dictionary<PlayerRef, int> _lastEnergies = new Dictionary<PlayerRef, int>();
+    private Dictionary<PlayerRef, int> _lastEatWeightGains = new Dictionary<PlayerRef, int>();
+    private Dictionary<PlayerRef, int> _lastSleepEnergyGains = new Dictionary<PlayerRef, int>();
+
+    /// <summary>
+    /// 前回値を強制的に更新（初期化時のアニメーション実行を防ぐ）
+    /// </summary>
+    public void UpdateLastValues(PlayerRef player, int weight, int energy, int eatWeightGain, int sleepEnergyGain)
+    {
+        _lastWeights[player] = weight;
+        _lastEnergies[player] = energy;
+        _lastEatWeightGains[player] = eatWeightGain;
+        _lastSleepEnergyGains[player] = sleepEnergyGain;
+    }
 
     // === 3.2で追加: 行動選択状態 ===
     private ActionData? _morningAction = null;      // 午前に選択した行動
     private ActionData? _afternoonAction = null;    // 午後に選択した行動
     private bool _isMorningSelected = false;        // 午前が選択済みか
     private PlayerRef _localPlayerRef;
+
+    // === 選択フェーズ開始時の重さ合計（じゅくすい・どかぐいの条件判定用） ===
+    private int _selectionPhaseStartWeightTotal = 0;
 
     // === フォントサイズのデフォルト値保存 ===
     // 9.3: _defaultSpecialAbilityButtonTextSize は削除されました
@@ -244,30 +278,15 @@ public class UIController : MonoBehaviour
          _localPlayerRef = runner.LocalPlayer;
         }
 
-        // TextMeshProリッチテキストタグを無効化（セキュリティ対策）
-        if (myNameText != null)
-        {
-            myNameText.richText = false;
-        }
-        if (opponentNameText != null)
-        {
-            opponentNameText.richText = false;
-        }
-        if (selectMyNameText != null)
-        {
-            selectMyNameText.richText = false;
-        }
-        if (selectOppNameText != null)
-        {
-            selectOppNameText.richText = false;
-        }
-
         // デフォルトのフォントサイズを保存
         // 9.3: specialAbilityButtonText は削除されました
         if (myTodayMorningActionText != null)
         {
             _defaultActionTextSize = myTodayMorningActionText.fontSize;
         }
+
+        // パラメータアニメーションコンポーネントを追加
+        _parameterAnimation = gameObject.AddComponent<ParameterAnimation>();
     }
 
     private void Start()
@@ -339,30 +358,39 @@ public class UIController : MonoBehaviour
         {
             _uyopyons.Add(uyopyon.OwnerPlayer, uyopyon);
 
-            // 初期表示の更新を明示的に実行（OnChangedが呼ばれない初回値の設定に対応）
-            UpdateWeightDisplay(uyopyon.OwnerPlayer, uyopyon.Weight);
-            UpdateEnergyDisplay(uyopyon.OwnerPlayer, uyopyon.Energy);
+            // 注: 前回値はUpdateDisplay()の後にUpdateLastValues()で設定されるため、ここでは登録しない
+            // これにより、RegisterUyopyon()とInitializeValues()の間の値変更でアニメーションが実行されることを防ぐ
         }
     }
 
     // === プレイヤー名更新（NetworkPlayerから呼ばれる） ===
-    public void UpdateMyName(string newName)
+    public void UpdateMyName(string newName, PlayerRef playerRef)
     {
+        bool isHost = IsHostPlayer(playerRef);
+
         myNameText.text = newName;
+        SetPlayerNameTextColor(myNameText, isHost);
+
         // 行動選択エリアの名前も更新
         if (selectMyNameText != null)
         {
             selectMyNameText.text = newName;
+            SetPlayerNameTextColor(selectMyNameText, isHost);
         }
     }
 
-    public void UpdateOpponentName(string newName)
+    public void UpdateOpponentName(string newName, PlayerRef playerRef)
     {
+        bool isHost = IsHostPlayer(playerRef);
+
         opponentNameText.text = newName;
+        SetPlayerNameTextColor(opponentNameText, isHost);
+
         // 行動選択エリアの名前も更新
         if (selectOppNameText != null)
         {
             selectOppNameText.text = newName;
+            SetPlayerNameTextColor(selectOppNameText, isHost);
         }
     }
 
@@ -370,32 +398,158 @@ public class UIController : MonoBehaviour
 
     public void UpdateWeightDisplay(PlayerRef player, int weight)
     {
-        string weightText = $"{weight}";
-        if (player == _localPlayerRef)
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? myWeightText : opponentWeightText;
+
+        if (targetText == null)
         {
-            SetTextIfChanged(myWeightText, weightText);
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastWeights.ContainsKey(player))
+        {
+            _lastWeights[player] = weight;
+            SetTextIfChanged(targetText, weight.ToString());
+            return;
+        }
+
+        int fromValue = _lastWeights[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameter(targetText, fromValue, weight);
         }
         else
         {
-            SetTextIfChanged(opponentWeightText, weightText);
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            SetTextIfChanged(targetText, weight.ToString());
         }
+
+        // 前回値を更新
+        _lastWeights[player] = weight;
     }
 
     public void UpdateEnergyDisplay(PlayerRef player, int energy)
     {
-        string energyText = $"{energy}";
-        if (player == _localPlayerRef)
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? myEnergyText : opponentEnergyText;
+
+        if (targetText == null)
         {
-            SetTextIfChanged(myEnergyText, energyText);
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastEnergies.ContainsKey(player))
+        {
+            _lastEnergies[player] = energy;
+            SetTextIfChanged(targetText, energy.ToString());
+            return;
+        }
+
+        int fromValue = _lastEnergies[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameter(targetText, fromValue, energy);
         }
         else
         {
-            SetTextIfChanged(opponentEnergyText, energyText);
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            SetTextIfChanged(targetText, energy.ToString());
         }
+
+        // 前回値を更新
+        _lastEnergies[player] = energy;
     }
 
     // TODO: フェーズ3で実装予定 - あそぶバフの表示
     public void UpdatePlayBuffDisplay(PlayerRef player, int buffWeight, int buffEnergy) { }
+
+    /// <summary>
+    /// たべる使用時の重さ上昇量を表示
+    /// </summary>
+    public void UpdateEatWeightGainDisplay(PlayerRef player, int eatWeightGain)
+    {
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? myEatWeightGainText : opponentEatWeightGainText;
+
+        if (targetText == null)
+        {
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastEatWeightGains.ContainsKey(player))
+        {
+            _lastEatWeightGains[player] = eatWeightGain;
+            string sign = eatWeightGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{eatWeightGain}";
+            targetText.color = Color.black;
+            return;
+        }
+
+        int fromValue = _lastEatWeightGains[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameterWithSign(targetText, fromValue, eatWeightGain);
+        }
+        else
+        {
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            string sign = eatWeightGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{eatWeightGain}";
+        }
+
+        // 前回値を更新
+        _lastEatWeightGains[player] = eatWeightGain;
+    }
+
+    /// <summary>
+    /// ねむる使用時の元気上昇量を表示
+    /// </summary>
+    public void UpdateSleepEnergyGainDisplay(PlayerRef player, int sleepEnergyGain)
+    {
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? mySleepEnergyGainText : opponentSleepEnergyGainText;
+
+        if (targetText == null)
+        {
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastSleepEnergyGains.ContainsKey(player))
+        {
+            _lastSleepEnergyGains[player] = sleepEnergyGain;
+            string sign = sleepEnergyGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{sleepEnergyGain}";
+            targetText.color = Color.black;
+            return;
+        }
+
+        int fromValue = _lastSleepEnergyGains[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameterWithSign(targetText, fromValue, sleepEnergyGain);
+        }
+        else
+        {
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            string sign = sleepEnergyGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{sleepEnergyGain}";
+        }
+
+        // 前回値を更新
+        _lastSleepEnergyGains[player] = sleepEnergyGain;
+    }
 
     /// <summary>
     /// 進化状態の表示を更新（TODO 3実装）
@@ -417,12 +571,8 @@ public class UIController : MonoBehaviour
         // 特殊能力ボタンの表示/非表示は UpdateAllActionEffectDisplay() で自動的に管理されます
         Debug.Log($"[UIController] 進化状態更新: hasEvolved={hasEvolved}, abilityName={abilityName}");
 
-        // ボタンの状態更新は UpdateSpecialAbilityButtonState() で処理されます
-        if (hasEvolved)
-        {
-            Debug.Log("[UIController] UpdateSpecialAbilityButtonState() を呼び出します");
-            UpdateSpecialAbilityButtonState();
-        }
+        // ボタンの状態更新は選択フェーズ開始時（UpdateActionButtonsBasedOnEnergy）で行われる
+        // 進化時は選択フェーズではないため、ここでは呼ばない
     }
 
     // TODO: フェーズ9で実装予定 - ビジュアル変更
@@ -535,8 +685,11 @@ public class UIController : MonoBehaviour
             // ログを表示（タイムスタンプなし）
             logText.text = message;
 
-            // ログテキストの色を黒に設定
+            // ログテキストの色を黒に設定（デフォルト色、リッチテキストタグで上書き可能）
             logText.color = Color.black;
+
+            // リッチテキストを有効化（プレイヤー名の色付けのため）
+            logText.richText = true;
 
             // 自動的に折り返しを有効化
             logText.textWrappingMode = TMPro.TextWrappingModes.Normal;
@@ -564,6 +717,23 @@ public class UIController : MonoBehaviour
         }
         layoutElement.minHeight = 20f;
         // preferredHeightやflexibleWidthは設定しない（ContentSizeFitterに任せる）
+
+        // 既存の余白スペーサーを削除（あれば）
+        Transform existingSpacer = logContent.Find("BottomSpacer");
+        if (existingSpacer != null)
+        {
+            Destroy(existingSpacer.gameObject);
+        }
+
+        // 新しい余白スペーサーを追加（最後のログの下に余白を作る）
+        GameObject spacer = new GameObject("BottomSpacer");
+        spacer.transform.SetParent(logContent, false);
+        RectTransform spacerRect = spacer.AddComponent<RectTransform>();
+        spacerRect.anchorMin = new Vector2(0, 1);
+        spacerRect.anchorMax = new Vector2(1, 1);
+        spacerRect.pivot = new Vector2(0, 1);
+        spacerRect.sizeDelta = new Vector2(0, 60f); // 高さ60pxの余白
+        spacer.transform.SetAsLastSibling(); // 最後に配置
 
         // 自動的に最下部にスクロール（重複実行を防ぐ）
         if (_scrollToBottomCoroutine != null)
@@ -593,7 +763,7 @@ public class UIController : MonoBehaviour
             yield return null;
             logScrollRect.verticalNormalizedPosition = 0f;
         }
-        
+
         // コルーチン完了時に参照をクリア
         _scrollToBottomCoroutine = null;
     }
@@ -1338,12 +1508,9 @@ public class UIController : MonoBehaviour
         if (clinicButton != null) clinicButton.interactable = interactable;
 
         // 9.3: 特殊能力ボタンの制御（6つ個別に、アクティブなボタンのみ）
-        if (interactable)
-        {
-            // 有効化する場合は、じゅくすい・どかぐいの条件チェック
-            UpdateSpecialAbilityButtonState();
-        }
-        else
+        // 有効化の場合は GameFlowManager から UpdateActionButtonsBasedOnEnergy() が呼ばれる
+        // そこで UpdateSpecialAbilityButtonState() が実行される
+        if (!interactable)
         {
             // 無効化する場合は、すべての特殊能力ボタンを無効化
             if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
@@ -1378,6 +1545,14 @@ public class UIController : MonoBehaviour
         PlayerRef localPlayer = runner.LocalPlayer;
         UyopyonState myState = GameManager.Instance?.GetUyopyonState(localPlayer);
         if (myState == null || GameManager.Instance?.gameParams == null) return;
+
+        // 選択フェーズ開始時の重さ合計を保存（じゅくすい・どかぐいの条件判定用）
+        _selectionPhaseStartWeightTotal = 0;
+        foreach (var kvp in _uyopyons)
+        {
+            _selectionPhaseStartWeightTotal += kvp.Value.Weight;
+        }
+        Debug.Log($"[UIController] 選択フェーズ開始時の重さ合計: {_selectionPhaseStartWeightTotal}");
 
         int currentEnergy = myState.Energy;
         var gameParams = GameManager.Instance.gameParams;
@@ -1468,6 +1643,9 @@ public class UIController : MonoBehaviour
         // 確定・クリアボタンは常に有効
         if (fixButton != null) fixButton.interactable = true;
         if (clearButton != null) clearButton.interactable = true;
+
+        // じゅくすい・どかぐいの条件チェック（選択フェーズ開始時の重さ合計を使用）
+        UpdateSpecialAbilityButtonState();
     }
 
 
@@ -1673,12 +1851,9 @@ public class UIController : MonoBehaviour
             return;
         }
 
-        // 両プレイヤーの重さ合計を計算
-        int totalWeight = 0;
-        foreach (var kvp in _uyopyons)
-        {
-            totalWeight += kvp.Value.Weight;
-        }
+        // 選択フェーズ開始時に保存された重さ合計を使用
+        int totalWeight = _selectionPhaseStartWeightTotal;
+        Debug.Log($"[UIController] 使用する重さ合計（選択フェーズ開始時）: {totalWeight}");
 
         // じゅくすい: 重さ合計が奇数のときのみ有効
         // どかぐい: 重さ合計が偶数のときのみ有効
@@ -2235,6 +2410,65 @@ public class UIController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 指定されたPlayerRefがホスト（SharedModeMasterClient）かどうかを判定
+    /// </summary>
+    /// <param name="player">判定するPlayerRef</param>
+    /// <returns>ホストの場合true、それ以外false</returns>
+    public bool IsHostPlayer(PlayerRef player)
+    {
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null || !runner.IsRunning)
+        {
+            return false;
+        }
+
+        // Shared Modeでは最初のプレイヤー（PlayerId が最小のプレイヤー）がホスト
+        // ActivePlayersから最小のPlayerIdを持つプレイヤーを取得
+        var activePlayers = runner.ActivePlayers.ToList();
+        if (activePlayers.Count == 0)
+        {
+            return false;
+        }
+
+        var hostPlayer = activePlayers.OrderBy(p => p.PlayerId).First();
+        return player == hostPlayer;
+    }
+
+    /// <summary>
+    /// TextMeshProUGUIコンポーネントの文字色を設定
+    /// </summary>
+    /// <param name="textComponent">対象のTextMeshProUGUIコンポーネント</param>
+    /// <param name="isHost">ホストプレイヤーかどうか</param>
+    private void SetPlayerNameTextColor(TextMeshProUGUI textComponent, bool isHost)
+    {
+        if (textComponent != null)
+        {
+            textComponent.color = isHost ? hostPlayerNameColor : clientPlayerNameColor;
+        }
+    }
+
+    /// <summary>
+    /// プレイヤー名を色付きでフォーマットする（ログ表示用）
+    /// TextMeshProのリッチテキストタグを使用
+    /// </summary>
+    /// <param name="playerName">プレイヤー名</param>
+    /// <param name="player">PlayerRef</param>
+    /// <returns>色付きプレイヤー名（リッチテキスト形式）</returns>
+    public string FormatPlayerNameForLog(string playerName, PlayerRef player)
+    {
+        if (string.IsNullOrEmpty(playerName))
+        {
+            return playerName;
+        }
+
+        bool isHost = IsHostPlayer(player);
+        Color nameColor = isHost ? hostPlayerNameColor : clientPlayerNameColor;
+        string hexColor = ColorUtility.ToHtmlStringRGB(nameColor);
+
+        return $"<color=#{hexColor}>{playerName}</color>";
+    }
+
     // === 8.2: ゲーム終了アニメーション ===
 
     /// <summary>
@@ -2407,9 +2641,11 @@ public class UIController : MonoBehaviour
 
         // 勝者名を表示
         string winnerName = GetPlayerName(winner);
+        bool winnerIsHost = IsHostPlayer(winner);
         if (resultWinnerText != null)
         {
             resultWinnerText.text = $"{winnerName} の勝ち！";
+            SetPlayerNameTextColor(resultWinnerText, winnerIsHost);
         }
 
         // 終了日数・午前/午後を表示
@@ -2435,7 +2671,9 @@ public class UIController : MonoBehaviour
         // 自分のステータスを表示
         if (resultMyNameText != null)
         {
+            bool myIsHost = IsHostPlayer(myPlayer);
             resultMyNameText.text = GetPlayerName(myPlayer);
+            SetPlayerNameTextColor(resultMyNameText, myIsHost);
         }
         if (resultMyWeightText != null)
         {
@@ -2450,11 +2688,17 @@ public class UIController : MonoBehaviour
             string abilityName = myState.HasEvolved ? GetSpecialAbilityDisplayNameForPlayer(myPlayer) : "未進化";
             resultMyAbilityText.text = $"特殊能力: {abilityName}";
         }
+        if (resultMyJankenWinText != null)
+        {
+            resultMyJankenWinText.text = $"じゃんけん勝利数: {myState.JankenWinCount}回";
+        }
 
         // 相手のステータスを表示
         if (resultOppNameText != null)
         {
+            bool oppIsHost = IsHostPlayer(oppPlayer);
             resultOppNameText.text = GetPlayerName(oppPlayer);
+            SetPlayerNameTextColor(resultOppNameText, oppIsHost);
         }
         if (resultOppWeightText != null)
         {
@@ -2468,6 +2712,10 @@ public class UIController : MonoBehaviour
         {
             string abilityName = oppState.HasEvolved ? GetSpecialAbilityDisplayNameForPlayer(oppPlayer) : "未進化";
             resultOppAbilityText.text = $"特殊能力: {abilityName}";
+        }
+        if (resultOppJankenWinText != null)
+        {
+            resultOppJankenWinText.text = $"じゃんけん勝利数: {oppState.JankenWinCount}回";
         }
 
         // リザルトパネルを表示

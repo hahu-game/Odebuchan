@@ -80,6 +80,54 @@ public class UyopyonState : NetworkBehaviour
     [Networked]
     public float BuffMultiplier { get; set; } = 1.0f;
 
+    /// <summary>
+    /// じゃんけん勝利数（ゲーム中に勝ったじゃんけんの回数）
+    /// </summary>
+    [Networked]
+    public int JankenWinCount { get; set; } = 0;
+
+    // === 計算プロパティ（表示用） ===
+
+    /// <summary>
+    /// たべる使用時の重さ上昇量を計算
+    /// </summary>
+    public int EatWeightGain
+    {
+        get
+        {
+            if (GameManager.Instance == null || GameManager.Instance.gameParams == null)
+            {
+                return 0;
+            }
+            var gameParams = GameManager.Instance.gameParams;
+            return (int)((gameParams.EatWeightChange + PlayBuffWeight) * BuffMultiplier);
+        }
+    }
+
+    /// <summary>
+    /// ねむる使用時の元気上昇量を計算
+    /// </summary>
+    public int SleepEnergyGain
+    {
+        get
+        {
+            if (GameManager.Instance == null || GameManager.Instance.gameParams == null)
+            {
+                return 0;
+            }
+            var gameParams = GameManager.Instance.gameParams;
+            int baseGain = (int)((gameParams.SleepEnergyChange + PlayBuffEnergy) * BuffMultiplier);
+
+            // 睡眠時無呼吸症候群の影響を適用
+            if (HasStatusAilment(StatusAilment.SleepApnea))
+            {
+                baseGain += gameParams.SleepApneaRecoveryReduction;
+            }
+
+            return baseGain;
+        }
+    }
+
     // === 変更検知用の前回値 ===
     private int _lastWeight;
     private int _lastEnergy;
@@ -90,6 +138,8 @@ public class UyopyonState : NetworkBehaviour
     private string _lastSpecialAbilityName = "";
     private byte[] _lastStatusAilments = new byte[4];
     private string _lastPlayerName = "";
+    private int _lastEatWeightGain;
+    private int _lastSleepEnergyGain;
 
     // === 位置管理 ===
     private bool _hasSetPosition = false;
@@ -169,6 +219,8 @@ public class UyopyonState : NetworkBehaviour
         {
             _lastStatusAilments[i] = StatusAilments[i];
         }
+        _lastEatWeightGain = EatWeightGain;
+        _lastSleepEnergyGain = SleepEnergyGain;
 
         // プレイヤー名の初期表示
         UpdatePlayerNameDisplay();
@@ -244,8 +296,8 @@ public class UyopyonState : NetworkBehaviour
         if (_lastWeight != Weight)
         {
             UIController.Instance?.UpdateWeightDisplay(OwnerPlayer, Weight);
-            // 重さが変わったら、じゅくすい・どかぐいのボタン状態を更新
-            UIController.Instance?.UpdateSpecialAbilityButtonState();
+            // 注: じゅくすい・どかぐいのボタン状態は選択フェーズ開始時にのみ更新される
+            // （選択フェーズ開始時の重さ合計で判定するため、途中で重さが変わっても再判定しない）
             _lastWeight = Weight;
         }
 
@@ -324,6 +376,22 @@ public class UyopyonState : NetworkBehaviour
                 _lastPlayerName = currentPlayerName;
             }
         }
+
+        // EatWeightGain の変更をチェック
+        int currentEatWeightGain = EatWeightGain;
+        if (_lastEatWeightGain != currentEatWeightGain)
+        {
+            UIController.Instance?.UpdateEatWeightGainDisplay(OwnerPlayer, currentEatWeightGain);
+            _lastEatWeightGain = currentEatWeightGain;
+        }
+
+        // SleepEnergyGain の変更をチェック
+        int currentSleepEnergyGain = SleepEnergyGain;
+        if (_lastSleepEnergyGain != currentSleepEnergyGain)
+        {
+            UIController.Instance?.UpdateSleepEnergyGainDisplay(OwnerPlayer, currentSleepEnergyGain);
+            _lastSleepEnergyGain = currentSleepEnergyGain;
+        }
     }
 
 
@@ -359,6 +427,13 @@ public class UyopyonState : NetworkBehaviour
                 ailments[i] = StatusAilments[i];
             }
             UIController.Instance?.UpdateStatusAilmentDisplay(OwnerPlayer, ailments);
+
+            // たべる/ねむるの上昇量を表示
+            UIController.Instance?.UpdateEatWeightGainDisplay(OwnerPlayer, EatWeightGain);
+            UIController.Instance?.UpdateSleepEnergyGainDisplay(OwnerPlayer, SleepEnergyGain);
+
+            // 初期表示後、前回値を現在値に更新（初期化時のアニメーション実行を防ぐ）
+            UIController.Instance.UpdateLastValues(OwnerPlayer, Weight, Energy, EatWeightGain, SleepEnergyGain);
         }
     }
 
@@ -422,7 +497,18 @@ public class UyopyonState : NetworkBehaviour
         if (!string.IsNullOrEmpty(playerName))
         {
             playerNameText.text = playerName;
-            DebugLogger.Log($"[UyopyonState] プレイヤー名を表示: OwnerPlayer={OwnerPlayer}, Name='{playerName}'");
+
+            // 文字色を設定
+            if (UIController.Instance != null)
+            {
+                bool isHost = UIController.Instance.IsHostPlayer(OwnerPlayer);
+                playerNameText.color = isHost ? UIController.Instance.hostPlayerNameColor : UIController.Instance.clientPlayerNameColor;
+                DebugLogger.Log($"[UyopyonState] プレイヤー名を表示: OwnerPlayer={OwnerPlayer}, Name='{playerName}', IsHost={isHost}");
+            }
+            else
+            {
+                DebugLogger.Log($"[UyopyonState] プレイヤー名を表示(色設定なし): OwnerPlayer={OwnerPlayer}, Name='{playerName}'");
+            }
         }
         else
         {

@@ -220,7 +220,7 @@ public class TurnProcessor : NetworkBehaviour
             return;
         }
 
-        string playerName = GetPlayerName(player);
+        string playerName = GetColoredPlayerName(player);
 
         // べんきょう以外の行動を選択した場合、StudyComboをリセット
         bool isBenkyou = action.Type == ActionType.SpecialAbility &&
@@ -299,8 +299,12 @@ public class TurnProcessor : NetworkBehaviour
             return;
         }
 
-        string winnerName = GetPlayerName(winner);
-        string loserName = GetPlayerName(loser);
+        // じゃんけん勝利数をカウント
+        winnerState.JankenWinCount++;
+        Debug.Log($"[TurnProcessor] じゃんけん勝利: {winner} の勝利数 = {winnerState.JankenWinCount}");
+
+        string winnerName = GetColoredPlayerName(winner);
+        string loserName = GetColoredPlayerName(loser);
         string effectLog = "";
 
         if (winGenre == Genre.Rock && loseGenre == Genre.Scissors)
@@ -378,6 +382,21 @@ public class TurnProcessor : NetworkBehaviour
     }
 
     /// <summary>
+    /// プレイヤー名を色付きで取得するヘルパーメソッド（ログ表示用）
+    /// </summary>
+    private string GetColoredPlayerName(PlayerRef player)
+    {
+        string playerName = GetPlayerName(player);
+
+        if (UIController.Instance != null)
+        {
+            return UIController.Instance.FormatPlayerNameForLog(playerName, player);
+        }
+
+        return playerName;
+    }
+
+    /// <summary>
     /// 数値を色付きフォーマットで返す（正の値は青、負の値は赤）
     /// </summary>
     public string FormatNumber(int value)
@@ -414,7 +433,7 @@ public class TurnProcessor : NetworkBehaviour
             {
                 uyopyon.Energy -= gameParams.ConsecutiveActionPenalty; // 20
 
-                string playerName = GetPlayerName(player);
+                string playerName = GetColoredPlayerName(player);
                 RPC_AddLog($"{playerName}の連続使用ペナルティ！元気{FormatNumber(-gameParams.ConsecutiveActionPenalty)}");
 
                 Debug.Log($"[TurnProcessor] {player} 連続使用ペナルティ適用: {previousAction} -> {currentAction}");
@@ -708,9 +727,9 @@ public class TurnProcessor : NetworkBehaviour
                 Debug.LogError("[TurnProcessor] UyopyonState が取得できません");
                 return;
             }
-            
-            string playerName = GetPlayerName(player);
-            
+
+            string playerName = GetColoredPlayerName(player);
+
             // すでに持っている病気をチェック
             bool hasSleepApnea = state.HasStatusAilment(StatusAilment.SleepApnea);
             bool hasDiabetes = state.HasStatusAilment(StatusAilment.Diabetes);
@@ -788,9 +807,9 @@ public class TurnProcessor : NetworkBehaviour
                 Debug.LogError("[TurnProcessor] UyopyonState が取得できません");
                 return;
             }
-            
-            string playerName = GetPlayerName(player);
-            
+
+            string playerName = GetColoredPlayerName(player);
+
             // すでに持っているケガをチェック
             bool hasBackPain = state.HasStatusAilment(StatusAilment.BackPain);
             bool hasHeatstroke = state.HasStatusAilment(StatusAilment.Heatstroke);
@@ -906,7 +925,7 @@ public class TurnProcessor : NetworkBehaviour
                     Genre = Genre.None
                 };
 
-                string playerName = GetPlayerName(player);
+                string playerName = GetColoredPlayerName(player);
                 RPC_AddLog($"{playerName}は腰痛で動けない！行動ができなかった！");
 
                 Debug.Log($"[TurnProcessor] {playerName} の行動が腰痛によりキャンセルされました");
@@ -948,8 +967,8 @@ public class TurnProcessor : NetworkBehaviour
                     if (otherKvp.Key != player)
                     {
                         winner = otherKvp.Key;
-                        string winnerName = GetPlayerName(winner.Value);
-                        string loserName = GetPlayerName(player);
+                        string winnerName = GetColoredPlayerName(winner.Value);
+                        string loserName = GetColoredPlayerName(player);
                         Debug.Log($"[TurnProcessor] 投了による勝者決定: {winnerName} (投了者: {loserName})");
 
                         // GameFlowManagerにゲーム終了を通知
@@ -994,7 +1013,7 @@ public class TurnProcessor : NetworkBehaviour
 
         if (winner.HasValue)
         {
-            string winnerName = GetPlayerName(winner.Value);
+            string winnerName = GetColoredPlayerName(winner.Value);
             Debug.Log($"[TurnProcessor] 勝者決定: {winnerName} (重さ: {maxWeight}kg)");
 
             // GameFlowManagerにゲーム終了を通知（8.2: アニメーション再生を待機、8.3: リザルト画面表示）
