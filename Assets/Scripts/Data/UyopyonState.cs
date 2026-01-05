@@ -86,6 +86,48 @@ public class UyopyonState : NetworkBehaviour
     [Networked]
     public int JankenWinCount { get; set; } = 0;
 
+    // === 計算プロパティ（表示用） ===
+
+    /// <summary>
+    /// たべる使用時の重さ上昇量を計算
+    /// </summary>
+    public int EatWeightGain
+    {
+        get
+        {
+            if (GameManager.Instance == null || GameManager.Instance.gameParams == null)
+            {
+                return 0;
+            }
+            var gameParams = GameManager.Instance.gameParams;
+            return (int)((gameParams.EatWeightChange + PlayBuffWeight) * BuffMultiplier);
+        }
+    }
+
+    /// <summary>
+    /// ねむる使用時の元気上昇量を計算
+    /// </summary>
+    public int SleepEnergyGain
+    {
+        get
+        {
+            if (GameManager.Instance == null || GameManager.Instance.gameParams == null)
+            {
+                return 0;
+            }
+            var gameParams = GameManager.Instance.gameParams;
+            int baseGain = (int)((gameParams.SleepEnergyChange + PlayBuffEnergy) * BuffMultiplier);
+
+            // 睡眠時無呼吸症候群の影響を適用
+            if (HasStatusAilment(StatusAilment.SleepApnea))
+            {
+                baseGain += gameParams.SleepApneaRecoveryReduction;
+            }
+
+            return baseGain;
+        }
+    }
+
     // === 変更検知用の前回値 ===
     private int _lastWeight;
     private int _lastEnergy;
@@ -96,6 +138,8 @@ public class UyopyonState : NetworkBehaviour
     private string _lastSpecialAbilityName = "";
     private byte[] _lastStatusAilments = new byte[4];
     private string _lastPlayerName = "";
+    private int _lastEatWeightGain;
+    private int _lastSleepEnergyGain;
 
     // === 位置管理 ===
     private bool _hasSetPosition = false;
@@ -175,6 +219,8 @@ public class UyopyonState : NetworkBehaviour
         {
             _lastStatusAilments[i] = StatusAilments[i];
         }
+        _lastEatWeightGain = EatWeightGain;
+        _lastSleepEnergyGain = SleepEnergyGain;
 
         // プレイヤー名の初期表示
         UpdatePlayerNameDisplay();
@@ -330,6 +376,22 @@ public class UyopyonState : NetworkBehaviour
                 _lastPlayerName = currentPlayerName;
             }
         }
+
+        // EatWeightGain の変更をチェック
+        int currentEatWeightGain = EatWeightGain;
+        if (_lastEatWeightGain != currentEatWeightGain)
+        {
+            UIController.Instance?.UpdateEatWeightGainDisplay(OwnerPlayer, currentEatWeightGain);
+            _lastEatWeightGain = currentEatWeightGain;
+        }
+
+        // SleepEnergyGain の変更をチェック
+        int currentSleepEnergyGain = SleepEnergyGain;
+        if (_lastSleepEnergyGain != currentSleepEnergyGain)
+        {
+            UIController.Instance?.UpdateSleepEnergyGainDisplay(OwnerPlayer, currentSleepEnergyGain);
+            _lastSleepEnergyGain = currentSleepEnergyGain;
+        }
     }
 
 
@@ -365,6 +427,13 @@ public class UyopyonState : NetworkBehaviour
                 ailments[i] = StatusAilments[i];
             }
             UIController.Instance?.UpdateStatusAilmentDisplay(OwnerPlayer, ailments);
+
+            // たべる/ねむるの上昇量を表示
+            UIController.Instance?.UpdateEatWeightGainDisplay(OwnerPlayer, EatWeightGain);
+            UIController.Instance?.UpdateSleepEnergyGainDisplay(OwnerPlayer, SleepEnergyGain);
+
+            // 初期表示後、前回値を現在値に更新（初期化時のアニメーション実行を防ぐ）
+            UIController.Instance.UpdateLastValues(OwnerPlayer, Weight, Energy, EatWeightGain, SleepEnergyGain);
         }
     }
 

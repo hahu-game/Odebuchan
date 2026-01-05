@@ -104,7 +104,7 @@
               "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\UIController.cs",
               "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
               "RelativeToolTip": "Assets\\Scripts\\UI\\UIController.cs",
-              "ViewState": "AgIAAAIAAAAAAAAAAAAawBgAAAAfAAAAAAAAAA==",
+              "ViewState": "AgIAAAwAAAAAAAAAAIA1wCIAAAA3AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-02T11:36:58.038Z",
               "EditorCaption": ""
@@ -143,8 +143,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Data\\GameEnums.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T09:28:40.825Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-02T09:28:40.825Z"
             },
             {
               "$type": "Document",
@@ -216,8 +215,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Data\\GameParameters.cs",
               "ViewState": "AgIAAGgAAAAAAAAAAADwvxgAAAAfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T09:58:23.954Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-02T09:58:23.954Z"
             },
             {
               "$type": "Document",

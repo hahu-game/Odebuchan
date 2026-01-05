@@ -24,11 +24,15 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI myNameText;
     public TextMeshProUGUI myWeightText;
     public TextMeshProUGUI myEnergyText;
+    public TextMeshProUGUI myEatWeightGainText;
+    public TextMeshProUGUI mySleepEnergyGainText;
 
     // === 相手のUI要素 ===
     public TextMeshProUGUI opponentNameText;
     public TextMeshProUGUI opponentWeightText;
     public TextMeshProUGUI opponentEnergyText;
+    public TextMeshProUGUI opponentEatWeightGainText;
+    public TextMeshProUGUI opponentSleepEnergyGainText;
 
     // === 行動選択エリアの名前表示 ===
     public TextMeshProUGUI selectMyNameText;    // 行動選択エリアの自分の名前
@@ -228,7 +232,24 @@ public class UIController : MonoBehaviour
     
     // スクロールコルーチンの参照（重複実行を防ぐため）
     private Coroutine _scrollToBottomCoroutine = null;
-    
+
+    // === パラメータアニメーション関連 ===
+    private ParameterAnimation _parameterAnimation;
+    private Dictionary<PlayerRef, int> _lastWeights = new Dictionary<PlayerRef, int>();
+    private Dictionary<PlayerRef, int> _lastEnergies = new Dictionary<PlayerRef, int>();
+    private Dictionary<PlayerRef, int> _lastEatWeightGains = new Dictionary<PlayerRef, int>();
+    private Dictionary<PlayerRef, int> _lastSleepEnergyGains = new Dictionary<PlayerRef, int>();
+
+    /// <summary>
+    /// 前回値を強制的に更新（初期化時のアニメーション実行を防ぐ）
+    /// </summary>
+    public void UpdateLastValues(PlayerRef player, int weight, int energy, int eatWeightGain, int sleepEnergyGain)
+    {
+        _lastWeights[player] = weight;
+        _lastEnergies[player] = energy;
+        _lastEatWeightGains[player] = eatWeightGain;
+        _lastSleepEnergyGains[player] = sleepEnergyGain;
+    }
 
     // === 3.2で追加: 行動選択状態 ===
     private ActionData? _morningAction = null;      // 午前に選択した行動
@@ -263,6 +284,9 @@ public class UIController : MonoBehaviour
         {
             _defaultActionTextSize = myTodayMorningActionText.fontSize;
         }
+
+        // パラメータアニメーションコンポーネントを追加
+        _parameterAnimation = gameObject.AddComponent<ParameterAnimation>();
     }
 
     private void Start()
@@ -334,9 +358,8 @@ public class UIController : MonoBehaviour
         {
             _uyopyons.Add(uyopyon.OwnerPlayer, uyopyon);
 
-            // 初期表示の更新を明示的に実行（OnChangedが呼ばれない初回値の設定に対応）
-            UpdateWeightDisplay(uyopyon.OwnerPlayer, uyopyon.Weight);
-            UpdateEnergyDisplay(uyopyon.OwnerPlayer, uyopyon.Energy);
+            // 注: 前回値はUpdateDisplay()の後にUpdateLastValues()で設定されるため、ここでは登録しない
+            // これにより、RegisterUyopyon()とInitializeValues()の間の値変更でアニメーションが実行されることを防ぐ
         }
     }
 
@@ -375,32 +398,158 @@ public class UIController : MonoBehaviour
 
     public void UpdateWeightDisplay(PlayerRef player, int weight)
     {
-        string weightText = $"{weight}";
-        if (player == _localPlayerRef)
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? myWeightText : opponentWeightText;
+
+        if (targetText == null)
         {
-            SetTextIfChanged(myWeightText, weightText);
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastWeights.ContainsKey(player))
+        {
+            _lastWeights[player] = weight;
+            SetTextIfChanged(targetText, weight.ToString());
+            return;
+        }
+
+        int fromValue = _lastWeights[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameter(targetText, fromValue, weight);
         }
         else
         {
-            SetTextIfChanged(opponentWeightText, weightText);
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            SetTextIfChanged(targetText, weight.ToString());
         }
+
+        // 前回値を更新
+        _lastWeights[player] = weight;
     }
 
     public void UpdateEnergyDisplay(PlayerRef player, int energy)
     {
-        string energyText = $"{energy}";
-        if (player == _localPlayerRef)
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? myEnergyText : opponentEnergyText;
+
+        if (targetText == null)
         {
-            SetTextIfChanged(myEnergyText, energyText);
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastEnergies.ContainsKey(player))
+        {
+            _lastEnergies[player] = energy;
+            SetTextIfChanged(targetText, energy.ToString());
+            return;
+        }
+
+        int fromValue = _lastEnergies[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameter(targetText, fromValue, energy);
         }
         else
         {
-            SetTextIfChanged(opponentEnergyText, energyText);
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            SetTextIfChanged(targetText, energy.ToString());
         }
+
+        // 前回値を更新
+        _lastEnergies[player] = energy;
     }
 
     // TODO: フェーズ3で実装予定 - あそぶバフの表示
     public void UpdatePlayBuffDisplay(PlayerRef player, int buffWeight, int buffEnergy) { }
+
+    /// <summary>
+    /// たべる使用時の重さ上昇量を表示
+    /// </summary>
+    public void UpdateEatWeightGainDisplay(PlayerRef player, int eatWeightGain)
+    {
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? myEatWeightGainText : opponentEatWeightGainText;
+
+        if (targetText == null)
+        {
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastEatWeightGains.ContainsKey(player))
+        {
+            _lastEatWeightGains[player] = eatWeightGain;
+            string sign = eatWeightGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{eatWeightGain}";
+            targetText.color = Color.black;
+            return;
+        }
+
+        int fromValue = _lastEatWeightGains[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameterWithSign(targetText, fromValue, eatWeightGain);
+        }
+        else
+        {
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            string sign = eatWeightGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{eatWeightGain}";
+        }
+
+        // 前回値を更新
+        _lastEatWeightGains[player] = eatWeightGain;
+    }
+
+    /// <summary>
+    /// ねむる使用時の元気上昇量を表示
+    /// </summary>
+    public void UpdateSleepEnergyGainDisplay(PlayerRef player, int sleepEnergyGain)
+    {
+        // アニメーション対象のテキストコンポーネントを取得
+        TextMeshProUGUI targetText = (player == _localPlayerRef) ? mySleepEnergyGainText : opponentSleepEnergyGainText;
+
+        if (targetText == null)
+        {
+            return;
+        }
+
+        // 前回の値を取得（初回の場合は現在の値をそのまま使用）
+        if (!_lastSleepEnergyGains.ContainsKey(player))
+        {
+            _lastSleepEnergyGains[player] = sleepEnergyGain;
+            string sign = sleepEnergyGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{sleepEnergyGain}";
+            targetText.color = Color.black;
+            return;
+        }
+
+        int fromValue = _lastSleepEnergyGains[player];
+
+        // アニメーション実行
+        if (_parameterAnimation != null)
+        {
+            _parameterAnimation.AnimateParameterWithSign(targetText, fromValue, sleepEnergyGain);
+        }
+        else
+        {
+            // フォールバック: アニメーションコンポーネントがない場合は直接表示
+            string sign = sleepEnergyGain >= 0 ? "+" : "";
+            targetText.text = $"{sign}{sleepEnergyGain}";
+        }
+
+        // 前回値を更新
+        _lastSleepEnergyGains[player] = sleepEnergyGain;
+    }
 
     /// <summary>
     /// 進化状態の表示を更新（TODO 3実装）
