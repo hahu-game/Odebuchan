@@ -351,6 +351,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 1702345773}
+        m_TargetAssemblyTypeName: ButtonSoundPlayer, Assembly-CSharp
+        m_MethodName: PlayFriendMatchButtonSE
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &5389621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1113,7 +1125,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 142168254}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1702345773}
+        m_TargetAssemblyTypeName: ButtonSoundPlayer, Assembly-CSharp
+        m_MethodName: PlayButtonClickSE
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &142168254
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2409,6 +2433,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 1702345773}
+        m_TargetAssemblyTypeName: ButtonSoundPlayer, Assembly-CSharp
+        m_MethodName: PlayButtonClickSE
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &577524899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2641,7 +2677,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 56.3, y: -244.5}
+  m_AnchoredPosition: {x: 370.1, y: -173.2}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &650427339
@@ -4074,7 +4110,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 979813923}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1702345773}
+        m_TargetAssemblyTypeName: ButtonSoundPlayer, Assembly-CSharp
+        m_MethodName: PlayButtonClickSE
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &979813923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5607,7 +5655,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1469581091}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1702345773}
+        m_TargetAssemblyTypeName: ButtonSoundPlayer, Assembly-CSharp
+        m_MethodName: PlayButtonClickSE
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1469581091
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6120,6 +6180,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1702345772}
   - component: {fileID: 1702345771}
+  - component: {fileID: 1702345773}
   m_Layer: 0
   m_Name: AudioManager
   m_TagString: Untagged
@@ -6144,7 +6205,7 @@ MonoBehaviour:
   titleBGM: {fileID: 8300000, guid: bd9f3eece879ee84aa2c950e62d729fb, type: 3}
   gameBGM: {fileID: 8300000, guid: 69cadec68ee1fd34abce29e8b29e0bf0, type: 3}
   resultBGM: {fileID: 8300000, guid: 242b904f4137d194aa0094c930cb6f6b, type: 3}
-  seButtonClick: {fileID: 0}
+  seButtonClick: {fileID: 8300000, guid: e4e483d9c76bea74c8412ef6261b6f9e, type: 3}
   seMatchingStart: {fileID: 0}
   seMatchingSuccess: {fileID: 0}
   sePhaseStart: {fileID: 0}
@@ -6153,23 +6214,31 @@ MonoBehaviour:
   seTimeUp: {fileID: 0}
   seActionSelect: {fileID: 0}
   seActionConfirm: {fileID: 0}
-  seActionClear: {fileID: 0}
+  seActionClear: {fileID: 8300000, guid: b1fb100e125605847928b3991ba98f94, type: 3}
   seActionReveal: {fileID: 0}
-  seEat: {fileID: 0}
-  seSleep: {fileID: 0}
-  sePlay: {fileID: 0}
-  seClinic: {fileID: 0}
+  seEat: {fileID: 8300000, guid: 3ce5213835e65504fa1c183c5529fe6d, type: 3}
+  seSleep: {fileID: 8300000, guid: 632f23730bbee3c4183149a12426d7fb, type: 3}
+  sePlay: {fileID: 8300000, guid: bfa439da37d9e7a42a855959ac51e374, type: 3}
+  seClinic: {fileID: 8300000, guid: 0aed620edcdf2264bb63c029180ee763, type: 3}
   seSpecialAbility: {fileID: 0}
-  seEvolution: {fileID: 0}
+  seKintre: {fileID: 8300000, guid: 646720532dcb46e46924e8ecd0784686, type: 3}
+  seGamushara: {fileID: 8300000, guid: b9f71bfa9f26a8944a876875fec84294, type: 3}
+  seBenkyou: {fileID: 8300000, guid: 5df33db4eff13b34bba8adcbe3ed75ce, type: 3}
+  seEvolution: {fileID: 8300000, guid: 33a472064c597c84b8b1c686c912b4ea, type: 3}
   seAbilityChoice: {fileID: 0}
   seAbilitySelected: {fileID: 0}
   seSicknessOnset: {fileID: 0}
-  seInjuryOnset: {fileID: 0}
-  seAilmentCure: {fileID: 0}
+  seInjuryOnset: {fileID: 8300000, guid: 8da9fee72ad25854fba06c55360f967c, type: 3}
+  seAilmentCure: {fileID: 8300000, guid: 8da9fee72ad25854fba06c55360f967c, type: 3}
+  seParameterChange: {fileID: 8300000, guid: e4e20cd094320c34498be82bf8869269, type: 3}
+  seJankenWin: {fileID: 8300000, guid: 9d38b72b643cc6440882c44aab9f3ebf, type: 3}
+  seJankenLose: {fileID: 8300000, guid: 24ca6496e7349ad4cbb6e4293b8f700b, type: 3}
   seVictory: {fileID: 0}
   seDefeat: {fileID: 0}
   seDraw: {fileID: 0}
   seSurrender: {fileID: 0}
+  seEndGame: {fileID: 8300000, guid: a67c21c93593f0841a9725384e57017d, type: 3}
+  seStartAction: {fileID: 8300000, guid: 5f6ea947390a33b4b8f3c35b01634293, type: 3}
   bgmVolume: 0.5
   seVolume: 0.7
 --- !u!4 &1702345772
@@ -6189,6 +6258,19 @@ Transform:
   - {fileID: 998115107}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1702345773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1702345770}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37f4bd757244a6d499ea6bdbae051955, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonSoundPlayer
+  titleScreenManager: {fileID: 609613371}
 --- !u!1 &1705529999
 GameObject:
   m_ObjectHideFlags: 0
@@ -6653,7 +6735,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1786864950}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1702345773}
+        m_TargetAssemblyTypeName: ButtonSoundPlayer, Assembly-CSharp
+        m_MethodName: PlayClearButtonSE
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1786864950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7104,7 +7198,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2083751255}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1702345773}
+        m_TargetAssemblyTypeName: ButtonSoundPlayer, Assembly-CSharp
+        m_MethodName: PlayClearButtonSE
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2083751255
 MonoBehaviour:
   m_ObjectHideFlags: 0

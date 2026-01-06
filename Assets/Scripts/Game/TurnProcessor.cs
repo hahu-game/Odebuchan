@@ -190,6 +190,10 @@ public class TurnProcessor : NetworkBehaviour
 
         // エフェクト・効果音再生（2秒待機）
         RPC_ShowJankenResult(winner, winGenre);
+
+        // じゃんけん勝敗SE再生
+        RPC_PlayJankenResultSE(winner, loser);
+
         await UniTask.Delay((int)(gameParams.ActionWaitDuration * 1000));
     }
 
@@ -454,6 +458,25 @@ public class TurnProcessor : NetworkBehaviour
     }
 
     /// <summary>
+    /// じゃんけん勝敗SE再生をRPC経由で全クライアントに通知
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_PlayJankenResultSE(PlayerRef winner, PlayerRef loser)
+    {
+        Debug.Log($"[TurnProcessor RPC] じゃんけん勝敗SE再生: Winner={winner}, Loser={loser}");
+
+        // ローカルプレイヤーが勝者の場合は勝利SE、敗者の場合は敗北SEを再生
+        if (Runner.LocalPlayer == winner)
+        {
+            AudioManager.Instance?.PlayJankenWinSE();
+        }
+        else if (Runner.LocalPlayer == loser)
+        {
+            AudioManager.Instance?.PlayJankenLoseSE();
+        }
+    }
+
+    /// <summary>
     /// ログ追加をRPC経由で全クライアントに通知
     /// </summary>
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -660,9 +683,6 @@ public class TurnProcessor : NetworkBehaviour
         }
 
         Debug.Log($"[TurnProcessor] {playerName}が特殊能力 {abilityType} を実行");
-
-        // 特殊能力SE再生
-        AudioManager.Instance?.PlaySpecialAbilitySE();
 
         // StudyComboリセット（べんきょう以外の行動を実行した場合）
         if (abilityType != SpecialAbilityType.Benkyou)

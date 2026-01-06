@@ -890,9 +890,6 @@ public class UIController : MonoBehaviour
             // LogAreaに確定メッセージを表示
             AddLog("行動を確定しました。対戦相手の選択を待っています。");
 
-            // 確定SE再生
-            AudioManager.Instance?.PlayActionConfirmSE();
-
             // 確定後、行動ボタンと確定・クリアボタンを無効化（ロック）
             LockActionButtons();
         }
@@ -934,9 +931,6 @@ public class UIController : MonoBehaviour
 
             Debug.Log("[UIController] 熱中症対応: 午後の選択のみクリアしました");
 
-            // クリアSE再生
-            AudioManager.Instance?.PlayActionClearSE();
-
             // 午後のパネル表示のみクリア
             if (myTodayAfternoonActionText != null)
             {
@@ -966,9 +960,6 @@ public class UIController : MonoBehaviour
             _isMorningSelected = false;
 
             Debug.Log("[UIController] 選択をクリアしました");
-
-            // クリアSE再生
-            AudioManager.Instance?.PlayActionClearSE();
 
             // パネル表示もクリア
             if (myTodayMorningActionText != null)
@@ -1009,9 +1000,6 @@ public class UIController : MonoBehaviour
     private void OnActionButtonClicked(ActionType actionType, SpecialAbilityType abilityType)
     {
         Debug.Log($"[UIController] OnActionButtonClicked 開始: actionType={actionType}, abilityType={abilityType}");
-
-        // 行動選択SE再生
-        AudioManager.Instance?.PlayActionSelectSE();
 
         // ActionDataを生成
         ActionData selectedAction = ActionData.CreateSpecialAbility(abilityType);
@@ -1079,9 +1067,6 @@ public class UIController : MonoBehaviour
     private void OnActionButtonClicked(ActionType actionType)
     {
         Debug.Log($"[UIController] OnActionButtonClicked 開始: actionType={actionType}");
-
-        // 行動選択SE再生
-        AudioManager.Instance?.PlayActionSelectSE();
 
         // ActionTypeに対応するActionDataを生成
         ActionData selectedAction;

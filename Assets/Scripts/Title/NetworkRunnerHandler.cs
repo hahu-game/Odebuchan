@@ -266,6 +266,14 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     {
         Debug.Log($"シャットダウン: {shutdownReason}");
         _started = false;
+
+        // シャットダウン時にタイトル画面のUIを復元
+        // （キャンセルボタンやネットワークエラーでシャットダウンした場合）
+        if (TitleScreenManager.Instance != null)
+        {
+            Debug.Log("[OnShutdown] タイトル画面のUIを復元します");
+            TitleScreenManager.Instance.HideMatchingUI();
+        }
     }
 
     // 以前は無かったメソッドの追加

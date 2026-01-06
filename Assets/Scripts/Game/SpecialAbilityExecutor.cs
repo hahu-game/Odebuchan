@@ -35,6 +35,9 @@ public class SpecialAbilityExecutor
 
         Debug.Log($"[SpecialAbility] {log}");
 
+        // がいしょくSE再生（たべると同じ）
+        AudioManager.Instance?.PlayEatSE();
+
         // 病気発症判定
         turnProcessor.CheckSickness(player, state.Weight);
     }
@@ -93,6 +96,9 @@ public class SpecialAbilityExecutor
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");
+
+        // がむしゃらSE再生
+        AudioManager.Instance?.PlayGamusharaSE();
     }
 
     /// <summary>
@@ -126,6 +132,9 @@ public class SpecialAbilityExecutor
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");
+
+        // べんきょうSE再生
+        AudioManager.Instance?.PlayBenkyouSE();
     }
 
     /// <summary>
@@ -146,6 +155,9 @@ public class SpecialAbilityExecutor
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");
+
+        // じゅくすいSE再生（ねむると同じ）
+        AudioManager.Instance?.PlaySleepSE();
     }
 
     /// <summary>
@@ -168,6 +180,9 @@ public class SpecialAbilityExecutor
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");
+
+        // どかぐいSE再生（たべると同じ）
+        AudioManager.Instance?.PlayEatSE();
 
         // 病気発症判定
         turnProcessor.CheckSickness(player, state.Weight);
@@ -203,5 +218,8 @@ public class SpecialAbilityExecutor
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");
+
+        // きんとれSE再生
+        AudioManager.Instance?.PlayKintreSE();
     }
 }
