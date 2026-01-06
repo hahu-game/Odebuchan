@@ -49,10 +49,22 @@ public class TitleScreenManager : MonoBehaviour
 
     private NetworkRunnerHandler _activeRunnerHandlerInstance;
 
+    // マッチング処理中フラグ（二重実行防止）
+    private bool _isMatchingInProgress = false;
+
     private void Awake()
     {
-        if (Instance != null && Instance != this) Destroy(gameObject);
-        else Instance = this;
+        // シングルトンチェック：既に別のインスタンスが存在する場合は即座にreturn
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("[TitleScreenManager Awake] 既存のInstanceが存在するため、このGameObjectを破棄します");
+            Destroy(gameObject);
+            return; // IMPORTANT: 即座にreturnして、以降の処理を実行しない
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject); // シーンリロード時もこのインスタンスを維持
+        Debug.Log("[TitleScreenManager Awake] このインスタンスをシングルトンとして設定し、DontDestroyOnLoadを適用しました");
 
         //プレイヤーネームのデフォルトリセット。
         //デバッグ完了後、この行は削除またはコメントアウトしてください。
@@ -84,11 +96,20 @@ public class TitleScreenManager : MonoBehaviour
         }
 
         // 初期状態ではマッチングUIを非表示にしておく
-        SetMatchingUIActive(false);
+        // ただし、マッチング処理中の場合（シーンリロード時など）は実行しない
+        if (!_isMatchingInProgress)
+        {
+            SetMatchingUIActive(false);
+            Debug.Log("[Awake] SetMatchingUIActive(false) を実行しました（マッチング処理中ではないため）");
+        }
+        else
+        {
+            Debug.LogWarning("[Awake] マッチング処理中のため、SetMatchingUIActive(false) をスキップしました");
+        }
 
         if (playerNameInputField != null)
         {
-            Debug.Log($"[Awake] playerNameInputField.interactable AFTER SetMatchingUIActive(false): {playerNameInputField.interactable}");
+            Debug.Log($"[Awake] playerNameInputField.interactable AFTER SetMatchingUIActive: {playerNameInputField.interactable}");
         }
 
         // エラーメッセージを非表示にし、Raycast Targetをオフにする
@@ -147,11 +168,27 @@ public class TitleScreenManager : MonoBehaviour
     private void SetMatchingUIActive(bool isActive)
     {
         Debug.Log($"[SetMatchingUIActive] isActive={isActive}");
+        Debug.Log($"[SetMatchingUIActive] 呼び出し元スタックトレース:\n{UnityEngine.StackTraceUtility.ExtractStackTrace()}");
 
         // 1. オーバーレイパネルの表示/非表示を切り替え
         if (matchingOverlayPanel != null)
         {
+            // CanvasGroupがあればそれも制御
+            var canvasGroup = matchingOverlayPanel.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = isActive ? 1f : 0f;
+                canvasGroup.interactable = isActive;
+                canvasGroup.blocksRaycasts = isActive; // これが重要：Raycastをブロックしないようにする
+                Debug.Log($"[SetMatchingUIActive] CanvasGroup: alpha={canvasGroup.alpha}, interactable={canvasGroup.interactable}, blocksRaycasts={canvasGroup.blocksRaycasts}");
+            }
+
             matchingOverlayPanel.SetActive(isActive);
+            Debug.Log($"[SetMatchingUIActive] matchingOverlayPanel.SetActive({isActive}) 実行完了。現在のactiveSelf={matchingOverlayPanel.activeSelf}");
+        }
+        else
+        {
+            Debug.LogWarning("[SetMatchingUIActive] matchingOverlayPanel is NULL!");
         }
 
         // 2. 他のボタンとインプットフィールドの操作を制御
@@ -188,9 +225,82 @@ public class TitleScreenManager : MonoBehaviour
     /// </summary>
     public void HideMatchingUI()
     {
+        Debug.Log("[HideMatchingUI] 呼び出されました");
+
+        // マッチング処理中フラグを解除
+        _isMatchingInProgress = false;
+        Debug.Log("[HideMatchingUI] _isMatchingInProgress = false に設定");
+
         // 接続成功または失敗、切断時に呼ばれる
         SetMatchingUIActive(false);
+
+        // 念のため、matchingOverlayPanelのCanvasGroupとImageを強制的に無効化
+        if (matchingOverlayPanel != null)
+        {
+            var canvasGroup = matchingOverlayPanel.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+                Debug.Log("[HideMatchingUI] CanvasGroupのblocksRaycastsをfalseに設定しました");
+            }
+
+            // ImageコンポーネントのRaycast Targetも無効化
+            var image = matchingOverlayPanel.GetComponent<UnityEngine.UI.Image>();
+            if (image != null)
+            {
+                image.raycastTarget = false;
+                Debug.Log("[HideMatchingUI] ImageのraycastTargetをfalseに設定しました");
+            }
+        }
+
+        // 念のため、すべてのUI要素を強制的に活性化
+        if (randomMatchButton != null)
+        {
+            randomMatchButton.interactable = true;
+            Debug.Log($"[HideMatchingUI] randomMatchButton.interactable を強制的にtrueに設定しました");
+        }
+
+        if (friendMatchButton != null)
+        {
+            friendMatchButton.interactable = true;
+            Debug.Log($"[HideMatchingUI] friendMatchButton.interactable を強制的にtrueに設定しました");
+        }
+
+        if (playerNameInputField != null)
+        {
+            playerNameInputField.interactable = true;
+            Debug.Log($"[HideMatchingUI] playerNameInputField.interactable を強制的にtrueに設定しました");
+        }
+
+        if (sessionNameInputField != null)
+        {
+            sessionNameInputField.interactable = true;
+            Debug.Log($"[HideMatchingUI] sessionNameInputField.interactable を強制的にtrueに設定しました");
+        }
+
+        Debug.Log("[HideMatchingUI] 処理完了");
+
+        // 親CanvasGroupがボタンをブロックしていないかチェック
+        if (randomMatchButton != null)
+        {
+            var parentCanvasGroups = randomMatchButton.GetComponentsInParent<CanvasGroup>();
+            Debug.Log($"[HideMatchingUI] randomMatchButtonの親CanvasGroup数: {parentCanvasGroups.Length}");
+            for (int i = 0; i < parentCanvasGroups.Length; i++)
+            {
+                var cg = parentCanvasGroups[i];
+                Debug.Log($"[HideMatchingUI] 親CanvasGroup[{i}] (GameObject: {cg.gameObject.name}): alpha={cg.alpha}, interactable={cg.interactable}, blocksRaycasts={cg.blocksRaycasts}");
+
+                // interactable=falseの親CanvasGroupがあれば警告
+                if (!cg.interactable)
+                {
+                    Debug.LogError($"[HideMatchingUI] 親CanvasGroup '{cg.gameObject.name}' のinteractableがfalseです！これがUIをブロックしている可能性があります。");
+                }
+            }
+        }
     }
+
 
     // ------------------------------------------------------------------
     // ボタンクリック処理
@@ -200,6 +310,13 @@ public class TitleScreenManager : MonoBehaviour
     {
         Debug.Log($"[OnRandomMatchClicked] ===== ボタンクリック =====");
         Debug.Log($"[OnRandomMatchClicked] InputField.text: '{playerNameInputField.text}'");
+
+        // 二重実行防止チェック
+        if (_isMatchingInProgress)
+        {
+            Debug.LogWarning("[OnRandomMatchClicked] 既にマッチング処理中です。処理を中断します。");
+            return;
+        }
 
         // プレイヤー名のバリデーション
         if (!ValidatePlayerName())
@@ -215,22 +332,50 @@ public class TitleScreenManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("[OnRandomMatchClicked] SavePlayerName() を呼び出します。");
-        SavePlayerName();
+        // マッチング処理開始：フラグを設定し、ボタンを即座に無効化
+        _isMatchingInProgress = true;
+        Debug.Log("[OnRandomMatchClicked] _isMatchingInProgress = true に設定");
 
-        Debug.Log("[OnRandomMatchClicked] SetMatchingUIActive(true) を呼び出します。");
-        SetMatchingUIActive(true);
+        // ボタンを即座に無効化（ダブルクリック防止）
+        if (randomMatchButton != null) randomMatchButton.interactable = false;
+        if (friendMatchButton != null) friendMatchButton.interactable = false;
 
-        Debug.Log("[OnRandomMatchClicked] StartGame() を呼び出します。sessionName=null");
-        // ランダムマッチング：sessionName に null を渡す
-        await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, null);
+        try
+        {
+            Debug.Log("[OnRandomMatchClicked] SavePlayerName() を呼び出します。");
+            SavePlayerName();
 
-        Debug.Log("[OnRandomMatchClicked] StartGame() が完了しました。");
+            Debug.Log("[OnRandomMatchClicked] SetMatchingUIActive(true) を呼び出します。");
+            SetMatchingUIActive(true);
+
+            Debug.Log("[OnRandomMatchClicked] StartGame() を呼び出します。sessionName=null");
+            // ランダムマッチング：sessionName に null を渡す
+            await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, null);
+
+            Debug.Log("[OnRandomMatchClicked] StartGame() が完了しました。");
+        }
+        finally
+        {
+            // 処理が完了したらフラグを解除（キャンセルや失敗時も含む）
+            // ただし、マッチング成功時はシーン遷移するのでフラグは不要
+            // マッチング失敗やキャンセル時のみ解除が必要
+            Debug.Log("[OnRandomMatchClicked] finally: マッチング処理終了");
+        }
     }
 
     public async void OnFriendMatchClicked()
     {
         Debug.Log($"[OnFriendMatchClicked] ボタンクリック時のInputField.text: '{playerNameInputField.text}'");
+
+        // 二重実行防止チェック
+        if (_isMatchingInProgress)
+        {
+            Debug.LogWarning("[OnFriendMatchClicked] 既にマッチング処理中です。処理を中断します。");
+            return;
+        }
+
+        // NOTE: SE再生はButtonSoundPlayer.PlayFriendMatchButtonSE()に任せる（Inspector設定）
+        // ここでSEを再生すると二重再生になるため削除
 
         // プレイヤー名のバリデーション
         if (!ValidatePlayerName())
@@ -238,7 +383,7 @@ public class TitleScreenManager : MonoBehaviour
             return; // バリデーションエラーの場合、処理を中断
         }
 
-        // 【修正箇所】: 合言葉の入力チェックを先に行う
+        // 合言葉の入力状態をチェック
         string rawSessionName = sessionNameInputField.text;
         string sanitizedSessionName = SanitizeSessionName(rawSessionName);
 
@@ -260,11 +405,27 @@ public class TitleScreenManager : MonoBehaviour
         // NetworkRunnerHandlerの有効性をチェックし、再取得する
         if (!CheckAndRestoreRunnerHandler()) return;
 
-        SavePlayerName();
-        SetMatchingUIActive(true); // マッチングUIを表示し、他を操作不可にする
+        // マッチング処理開始：フラグを設定し、ボタンを即座に無効化
+        _isMatchingInProgress = true;
+        Debug.Log("[OnFriendMatchClicked] _isMatchingInProgress = true に設定");
 
-        // マッチングが成功/失敗するまでこのメソッドはブロックされる（待機する）
-        await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, sanitizedSessionName);
+        // ボタンを即座に無効化（ダブルクリック防止）
+        if (randomMatchButton != null) randomMatchButton.interactable = false;
+        if (friendMatchButton != null) friendMatchButton.interactable = false;
+
+        try
+        {
+            SavePlayerName();
+            SetMatchingUIActive(true); // マッチングUIを表示し、他を操作不可にする
+
+            // マッチングが成功/失敗するまでこのメソッドはブロックされる（待機する）
+            await _activeRunnerHandlerInstance.StartGame(Fusion.GameMode.Shared, sanitizedSessionName);
+        }
+        finally
+        {
+            // 処理が完了したらフラグを解除（キャンセルや失敗時も含む）
+            Debug.Log("[OnFriendMatchClicked] finally: マッチング処理終了");
+        }
     }
 
     public void OnCancelMatchClicked()

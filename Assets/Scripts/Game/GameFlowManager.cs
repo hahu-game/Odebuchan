@@ -422,6 +422,10 @@ public class GameFlowManager : NetworkBehaviour
 
             // ブラックアウト「行動開始！」を表示
             RPC_ShowBlackout("行動開始！");
+
+            // 行動開始SE再生
+            AudioManager.Instance?.PlayStartActionSE();
+
             await UniTask.Delay((int)(gameParams.BlackoutDuration * 1000));
 
             // ログに実行フェーズ開始を追加
@@ -1388,6 +1392,9 @@ public class GameFlowManager : NetworkBehaviour
         var allPlayers = GameManager.Instance.uyopyonStateDict.Keys.ToList();
         PlayerRef loser = allPlayers.FirstOrDefault(p => p != winner);
         string loserName = GetColoredPlayerName(loser);
+
+        // ゲーム終了SE再生
+        AudioManager.Instance?.PlayEndGameSE();
 
         // ログに記録
         RPC_AddLog($"=== ゲーム終了 ===");
