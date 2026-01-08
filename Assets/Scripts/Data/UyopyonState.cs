@@ -545,4 +545,18 @@ public class UyopyonState : NetworkBehaviour
             DebugLogger.Log($"[UyopyonState] プレイヤー名がまだ設定されていません: OwnerPlayer={OwnerPlayer}");
         }
     }
+
+    // === テスト用メソッド ===
+
+    /// <summary>
+    /// テスト用: 体重を650増加させる（ボタンから呼び出される）
+    /// RpcSources.All: どのクライアントからでも送信可能（テスト用）
+    /// RpcTargets.StateAuthority: ホスト側で実行
+    /// </summary>
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_IncreaseWeightForTest()
+    {
+        Weight += 650;
+        Debug.Log($"[UyopyonState] テスト用: Player {OwnerPlayer} の体重を650増加させました。新しい体重: {Weight}");
+    }
 }

@@ -1,0 +1,74 @@
+テスト用体重増加ボタンの追加手順
+===============================
+
+スクリプトの実装は完了しています。
+Unityエディタで以下の手順に従ってボタンを追加してください。
+
+## 追加されたスクリプト
+
+1. **UyopyonState.cs** (Assets/Scripts/Data/UyopyonState.cs:554-559)
+   - `RPC_IncreaseWeightForTest()` メソッドを追加
+   - プレイヤーの体重を650増加させるRPCメソッド
+
+2. **Test_UIController_34.cs** (Assets/Scripts/Test/Test_UIController_34.cs:159-190)
+   - `ManualTestIncreaseWeight()` メソッドを追加
+   - ボタンがクリックされた時にRPCを呼び出す
+
+## Unityエディタでの操作手順
+
+### 1. GameSceneを開く
+   - Assets/Scenes/GameScene.unity を開く
+
+### 2. ボタンオブジェクトを作成
+   - Hierarchyウィンドウで Canvas を探す
+   - Canvas を右クリック → UI → Button - TextMeshPro を選択
+   - 作成されたボタンの名前を「TestWeightIncreaseButton」に変更
+
+### 3. ボタンの位置とサイズを調整
+   - TestWeightIncreaseButton を選択
+   - Inspector の RectTransform で適切な位置に配置
+   - 推奨位置: 画面の右下など、他のUIと重ならない場所
+   - サイズ: 幅 200, 高さ 50 程度
+
+### 4. ボタンのテキストを設定
+   - Hierarchy で TestWeightIncreaseButton の子オブジェクト「Text (TMP)」を選択
+   - Inspector の TextMeshPro - Text で以下を設定:
+     - Text: "体重+650 (テスト)"
+     - Font Size: 18-24 程度
+     - Alignment: 中央揃え
+
+### 5. OnClickイベントを設定
+   - TestWeightIncreaseButton を選択
+   - Inspector の Button コンポーネントを見つける
+   - OnClick() リストの下の「+」ボタンをクリック
+   - 新しいイベントスロットが追加される
+   - オブジェクトフィールドに「Test_UIController_34」がアタッチされているオブジェクトをドラッグ&ドロップ
+     （Hierarchy内でTest_UIController_34スクリプトを持つオブジェクトを探す）
+   - Function ドロップダウンから:
+     Test_UIController_34 → ManualTestIncreaseWeight() を選択
+
+### 6. シーンを保存
+   - File → Save Scene (Ctrl+S)
+
+## 動作確認
+
+1. Unityエディタでゲームを再生
+2. 2人のプレイヤーでマッチング（エディタ + WebGLビルドなど）
+3. ゲームシーンで「体重+650 (テスト)」ボタンをクリック
+4. 押したプレイヤーの体重が650増加することを確認
+5. 相手側の画面でも同じ体重が表示されることを確認（ネットワーク同期）
+
+## 実装の詳細
+
+- ボタンをクリックすると `Test_UIController_34.ManualTestIncreaseWeight()` が呼ばれる
+- NetworkRunnerからローカルプレイヤーを取得
+- GameManagerから自分のUyopyonStateを取得
+- `UyopyonState.RPC_IncreaseWeightForTest()` をRPC経由で呼び出す
+- ホスト側でWeightが650増加
+- Networkedプロパティなので自動的に全クライアントに同期
+- UyopyonState.Render()メソッドで変更を検知してUIを更新
+
+## 注意事項
+
+- Test_UIController_34スクリプトがGameScene内のオブジェクトにアタッチされている必要があります
+- 既にGameSceneに配置されている場合は、そのオブジェクトをボタンのOnClickイベントに設定してください

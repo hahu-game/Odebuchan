@@ -2736,45 +2736,39 @@ public class UIController : MonoBehaviour
 
     /// <summary>
     /// タイトルシーンに戻るコルーチン
-    /// GameFlowManagerのゲーム終了フラグを設定し、NetworkRunnerをシャットダウンしてから即座にシーン遷移を行う
+    /// NetworkRunnerをシャットダウンしてからシーン遷移を行う
     /// </summary>
     private IEnumerator ReturnToTitleCoroutine()
     {
         Debug.Log("[UIController] ReturnToTitleCoroutine: タイトルへの遷移を開始します");
 
-        // GameFlowManagerのゲーム終了フラグを設定（非同期処理を止める）
-        var gameFlowManager = FindFirstObjectByType<GameFlowManager>();
-        if (gameFlowManager != null && gameFlowManager.Object != null && gameFlowManager.Object.IsValid)
-        {
-            // ホストの場合のみフラグを設定可能
-            if (gameFlowManager.Object.HasStateAuthority)
-            {
-                gameFlowManager.IsGameEnded = true;
-                Debug.Log("[UIController] ReturnToTitleCoroutine: IsGameEndedをtrueに設定しました");
-            }
-        }
-
-        // NetworkRunnerをシャットダウン（完了を待たない）
+        // NetworkRunnerをシャットダウン
         NetworkRunner runner = FindFirstObjectByType<NetworkRunner>();
         if (runner != null && runner.IsRunning)
         {
-            Debug.Log("[UIController] ReturnToTitleCoroutine: NetworkRunnerのシャットダウンを開始します");
+            Debug.Log("[UIController] NetworkRunnerをシャットダウンします");
             try
             {
                 runner.Shutdown();
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"[UIController] ReturnToTitleCoroutine: Shutdown中に例外発生: {e.Message}");
+                Debug.LogWarning($"[UIController] Shutdown中に例外発生: {e.Message}");
             }
+
+            // Shutdownの完了を少し待つ
+            yield return new WaitForSeconds(0.5f);
+        }
+        else
+        {
+            Debug.Log("[UIController] NetworkRunnerは既にシャットダウンされているか、存在しません");
         }
 
-        // 少し待機（シャットダウン開始を確実にする）
-        yield return new WaitForSeconds(0.1f);
-
-        // TitleSceneに遷移
+        // シーン遷移
         Debug.Log("[UIController] ReturnToTitleCoroutine: TitleSceneに遷移します");
         UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
+
+        yield break;
     }
 
     /// <summary>

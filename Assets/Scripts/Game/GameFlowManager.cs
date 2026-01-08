@@ -139,6 +139,10 @@ public class GameFlowManager : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
+        // Objectの有効性チェック
+        if (!Object || !Object.IsValid)
+            return;
+
         // ホストのみが処理を実行
         if (!Object.HasStateAuthority)
             return;
@@ -252,16 +256,17 @@ public class GameFlowManager : NetworkBehaviour
             Debug.Log($"[GameFlowManager] ========== StartPreparationPhase() 開始 ==========");
             Debug.Log($"[GameFlowManager] {CurrentDay}日目の準備フェーズを開始します");
 
+            // Objectの有効性チェック（Networkedプロパティアクセス前に必須）
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogWarning("[GameFlowManager] 準備フェーズ開始前: Object無効（シャットダウン中の可能性）");
+                return;
+            }
+
             // ゲーム終了チェック
             if (IsGameEnded)
             {
                 Debug.Log("[GameFlowManager] ゲーム終了済みのため、準備フェーズをスキップします");
-                return;
-            }
-
-            if (!Object || !Object.IsValid)
-            {
-                Debug.LogWarning("[GameFlowManager] 準備フェーズ開始前: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -323,16 +328,17 @@ public class GameFlowManager : NetworkBehaviour
             Debug.Log($"[GameFlowManager] ========== StartSelectionPhase() 開始 ==========");
             Debug.Log($"[GameFlowManager] 選択フェーズを開始します");
 
+            // Objectの有効性チェック（Networkedプロパティアクセス前に必須）
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogWarning("[GameFlowManager] 選択フェーズ開始前: Object無効（シャットダウン中の可能性）");
+                return;
+            }
+
             // ゲーム終了チェック
             if (IsGameEnded)
             {
                 Debug.Log("[GameFlowManager] ゲーム終了済みのため、選択フェーズをスキップします");
-                return;
-            }
-
-            if (!Object || !Object.IsValid)
-            {
-                Debug.LogWarning("[GameFlowManager] 選択フェーズ開始前: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -455,6 +461,13 @@ public class GameFlowManager : NetworkBehaviour
             Debug.Log("[GameFlowManager] 午前の処理が完了");
             await UniTask.Delay(2000); // アニメーション表示時間
 
+            // Objectの有効性チェック（シャットダウン時の対応）
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogWarning("[GameFlowManager] 午前処理後: Object無効（シャットダウン中の可能性）");
+                return;
+            }
+
             // 勝利判定（8.1で実装予定）
             // if (CheckVictory(out PlayerRef winner)) { ... }
 
@@ -473,6 +486,13 @@ public class GameFlowManager : NetworkBehaviour
             await turnProcessor.ProcessAfternoon(playerActionDict);
             Debug.Log("[GameFlowManager] 午後の処理が完了");
             await UniTask.Delay(2000); // アニメーション表示時間
+
+            // Objectの有効性チェック（シャットダウン時の対応）
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogWarning("[GameFlowManager] 午後処理後: Object無効（シャットダウン中の可能性）");
+                return;
+            }
 
             // 勝利判定（8.1で実装予定）
             // if (CheckVictory(out PlayerRef winner)) { ... }
@@ -510,17 +530,17 @@ public class GameFlowManager : NetworkBehaviour
     {
         while (_selectionPhaseActive)
         {
+            // Objectの状態をチェック（Networkedプロパティアクセス前に必須）
+            if (!Object || !Object.IsValid)
+            {
+                Debug.LogWarning("[GameFlowManager] WaitForSelectionComplete: Object無効（シャットダウン中の可能性）");
+                return;
+            }
+
             // ゲーム終了チェック（シャットダウン時のグレースフル終了）
             if (IsGameEnded)
             {
                 Debug.Log("[GameFlowManager] WaitForSelectionComplete: ゲーム終了のため待機を終了します");
-                return;
-            }
-
-            // Objectの状態をチェック（シャットダウン時は警告レベル）
-            if (!Object || !Object.IsValid)
-            {
-                Debug.LogWarning("[GameFlowManager] WaitForSelectionComplete: Object無効（シャットダウン中の可能性）");
                 return;
             }
 
@@ -1461,6 +1481,10 @@ public class GameFlowManager : NetworkBehaviour
         {
             Debug.LogError("[GameFlowManager] UIController.Instance が null です");
         }
+
+        // 注: セッションの終了は「タイトルに戻る」ボタンから行う
+        // 即座にShutdownするとクライアント側でリザルト画面が表示される前に切断される問題があるため削除
+        Debug.Log("[GameFlowManager] リザルト画面を表示しました。セッション終了は「タイトルに戻る」ボタンから行います。");
     }
 
     // === 9.2: 投了機能 ===
