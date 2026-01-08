@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// タイトル画面のUIを管理し、ネットワーク接続を開始する。
@@ -66,6 +67,9 @@ public class TitleScreenManager : MonoBehaviour
         DontDestroyOnLoad(gameObject); // シーンリロード時もこのインスタンスを維持
         Debug.Log("[TitleScreenManager Awake] このインスタンスをシングルトンとして設定し、DontDestroyOnLoadを適用しました");
 
+        // シーンがロードされたときのイベントを登録
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         //プレイヤーネームのデフォルトリセット。
         //デバッグ完了後、この行は削除またはコメントアウトしてください。
         //PlayerPrefs.DeleteKey(GetPlayerNameKey());
@@ -127,16 +131,97 @@ public class TitleScreenManager : MonoBehaviour
         HidePlayerNameError();
     }
 
+    private void OnDestroy()
+    {
+        // イベントの登録解除
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// シーンがロードされたときに呼ばれる
+    /// </summary>
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"[TitleScreenManager] OnSceneLoaded: scene={scene.name}");
+
+        // TitleSceneに戻ってきたときにUI状態を初期化
+        if (scene.name == "TitleScene")
+        {
+            Debug.Log("[TitleScreenManager] TitleSceneに戻ってきました。UI状態を初期化します");
+            InitializeUIState();
+        }
+    }
+
     private void Start()
     {
-        // タイトル画面では降参ボタンを非表示にする
+        // タイトルBGM再生（AudioManagerが見つかるまで待機）
+        StartCoroutine(PlayTitleBGMCoroutine());
+    }
+
+    /// <summary>
+    /// タイトル画面のUI状態を初期化する
+    /// ゲーム起動時とGameSceneから戻ってきた時の両方で使用
+    /// </summary>
+    private void InitializeUIState()
+    {
+        Debug.Log("[TitleScreenManager] UI状態を初期化します");
+
+        // 1. ボタンの状態をリセット
+        if (randomMatchButton != null)
+        {
+            randomMatchButton.interactable = true;
+            Debug.Log("[TitleScreenManager] randomMatchButton.interactable = true");
+        }
+
+        if (friendMatchButton != null)
+        {
+            friendMatchButton.interactable = true;
+            Debug.Log("[TitleScreenManager] friendMatchButton.interactable = true");
+        }
+
+        if (cancelButton != null)
+        {
+            cancelButton.interactable = true;
+        }
+
+        // 2. 入力フィールドの状態をリセット
+        if (playerNameInputField != null)
+        {
+            playerNameInputField.interactable = true;
+        }
+
+        if (sessionNameInputField != null)
+        {
+            sessionNameInputField.interactable = true;
+        }
+
+        // 3. マッチングUIを非表示にする
+        if (matchingOverlayPanel != null)
+        {
+            matchingOverlayPanel.SetActive(false);
+            Debug.Log("[TitleScreenManager] matchingOverlayPanel を非表示にしました");
+        }
+
+        // 4. エラーメッセージを非表示にする
+        HideErrorMessage();
+        HidePlayerNameError();
+
+        // 5. 降参ボタンを非表示にする（GameSceneでのみ表示）
         if (SettingController.Instance != null)
         {
             SettingController.Instance.SetSurrenderButtonVisible(false);
+            Debug.Log("[TitleScreenManager] 降参ボタンを非表示にしました");
         }
 
-        // タイトルBGM再生（AudioManagerが見つかるまで待機）
-        StartCoroutine(PlayTitleBGMCoroutine());
+        // 6. BGMをタイトルBGMに切り替える（リザルトBGMなどが流れている場合）
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopBGM();
+            AudioManager.Instance.PlayTitleBGM();
+            Debug.Log("[TitleScreenManager] タイトルBGMを再生しました");
+        }
+
+        Debug.Log("[TitleScreenManager] UI状態の初期化が完了しました");
     }
 
     private System.Collections.IEnumerator PlayTitleBGMCoroutine()
@@ -153,6 +238,8 @@ public class TitleScreenManager : MonoBehaviour
 
         if (AudioManager.Instance != null)
         {
+            // 既存のBGM（リザルトBGMなど）を停止してからタイトルBGMを再生
+            AudioManager.Instance.StopBGM();
             AudioManager.Instance.PlayTitleBGM();
             Debug.Log("[TitleScreenManager] タイトルBGMを再生開始");
         }
@@ -169,6 +256,13 @@ public class TitleScreenManager : MonoBehaviour
     {
         Debug.Log($"[SetMatchingUIActive] isActive={isActive}");
         Debug.Log($"[SetMatchingUIActive] 呼び出し元スタックトレース:\n{UnityEngine.StackTraceUtility.ExtractStackTrace()}");
+
+        // GameSceneから呼ばれた場合（TitleSceneのUI要素が存在しない場合）は早期return
+        if (playerNameInputField == null || matchingOverlayPanel == null)
+        {
+            Debug.LogWarning("[SetMatchingUIActive] TitleSceneのUI要素が存在しないため、処理をスキップします（GameSceneから呼ばれた可能性）");
+            return;
+        }
 
         // 1. オーバーレイパネルの表示/非表示を切り替え
         if (matchingOverlayPanel != null)

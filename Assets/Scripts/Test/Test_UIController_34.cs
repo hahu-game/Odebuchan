@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Fusion;
 
 /// <summary>
 /// 3.4実装のテスト用スクリプト
@@ -149,5 +150,42 @@ public class Test_UIController_34 : MonoBehaviour
         {
             Debug.LogError("[Test_34] UIController.Instance が null です！");
         }
+    }
+
+    /// <summary>
+    /// テスト用: 体重を650増加させるボタンがクリックされた時の処理
+    /// UIボタンから呼び出し可能
+    /// </summary>
+    public void ManualTestIncreaseWeight()
+    {
+        Debug.Log("[Test_34] 手動テスト: 体重+650");
+
+        // NetworkRunnerから現在のLocalPlayerを取得
+        var runner = FindFirstObjectByType<NetworkRunner>();
+        if (runner == null)
+        {
+            Debug.LogError("[Test_34] NetworkRunnerが見つかりません");
+            return;
+        }
+
+        PlayerRef localPlayer = runner.LocalPlayer;
+
+        // GameManagerから自分のUyopyonStateを取得
+        if (GameManager.Instance == null)
+        {
+            Debug.LogError("[Test_34] GameManager.Instance が null です");
+            return;
+        }
+
+        UyopyonState myState = GameManager.Instance.GetUyopyonState(localPlayer);
+        if (myState == null)
+        {
+            Debug.LogError($"[Test_34] Player {localPlayer} の UyopyonState が見つかりません");
+            return;
+        }
+
+        // RPCを呼び出して体重を増加
+        myState.RPC_IncreaseWeightForTest();
+        Debug.Log($"[Test_34] Player {localPlayer} の体重増加RPCを送信しました");
     }
 }
