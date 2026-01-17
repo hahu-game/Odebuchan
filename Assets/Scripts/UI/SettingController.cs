@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using Fusion;
 
 /// <summary>
@@ -40,6 +41,9 @@ public class SettingController : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        // シーンロードイベントを登録
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         // 設定パネルを非表示にする（初期状態）
         if (settingPanel != null)
         {
@@ -53,6 +57,93 @@ public class SettingController : MonoBehaviour
         RegisterButtonEvents();
     }
 
+    void OnDestroy()
+    {
+        // イベントの登録解除
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// シーンがロードされたときに呼ばれる
+    /// </summary>
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log($"[SettingController] OnSceneLoaded: scene={scene.name}");
+
+        // すべてのパネルを非表示
+        ForceHideAllPanels();
+
+        // UI参照を再取得
+        ReassignUIReferences();
+
+        // TitleSceneでは降参ボタンを非表示
+        if (scene.name == "TitleScene")
+        {
+            SetSurrenderButtonVisible(false);
+        }
+    }
+
+    /// <summary>
+    /// シーン遷移後にUI要素の参照を再取得する
+    /// </summary>
+    private void ReassignUIReferences()
+    {
+        Debug.Log("[SettingController] ReassignUIReferences: UI参照を再取得開始");
+
+        // 全てのGameObjectを取得
+        GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+
+        foreach (GameObject obj in allObjects)
+        {
+            // Prefabやアセットを除外
+            if (obj.hideFlags == HideFlags.NotEditable || obj.hideFlags == HideFlags.HideAndDontSave)
+                continue;
+
+            // シーン内のオブジェクトのみ対象
+            if (!obj.scene.IsValid() || !obj.scene.isLoaded)
+                continue;
+
+            switch (obj.name)
+            {
+                case "SettingButton":
+                    settingButton = obj.GetComponent<Button>();
+                    break;
+                case "SettingPanel":
+                    settingPanel = obj;
+                    break;
+                case "BGMVolumeSlider":
+                    bgmVolumeSlider = obj.GetComponent<Slider>();
+                    break;
+                case "SEVolumeSlider":
+                    seVolumeSlider = obj.GetComponent<Slider>();
+                    break;
+                case "SurrenderButton":
+                    surrenderButton = obj.GetComponent<Button>();
+                    break;
+                case "CloseButton":
+                    closeButton = obj.GetComponent<Button>();
+                    break;
+                case "ConfirmPanel":
+                    confirmPanel = obj;
+                    break;
+                case "YesButton":
+                    yesButton = obj.GetComponent<Button>();
+                    break;
+                case "NoButton":
+                    noButton = obj.GetComponent<Button>();
+                    break;
+            }
+        }
+
+        Debug.Log($"[SettingController] settingButton: {(settingButton != null ? "OK" : "NULL")}");
+        Debug.Log($"[SettingController] settingPanel: {(settingPanel != null ? "OK" : "NULL")}");
+
+        // ボタンイベントを再登録
+        RegisterButtonEvents();
+
+        Debug.Log("[SettingController] ReassignUIReferences: UI参照の再取得完了");
+    }
+
     void Start()
     {
         Debug.Log($"[SettingController] Start() called.");
@@ -63,22 +154,26 @@ public class SettingController : MonoBehaviour
         // スライダーのイベント設定
         if (bgmVolumeSlider != null)
         {
+            bgmVolumeSlider.onValueChanged.RemoveAllListeners(); // 重複登録を防ぐ
             bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
         }
 
         if (seVolumeSlider != null)
         {
+            seVolumeSlider.onValueChanged.RemoveAllListeners(); // 重複登録を防ぐ
             seVolumeSlider.onValueChanged.AddListener(OnSEVolumeChanged);
         }
 
         // 確認パネルのボタンイベント設定
         if (yesButton != null)
         {
+            yesButton.onClick.RemoveAllListeners(); // 重複登録を防ぐ
             yesButton.onClick.AddListener(OnConfirmYesClicked);
         }
 
         if (noButton != null)
         {
+            noButton.onClick.RemoveAllListeners(); // 重複登録を防ぐ
             noButton.onClick.AddListener(OnConfirmNoClicked);
         }
     }
@@ -93,6 +188,7 @@ public class SettingController : MonoBehaviour
 
         if (settingButton != null)
         {
+            settingButton.onClick.RemoveAllListeners(); // 重複登録を防ぐ
             settingButton.onClick.AddListener(ShowSettingPanel);
             Debug.Log($"[SettingController] settingButton.onClick.AddListener completed.");
             Debug.Log($"[SettingController] Button name: {settingButton.gameObject.name}");
@@ -114,11 +210,13 @@ public class SettingController : MonoBehaviour
 
         if (surrenderButton != null)
         {
+            surrenderButton.onClick.RemoveAllListeners(); // 重複登録を防ぐ
             surrenderButton.onClick.AddListener(OnSurrenderButtonClicked);
         }
 
         if (closeButton != null)
         {
+            closeButton.onClick.RemoveAllListeners(); // 重複登録を防ぐ
             closeButton.onClick.AddListener(CloseSettingPanel);
         }
     }
@@ -250,6 +348,24 @@ public class SettingController : MonoBehaviour
         {
             confirmPanel.SetActive(false);
             Debug.Log("[SettingController] 確認パネルを閉じました");
+        }
+    }
+
+    /// <summary>
+    /// すべてのパネルを強制的に非表示にする（TitleSceneに戻ったときなどに使用）
+    /// </summary>
+    public void ForceHideAllPanels()
+    {
+        if (settingPanel != null)
+        {
+            settingPanel.SetActive(false);
+            Debug.Log("[SettingController] 設定パネルを強制非表示");
+        }
+
+        if (confirmPanel != null)
+        {
+            confirmPanel.SetActive(false);
+            Debug.Log("[SettingController] 確認パネルを強制非表示");
         }
     }
 

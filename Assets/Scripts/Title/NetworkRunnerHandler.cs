@@ -295,23 +295,32 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // 以前は無かったメソッドの追加
     void INetworkRunnerCallbacks.OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
-        Debug.Log($"サーバーから切断されました: {reason}");
+        Debug.Log($"[NetworkRunnerHandler] サーバーから切断されました: {reason}");
+
+        // 現在のシーンを確認
+        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        Debug.Log($"[NetworkRunnerHandler] 現在のシーン: {currentSceneName}");
+
+        // TitleSceneにいる場合は何もしない（既にタイトルに戻っている）
+        if (currentSceneName == "TitleScene")
+        {
+            Debug.Log("[NetworkRunnerHandler] 既にTitleSceneにいるため、何もしません");
+            return;
+        }
 
         // GameFlowManagerが存在し、ゲーム終了フラグが立っている場合は何もしない
         // （UIController等から意図的にシャットダウンされた場合）
         var gameFlowManager = FindFirstObjectByType<GameFlowManager>();
         if (gameFlowManager != null && gameFlowManager.IsGameEnded)
         {
-            Debug.Log("[NetworkRunnerHandler] ゲーム終了フラグが立っているため、タイトル遷移をスキップします");
+            Debug.Log("[NetworkRunnerHandler] ゲーム終了フラグが立っているため、タイトル遷移をスキップします（リザルト画面からの遷移）");
             return;
         }
 
-        // GameScene中の切断の場合、タイトル画面に戻る
-        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        // GameScene中の予期しない切断の場合のみ、タイトル画面に戻る
         if (currentSceneName == "GameScene")
         {
-            Debug.Log("[NetworkRunnerHandler] GameScene中の切断を検出。タイトル画面に戻ります");
-            // 0.5秒待機してからタイトルに戻る
+            Debug.Log("[NetworkRunnerHandler] GameScene中の予期しない切断を検出。タイトル画面に戻ります");
             StartCoroutine(ReturnToTitleAfterDisconnect());
         }
     }
@@ -321,8 +330,18 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     /// </summary>
     private System.Collections.IEnumerator ReturnToTitleAfterDisconnect()
     {
-        yield return new WaitForSeconds(0.5f);
-        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
+        // 次のフレームでシーン遷移を実行（待機時間を最小限にする）
+        yield return null;
+
+        Debug.Log("[NetworkRunnerHandler] TitleSceneに遷移します");
+        try
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[NetworkRunnerHandler] LoadScene中に例外発生: {e.Message}");
+        }
     }
 
     // 以下のメソッドはすべて明示的な実装に変更します
