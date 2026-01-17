@@ -349,6 +349,16 @@ public class UIController : MonoBehaviour
         Debug.Log("[UIController] Start: 初期化完了");
     }
 
+    private void OnDestroy()
+    {
+        // シングルトンがこのインスタンスの場合のみクリア
+        if (Instance == this)
+        {
+            Debug.Log("[UIController] OnDestroy: Instanceをnullに設定します");
+            Instance = null;
+        }
+    }
+
     /// <summary>
     /// UyopyonState.Spawned()から呼ばれ、うーぴょんの参照を登録する
     /// </summary>
@@ -2742,7 +2752,7 @@ public class UIController : MonoBehaviour
     {
         Debug.Log("[UIController] ReturnToTitleCoroutine: タイトルへの遷移を開始します");
 
-        // NetworkRunnerをシャットダウン
+        // ステップ1: NetworkRunnerをシャットダウン（最優先）
         NetworkRunner runner = FindFirstObjectByType<NetworkRunner>();
         if (runner != null && runner.IsRunning)
         {
@@ -2750,23 +2760,33 @@ public class UIController : MonoBehaviour
             try
             {
                 runner.Shutdown();
+                Debug.Log("[UIController] Shutdown呼び出し完了");
             }
             catch (System.Exception e)
             {
-                Debug.LogWarning($"[UIController] Shutdown中に例外発生: {e.Message}");
+                Debug.LogError($"[UIController] Shutdown中に例外発生: {e.Message}");
             }
-
-            // Shutdownの完了を少し待つ
-            yield return new WaitForSeconds(0.5f);
         }
         else
         {
             Debug.Log("[UIController] NetworkRunnerは既にシャットダウンされているか、存在しません");
         }
 
-        // シーン遷移
+        // ステップ2: シーン遷移を即座に実行（GameSceneのオブジェクトは自動的に破棄される）
         Debug.Log("[UIController] ReturnToTitleCoroutine: TitleSceneに遷移します");
-        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
+
+        try
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
+            Debug.Log("[UIController] LoadScene呼び出し完了");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[UIController] LoadScene中に例外発生: {e.Message}");
+        }
+
+        // シーン遷移によってGameSceneのオブジェクトは自動的に破棄されます
+        // 手動での破棄は不要（むしろ破棄するとエラーの原因になる）
 
         yield break;
     }

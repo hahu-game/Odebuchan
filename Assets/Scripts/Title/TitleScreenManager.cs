@@ -144,12 +144,148 @@ public class TitleScreenManager : MonoBehaviour
     {
         Debug.Log($"[TitleScreenManager] OnSceneLoaded: scene={scene.name}");
 
-        // TitleSceneに戻ってきたときにUI状態を初期化
+        // TitleSceneに戻ってきたときにUI参照を再取得し、UI状態を初期化
         if (scene.name == "TitleScene")
         {
-            Debug.Log("[TitleScreenManager] TitleSceneに戻ってきました。UI状態を初期化します");
+            Debug.Log("[TitleScreenManager] TitleSceneに戻ってきました。UI参照を再取得します");
+            ReassignUIReferences();
             InitializeUIState();
         }
+    }
+
+    /// <summary>
+    /// シーン遷移後にUI要素の参照を再取得する
+    /// DontDestroyOnLoadされたTitleScreenManagerは残るが、UI要素はシーンと一緒に破棄されるため
+    /// </summary>
+    private void ReassignUIReferences()
+    {
+        Debug.Log("[TitleScreenManager] ReassignUIReferences: UI参照を再取得開始");
+
+        // Canvas配下のUI要素を検索して再取得
+        // 非アクティブなGameObjectも含めて検索するため、Resources.FindObjectsOfTypeAllを使用
+
+        // まず全てのGameObjectを取得
+        GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+
+        foreach (GameObject obj in allObjects)
+        {
+            // Prefabやアセットを除外（hideFlags が None のシーンオブジェクトのみ対象）
+            if (obj.hideFlags == HideFlags.NotEditable || obj.hideFlags == HideFlags.HideAndDontSave)
+                continue;
+
+            // TitleSceneのオブジェクトのみ対象（空文字チェックではなく、isLoadedチェック）
+            if (!obj.scene.IsValid() || !obj.scene.isLoaded)
+                continue;
+
+            // TitleScene以外のシーンのオブジェクトは除外
+            if (obj.scene.name != "TitleScene")
+                continue;
+
+            switch (obj.name)
+            {
+                case "PlayerNameInputField":
+                    playerNameInputField = obj.GetComponent<TMP_InputField>();
+                    break;
+                case "SessionNameInput":  // 実際のGameObject名に修正
+                    sessionNameInputField = obj.GetComponent<TMP_InputField>();
+                    break;
+                case "MatchingOverlayPanel":
+                    matchingOverlayPanel = obj;
+                    break;
+                case "CancelButton":
+                    cancelButton = obj.GetComponent<Button>();
+                    break;
+                case "RandomMatchButton":
+                    randomMatchButton = obj.GetComponent<Button>();
+                    break;
+                case "FriendMatchButton":
+                    friendMatchButton = obj.GetComponent<Button>();
+                    break;
+                case "ErrorMessageText":
+                    errorMessageText = obj.GetComponent<TextMeshProUGUI>();
+                    break;
+                case "PlayerNameErrorText":  // 実際のGameObject名に修正
+                    playerNameErrorMessageText = obj.GetComponent<TextMeshProUGUI>();
+                    break;
+            }
+        }
+
+        // 参照が取得できたかログ出力
+        Debug.Log($"[ReassignUIReferences] playerNameInputField: {(playerNameInputField != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] sessionNameInputField: {(sessionNameInputField != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] matchingOverlayPanel: {(matchingOverlayPanel != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] randomMatchButton: {(randomMatchButton != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] friendMatchButton: {(friendMatchButton != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] cancelButton: {(cancelButton != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] errorMessageText: {(errorMessageText != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] playerNameErrorMessageText: {(playerNameErrorMessageText != null ? "OK" : "NULL")}");
+
+        // 再取得後、リッチテキストを無効化（セキュリティ対策）
+        if (playerNameInputField != null)
+        {
+            playerNameInputField.richText = false;
+        }
+        if (sessionNameInputField != null)
+        {
+            sessionNameInputField.richText = false;
+        }
+
+        // エラーメッセージのRaycast Targetを無効化
+        if (errorMessageText != null)
+        {
+            errorMessageText.raycastTarget = false;
+        }
+        if (playerNameErrorMessageText != null)
+        {
+            playerNameErrorMessageText.raycastTarget = false;
+        }
+
+        // プレイヤー名をPlayerPrefsから再ロード
+        string key = GetPlayerNameKey();
+        string loadedName = PlayerPrefs.GetString(key, "");
+        if (playerNameInputField != null)
+        {
+            playerNameInputField.text = loadedName;
+            Debug.Log($"[ReassignUIReferences] プレイヤー名を再ロード: '{loadedName}'");
+        }
+
+        // ボタンのOnClick()イベントを再登録（破棄された古いインスタンスの参照を更新）
+        ReassignButtonEvents();
+
+        Debug.Log("[TitleScreenManager] ReassignUIReferences: UI参照の再取得完了");
+    }
+
+    /// <summary>
+    /// ボタンのOnClick()イベントを再登録する
+    /// Inspectorでアサインされたイベントはシーン遷移で失われるため、プログラムで再登録
+    /// </summary>
+    private void ReassignButtonEvents()
+    {
+        Debug.Log("[TitleScreenManager] ReassignButtonEvents: ボタンイベントの再登録開始");
+
+        // 既存のリスナーをクリア
+        if (randomMatchButton != null)
+        {
+            randomMatchButton.onClick.RemoveAllListeners();
+            randomMatchButton.onClick.AddListener(OnRandomMatchClicked);
+            Debug.Log("[TitleScreenManager] randomMatchButtonのイベントを再登録");
+        }
+
+        if (friendMatchButton != null)
+        {
+            friendMatchButton.onClick.RemoveAllListeners();
+            friendMatchButton.onClick.AddListener(OnFriendMatchClicked);
+            Debug.Log("[TitleScreenManager] friendMatchButtonのイベントを再登録");
+        }
+
+        if (cancelButton != null)
+        {
+            cancelButton.onClick.RemoveAllListeners();
+            cancelButton.onClick.AddListener(OnCancelMatchClicked);
+            Debug.Log("[TitleScreenManager] cancelButtonのイベントを再登録");
+        }
+
+        Debug.Log("[TitleScreenManager] ReassignButtonEvents: ボタンイベントの再登録完了");
     }
 
     private void Start()
@@ -166,17 +302,31 @@ public class TitleScreenManager : MonoBehaviour
     {
         Debug.Log("[TitleScreenManager] UI状態を初期化します");
 
+        // 0. マッチング処理フラグとNetworkRunnerHandler参照をリセット
+        _isMatchingInProgress = false;
+        _activeRunnerHandlerInstance = null; // 次回のマッチング時に再生成される
+        Debug.Log("[TitleScreenManager] _isMatchingInProgress = false");
+        Debug.Log("[TitleScreenManager] _activeRunnerHandlerInstance = null");
+
         // 1. ボタンの状態をリセット
         if (randomMatchButton != null)
         {
             randomMatchButton.interactable = true;
             Debug.Log("[TitleScreenManager] randomMatchButton.interactable = true");
         }
+        else
+        {
+            Debug.LogWarning("[TitleScreenManager] randomMatchButton is NULL!");
+        }
 
         if (friendMatchButton != null)
         {
             friendMatchButton.interactable = true;
             Debug.Log("[TitleScreenManager] friendMatchButton.interactable = true");
+        }
+        else
+        {
+            Debug.LogWarning("[TitleScreenManager] friendMatchButton is NULL!");
         }
 
         if (cancelButton != null)
@@ -189,28 +339,87 @@ public class TitleScreenManager : MonoBehaviour
         {
             playerNameInputField.interactable = true;
         }
+        else
+        {
+            Debug.LogWarning("[TitleScreenManager] playerNameInputField is NULL!");
+        }
 
         if (sessionNameInputField != null)
         {
             sessionNameInputField.interactable = true;
         }
 
-        // 3. マッチングUIを非表示にする
+        // 3. マッチングUIを非表示にし、CanvasGroupを完全にリセット
         if (matchingOverlayPanel != null)
         {
             matchingOverlayPanel.SetActive(false);
             Debug.Log("[TitleScreenManager] matchingOverlayPanel を非表示にしました");
+
+            // CanvasGroupを明示的にリセット（raycastをブロックしないようにする）
+            var canvasGroup = matchingOverlayPanel.GetComponent<CanvasGroup>();
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+                Debug.Log("[TitleScreenManager] matchingOverlayPanelのCanvasGroupをリセット: blocksRaycasts=false");
+            }
+
+            // ImageのraycastTargetも無効化
+            var image = matchingOverlayPanel.GetComponent<UnityEngine.UI.Image>();
+            if (image != null)
+            {
+                image.raycastTarget = false;
+                Debug.Log("[TitleScreenManager] matchingOverlayPanelのImageのraycastTargetを無効化");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[TitleScreenManager] matchingOverlayPanel is NULL!");
+        }
+
+        // すべての親CanvasGroupをチェックして有効化
+        if (randomMatchButton != null)
+        {
+            var parentCanvasGroups = randomMatchButton.GetComponentsInParent<CanvasGroup>();
+            Debug.Log($"[TitleScreenManager] randomMatchButtonの親CanvasGroup数: {parentCanvasGroups.Length}");
+            for (int i = 0; i < parentCanvasGroups.Length; i++)
+            {
+                var cg = parentCanvasGroups[i];
+
+                // matchingOverlayPanelのCanvasGroupは除外
+                if (cg.gameObject == matchingOverlayPanel)
+                {
+                    Debug.Log($"[TitleScreenManager] 親CanvasGroup[{i}] (GameObject: {cg.gameObject.name}) はmatchingOverlayPanelなのでスキップ");
+                    continue;
+                }
+
+                Debug.Log($"[TitleScreenManager] 親CanvasGroup[{i}] (GameObject: {cg.gameObject.name}): alpha={cg.alpha}, interactable={cg.interactable}, blocksRaycasts={cg.blocksRaycasts}");
+
+                // interactable=falseやblocksRaycasts=falseの親CanvasGroupがあれば有効化
+                if (!cg.interactable || !cg.blocksRaycasts)
+                {
+                    cg.interactable = true;
+                    cg.blocksRaycasts = true;
+                    cg.alpha = 1f;
+                    Debug.Log($"[TitleScreenManager] 親CanvasGroup '{cg.gameObject.name}' を有効化しました");
+                }
+            }
         }
 
         // 4. エラーメッセージを非表示にする
         HideErrorMessage();
         HidePlayerNameError();
 
-        // 5. 降参ボタンを非表示にする（GameSceneでのみ表示）
+        // 5. SettingControllerのパネルを強制的に非表示にする（GameSceneのUIがブロックしないように）
         if (SettingController.Instance != null)
         {
             SettingController.Instance.SetSurrenderButtonVisible(false);
             Debug.Log("[TitleScreenManager] 降参ボタンを非表示にしました");
+
+            // 設定パネルと確認パネルを強制的に非表示
+            SettingController.Instance.ForceHideAllPanels();
+            Debug.Log("[TitleScreenManager] SettingControllerのパネルを非表示にしました");
         }
 
         // 6. BGMをタイトルBGMに切り替える（リザルトBGMなどが流れている場合）

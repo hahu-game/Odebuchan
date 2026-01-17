@@ -89,6 +89,16 @@ public class GameFlowManager : NetworkBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        // シングルトンがこのインスタンスの場合のみクリア
+        if (Instance == this)
+        {
+            Debug.Log("[GameFlowManager] OnDestroy: Instanceをnullに設定します");
+            Instance = null;
+        }
+    }
+
     public override void Spawned()
     {
         Debug.Log($"[GameFlowManager] Spawned called. HasStateAuthority={Object.HasStateAuthority}, _gameStarted={_gameStarted}");
