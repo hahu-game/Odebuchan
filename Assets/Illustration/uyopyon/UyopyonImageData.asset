@@ -1,0 +1,94 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 489adb1c478caaa4c9c0c69639ed2053, type: 3}
+  m_Name: UyopyonImageData
+  m_EditorClassIdentifier: Assembly-CSharp::UyopyonImageData
+  beforeNormal: {fileID: 21300000, guid: ea871b7cc8b382c43874f308133611af, type: 3}
+  beforeAbnormal: {fileID: 21300000, guid: 5a8a34cf6737fd04bbaa98fe6623b749, type: 3}
+  afterNormal: {fileID: 21300000, guid: 4f785197a8dfc744896179512115359f, type: 3}
+  afterAbnormal: {fileID: 21300000, guid: 267e03f16b18b24489bc36a0c0e08631, type: 3}
+  beforeEat:
+    progressSprites:
+    - {fileID: 21300000, guid: 632bb84f6700a7d488db3c49c4f44a79, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 01f1143cb267d134baa2803158687aaf, type: 3}
+  beforeSleep:
+    progressSprites:
+    - {fileID: 21300000, guid: b1ec944e1e5f49f4d818e0bbd878eb01, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: ded20f46087724247a04c357af26afec, type: 3}
+  beforePlay:
+    progressSprites:
+    - {fileID: 21300000, guid: 8ddcca47c87bfad439c2a5a259da2968, type: 3}
+    - {fileID: 21300000, guid: 95336e0e66e73d6439e4afa1d60afc95, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: d3d2864255593db4db2ec767b895cb9f, type: 3}
+  beforeClinic:
+    progressSprites:
+    - {fileID: 21300000, guid: 3e6c34793ee42cc49a1310af4189a680, type: 3}
+    - {fileID: 21300000, guid: 63da23d2644dda14b96b1eb494cc2661, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 2062632d7b87e6a438a911c45498160c, type: 3}
+    - {fileID: 21300000, guid: 376fbc1bc78f1b34b9bd95a66b04a8da, type: 3}
+    - {fileID: 21300000, guid: 520e102de7e7b5e4c864e46858839d51, type: 3}
+  afterEat:
+    progressSprites:
+    - {fileID: 21300000, guid: 77547bb83703f4b49b8dd4bff4b1aba3, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 5ba460d9e01d76048adf6fced3cb212e, type: 3}
+  afterSleep:
+    progressSprites:
+    - {fileID: 21300000, guid: 020ce24fd94fc154eacc4971f673bc01, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 4d4ff19467604234ea42040d2a490aef, type: 3}
+  afterPlay:
+    progressSprites:
+    - {fileID: 21300000, guid: 919b915d801108f4fb733445ddb5647c, type: 3}
+    - {fileID: 21300000, guid: 6f7ef58c70636594e8401a7cfdc216b6, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 87145cb66fd90b54f9fed10ccba15746, type: 3}
+  afterClinic:
+    progressSprites:
+    - {fileID: 21300000, guid: b37760d02b38f2d4f888366cd29ea6fe, type: 3}
+    - {fileID: 21300000, guid: 0da5c1ed67231664589cd4867f497d4d, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 78828ab6e0c1c144aa57921883f93ade, type: 3}
+  afterGaishoku:
+    progressSprites:
+    - {fileID: 21300000, guid: d7a3e18e202f098429ebf3e7987b7125, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 8f4f26858db000c44ac4d6bdc6714f1f, type: 3}
+  afterKintre:
+    progressSprites:
+    - {fileID: 21300000, guid: 9239e018a796c6546bb62a539b9777c3, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: b9bd48672ac05384fac2ada654ed3544, type: 3}
+  afterGamushara:
+    progressSprites:
+    - {fileID: 21300000, guid: 5b68e263d4d383e4d9638b638a6e8755, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 5b0ca77b53dd4394a90d227711de9f3a, type: 3}
+  afterBenkyou:
+    progressSprites:
+    - {fileID: 21300000, guid: 0271394a1bd9c7744abc2a21e325fb12, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: cbd70b817faada14588101a6d682b209, type: 3}
+  afterJukusui:
+    progressSprites:
+    - {fileID: 21300000, guid: a36f836195de18b4b98f1b652015104d, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: cdb79db821005b74a8ca14a66ae9217e, type: 3}
+  afterDokagui:
+    progressSprites:
+    - {fileID: 21300000, guid: dabf3351c5bc1cb4aa76e8eab02a6168, type: 3}
+    completeSprites:
+    - {fileID: 21300000, guid: 29ed1d1c95330e142a9404d6b3658f81, type: 3}

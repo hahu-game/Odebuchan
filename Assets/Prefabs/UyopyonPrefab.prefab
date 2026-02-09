@@ -91,6 +91,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UyopyonState
   playerNameText: {fileID: 8738674984659553911}
+  uyopyonImage: {fileID: 3038004004531760730}
   _Weight: 1
   _Energy: 50
   _CurrentStatus: 0
@@ -108,6 +109,7 @@ MonoBehaviour:
     _data:
       Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   _BuffMultiplier: 1
+  _JankenWinCount: 0
 --- !u!95 &4686944652385539361
 Animator:
   serializedVersion: 7
@@ -278,7 +280,7 @@ GameObject:
   - component: {fileID: 828969268048081159}
   - component: {fileID: 3038004004531760730}
   m_Layer: 5
-  m_Name: Image
+  m_Name: UyopyonImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

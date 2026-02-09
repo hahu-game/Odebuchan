@@ -1,5 +1,6 @@
 ﻿using Fusion;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
@@ -12,6 +13,15 @@ public class UyopyonState : NetworkBehaviour
     [SerializeField]
     [Tooltip("プレイヤー名を表示するTextMeshProコンポーネント")]
     private TextMeshProUGUI playerNameText;
+
+    [SerializeField]
+    [Tooltip("うーぴょん画像を表示するImageコンポーネント")]
+    private Image uyopyonImage;
+
+    /// <summary>
+    /// うーぴょん画像を表示するImageコンポーネントを取得
+    /// </summary>
+    public Image UyopyonImage => uyopyonImage;
 
     // === 既存プロパティ ===
     [Networked]
