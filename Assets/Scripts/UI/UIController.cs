@@ -1,5 +1,6 @@
 using Fusion;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,6 +12,18 @@ using System.Linq;
 public class UIController : MonoBehaviour
 {
     public static UIController Instance { get; private set; }
+
+    // === うーぴょん画像表示 ===
+    [Header("Uyopyon Image Display")]
+    [Tooltip("うーぴょん画像データ（ScriptableObject）")]
+    public UyopyonImageData uyopyonImageData;
+
+    // うーぴょん画像のImage参照（動的に取得）
+    // UyopyonStateがSpawnされた際にRegisterUyopyon()で登録される
+    private Dictionary<PlayerRef, Image> _uyopyonImages = new Dictionary<PlayerRef, Image>();
+
+    // 画像アニメーション用コルーチン参照（重複防止用）
+    private Dictionary<PlayerRef, Coroutine> _uyopyonAnimationCoroutines = new Dictionary<PlayerRef, Coroutine>();
 
     // === プレイヤー名の文字色設定 ===
     [Header("Player Name Text Colors")]
@@ -368,6 +381,16 @@ public class UIController : MonoBehaviour
         {
             _uyopyons.Add(uyopyon.OwnerPlayer, uyopyon);
 
+            // うーぴょん画像のImage参照を登録
+            if (uyopyon.UyopyonImage != null && !_uyopyonImages.ContainsKey(uyopyon.OwnerPlayer))
+            {
+                _uyopyonImages.Add(uyopyon.OwnerPlayer, uyopyon.UyopyonImage);
+                Debug.Log($"[UIController] Player {uyopyon.OwnerPlayer} のうーぴょん画像を登録しました");
+
+                // 初期デフォルト画像を設定
+                SetDefaultUyopyonImage(uyopyon.OwnerPlayer, uyopyon.UyopyonImage, uyopyon);
+            }
+
             // 注: 前回値はUpdateDisplay()の後にUpdateLastValues()で設定されるため、ここでは登録しない
             // これにより、RegisterUyopyon()とInitializeValues()の間の値変更でアニメーションが実行されることを防ぐ
         }
@@ -570,6 +593,9 @@ public class UIController : MonoBehaviour
     {
         Debug.Log($"[UIController] UpdateEvolutionDisplay: player={player}, hasEvolved={hasEvolved}, abilityName={abilityName}");
 
+        // 進化状態の変化に応じてデフォルト画像を更新
+        UpdateUyopyonDefaultImage(player);
+
         // 自分のプレイヤーの場合のみ特殊能力ボタンを制御
         if (!IsMyPlayer(player))
         {
@@ -585,8 +611,17 @@ public class UIController : MonoBehaviour
         // 進化時は選択フェーズではないため、ここでは呼ばない
     }
 
-    // TODO: フェーズ9で実装予定 - ビジュアル変更
-    public void UpdateUyopyonVisual(PlayerRef player, string visualType) { }
+    /// <summary>
+    /// うーぴょんのビジュアルタイプが変更された時に呼び出される
+    /// 進化状態に応じてデフォルト画像を更新する
+    /// </summary>
+    public void UpdateUyopyonVisual(PlayerRef player, string visualType)
+    {
+        Debug.Log($"[UIController] UpdateUyopyonVisual: player={player}, visualType={visualType}");
+
+        // ビジュアルタイプの変更に応じてデフォルト画像を更新
+        UpdateUyopyonDefaultImage(player);
+    }
 
     /// <summary>
     /// ブラックアウトパネルを表示
@@ -1915,12 +1950,216 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
-    /// 行動アニメーションを再生（後で実装）
+    /// 行動アニメーションを再生
+    /// 画像を順番に切り替え、完了後はデフォルト画像に戻る
     /// </summary>
     public void PlayActionAnimation(PlayerRef player, ActionType action)
     {
         Debug.Log($"[UIController] 行動アニメーション: Player={player}, Action={action}");
-        // 実装は後で（フェーズ10）
+
+        if (uyopyonImageData == null)
+        {
+            Debug.LogWarning("[UIController] UyopyonImageDataが設定されていません");
+            return;
+        }
+
+        // プレイヤーの状態を取得
+        if (!GameManager.Instance.uyopyonStateDict.TryGetValue(player, out UyopyonState state))
+        {
+            Debug.LogWarning($"[UIController] Player {player} のUyopyonStateが見つかりません");
+            return;
+        }
+
+        // 特殊能力の場合、能力タイプを取得
+        SpecialAbilityType? specialAbilityType = null;
+        if (action == ActionType.SpecialAbility)
+        {
+            string abilityName = state.SpecialAbilityName.ToString();
+            if (System.Enum.TryParse<SpecialAbilityType>(abilityName, out var abilityType))
+            {
+                specialAbilityType = abilityType;
+            }
+        }
+
+        // 画像セットを取得
+        var imageSet = uyopyonImageData.GetActionImageSet(action, state.HasEvolved, specialAbilityType);
+        if (imageSet == null || imageSet.TotalSpriteCount == 0)
+        {
+            Debug.LogWarning($"[UIController] Player {player} の行動 {action} に対応する画像セットが見つかりません");
+            return;
+        }
+
+        // プレイヤーのImage参照を取得
+        if (!_uyopyonImages.TryGetValue(player, out Image targetImage) || targetImage == null)
+        {
+            Debug.LogWarning($"[UIController] Player {player} のうーぴょん画像Imageが登録されていません");
+            return;
+        }
+
+        // 既存のアニメーションを停止
+        if (_uyopyonAnimationCoroutines.TryGetValue(player, out Coroutine existingCoroutine) && existingCoroutine != null)
+        {
+            StopCoroutine(existingCoroutine);
+            _uyopyonAnimationCoroutines[player] = null;
+        }
+
+        // アニメーションコルーチンを開始
+        var coroutine = StartCoroutine(PlayActionAnimationCoroutine(player, targetImage, imageSet, state));
+        _uyopyonAnimationCoroutines[player] = coroutine;
+    }
+
+    /// <summary>
+    /// 行動アニメーションのコルーチン
+    /// 画像を順番に表示し、完了後はデフォルト画像に戻る
+    /// </summary>
+    private IEnumerator PlayActionAnimationCoroutine(PlayerRef player, Image targetImage, UyopyonImageData.ActionImageSet imageSet, UyopyonState state)
+    {
+        // 全画像を取得
+        Sprite[] sprites = imageSet.GetAllSprites();
+        if (sprites == null || sprites.Length == 0)
+        {
+            // 早期終了時もコルーチン参照をクリア
+            _uyopyonAnimationCoroutines[player] = null;
+            yield break;
+        }
+
+        // 1枚あたりの表示時間を計算（総時間2秒を均等割り）
+        float durationPerSprite = UyopyonImageData.GetDisplayDurationPerSprite(imageSet);
+
+        Debug.Log($"[UIController] アニメーション開始: Player={player}, 画像数={sprites.Length}, 1枚あたり={durationPerSprite}秒");
+
+        // 画像を順番に表示
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            if (sprites[i] != null)
+            {
+                targetImage.sprite = sprites[i];
+            }
+            yield return new WaitForSeconds(durationPerSprite);
+        }
+
+        // アニメーション完了 - コルーチン参照をクリア（これが先！）
+        _uyopyonAnimationCoroutines[player] = null;
+
+        // デフォルト画像に戻る（stateから最新の進化状態を取得）
+        SetDefaultUyopyonImage(player, targetImage, state);
+
+        Debug.Log($"[UIController] アニメーション完了: Player={player}");
+    }
+
+    /// <summary>
+    /// デフォルトのうーぴょん画像を設定
+    /// 進化状態と健康状態に応じてnormal/abnormalを切り替え
+    /// </summary>
+    /// <param name="player">プレイヤー</param>
+    /// <param name="targetImage">対象のImageコンポーネント</param>
+    /// <param name="state">UyopyonState</param>
+    /// <param name="hasEvolvedOverride">進化状態のオーバーライド（nullの場合はstateから取得）</param>
+    private void SetDefaultUyopyonImage(PlayerRef player, Image targetImage, UyopyonState state, bool? hasEvolvedOverride = null)
+    {
+        if (uyopyonImageData == null || targetImage == null || state == null)
+        {
+            return;
+        }
+
+        // 状態異常を持っているかチェック（病気またはケガ）
+        bool hasAilment = state.HasStatusAilment(StatusAilment.SleepApnea) ||
+                          state.HasStatusAilment(StatusAilment.Diabetes) ||
+                          state.HasStatusAilment(StatusAilment.BackPain) ||
+                          state.HasStatusAilment(StatusAilment.Heatstroke);
+
+        // 進化状態を決定（オーバーライドがあればそちらを使用）
+        bool hasEvolved = hasEvolvedOverride ?? state.HasEvolved;
+
+        // デフォルト画像を取得して設定
+        Sprite defaultSprite = uyopyonImageData.GetDefaultSprite(hasEvolved, hasAilment);
+        if (defaultSprite != null)
+        {
+            targetImage.sprite = defaultSprite;
+            Debug.Log($"[UIController] SetDefaultUyopyonImage: player={player}, hasEvolved={hasEvolved}, hasAilment={hasAilment}");
+        }
+    }
+
+    /// <summary>
+    /// 指定プレイヤーのうーぴょん画像をデフォルトに更新
+    /// 外部から呼び出し可能（状態異常の変化時など）
+    /// </summary>
+    public void UpdateUyopyonDefaultImage(PlayerRef player)
+    {
+        UpdateUyopyonDefaultImage(player, null);
+    }
+
+    /// <summary>
+    /// 指定プレイヤーのうーぴょん画像をデフォルトに更新（進化状態オーバーライド付き）
+    /// 進化直後など、ネットワーク同期前に確実に画像を切り替えたい場合に使用
+    /// </summary>
+    /// <param name="player">プレイヤー</param>
+    /// <param name="hasEvolvedOverride">進化状態のオーバーライド（nullの場合はUyopyonStateから取得）</param>
+    /// <param name="forceUpdate">trueの場合、アニメーション中でも強制的に更新（アニメーションも停止）</param>
+    public void UpdateUyopyonDefaultImage(PlayerRef player, bool? hasEvolvedOverride, bool forceUpdate = false)
+    {
+        if (uyopyonImageData == null)
+        {
+            Debug.LogWarning($"[UIController] UpdateUyopyonDefaultImage: uyopyonImageDataがnull player={player}");
+            return;
+        }
+
+        // プレイヤーの状態を取得
+        if (!GameManager.Instance.uyopyonStateDict.TryGetValue(player, out UyopyonState state))
+        {
+            Debug.LogWarning($"[UIController] UpdateUyopyonDefaultImage: UyopyonStateが見つからない player={player}");
+            return;
+        }
+
+        // プレイヤーのImage参照を取得
+        if (!_uyopyonImages.TryGetValue(player, out Image targetImage) || targetImage == null)
+        {
+            Debug.LogWarning($"[UIController] UpdateUyopyonDefaultImage: Imageが登録されていない player={player}, _uyopyonImages.Count={_uyopyonImages.Count}");
+            return;
+        }
+
+        // アニメーション中かチェック
+        bool isAnimating = _uyopyonAnimationCoroutines.TryGetValue(player, out Coroutine coroutine) && coroutine != null;
+
+        if (forceUpdate && isAnimating)
+        {
+            // 強制更新の場合、アニメーションを停止
+            StopCoroutine(coroutine);
+            _uyopyonAnimationCoroutines[player] = null;
+            Debug.Log($"[UIController] UpdateUyopyonDefaultImage: 強制更新のためアニメーションを停止 player={player}");
+            isAnimating = false;
+        }
+
+        if (!isAnimating)
+        {
+            SetDefaultUyopyonImage(player, targetImage, state, hasEvolvedOverride);
+        }
+        else
+        {
+            Debug.Log($"[UIController] UpdateUyopyonDefaultImage: アニメーション中のためスキップ player={player}");
+        }
+    }
+
+    /// <summary>
+    /// 全プレイヤーのうーぴょん画像をデフォルトに初期化
+    /// ゲーム開始時や選択フェーズ開始時に呼び出す
+    /// </summary>
+    public void InitializeUyopyonImages()
+    {
+        if (uyopyonImageData == null)
+        {
+            Debug.LogWarning("[UIController] UyopyonImageDataが設定されていません");
+            return;
+        }
+
+        foreach (var kvp in GameManager.Instance.uyopyonStateDict)
+        {
+            // デバッグ: 各プレイヤーの進化状態を確認
+            Debug.Log($"[UIController] InitializeUyopyonImages: player={kvp.Key}, HasEvolved={kvp.Value.HasEvolved}");
+            UpdateUyopyonDefaultImage(kvp.Key);
+        }
+
+        Debug.Log("[UIController] うーぴょん画像を初期化しました");
     }
 
     // === 6.7で追加: 状態異常テキスト表示メソッド ===
@@ -2007,6 +2246,13 @@ public class UIController : MonoBehaviour
         }
 
         Debug.Log($"[UIController] Player {player} の状態異常を更新: 病気{sicknessTextIndex}件, ケガ{injuryTextIndex}件");
+
+        // 状態異常の変化に応じてデフォルト画像を更新（実行フェーズ以外の場合のみ）
+        // 実行フェーズ中はアニメーション終了後に自動的に更新される
+        if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentPhase != GamePhase.Execution)
+        {
+            UpdateUyopyonDefaultImage(player);
+        }
     }
 
     /// <summary>

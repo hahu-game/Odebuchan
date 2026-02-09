@@ -360,6 +360,9 @@ public class GameFlowManager : NetworkBehaviour
             // ※先にリセットしてから元気チェックを実行する必要がある
             RPC_ResetActionSelection();
 
+            // うーぴょん画像をデフォルト状態に初期化
+            RPC_InitializeUyopyonImages();
+
             // UIの操作ロック解除（元気チェックが実行される）
             RPC_SetActionButtonsInteractable(true);
 
@@ -822,6 +825,39 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// うーぴょん画像をデフォルト状態に初期化するRPC
+    /// 選択フェーズ開始時に呼び出される
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_InitializeUyopyonImages()
+    {
+        Debug.Log("[GameFlowManager] RPC_InitializeUyopyonImages が呼ばれました");
+
+        if (UIController.Instance != null)
+        {
+            UIController.Instance.InitializeUyopyonImages();
+        }
+    }
+
+    /// <summary>
+    /// 特定プレイヤーのうーぴょん画像をデフォルト状態に更新するRPC
+    /// 進化時など、特定プレイヤーの画像を即座に更新したい場合に使用
+    /// </summary>
+    /// <param name="player">対象プレイヤー</param>
+    /// <param name="hasEvolved">進化済みかどうか（ネットワーク同期前に確実に反映するため引数で渡す）</param>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_UpdateUyopyonImageForPlayer(PlayerRef player, bool hasEvolved)
+    {
+        Debug.Log($"[GameFlowManager] RPC_UpdateUyopyonImageForPlayer が呼ばれました: player={player}, hasEvolved={hasEvolved}");
+
+        if (UIController.Instance != null)
+        {
+            // 進化時は強制更新（アニメーション中でも即座に画像を切り替え）
+            UIController.Instance.UpdateUyopyonDefaultImage(player, hasEvolved, forceUpdate: true);
+        }
+    }
+
+    /// <summary>
     /// 7.2: 特殊能力選択パネルを表示するRPC
     /// </summary>
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -1189,16 +1225,24 @@ public class GameFlowManager : NetworkBehaviour
 
                 // ログに追加
                 RPC_AddLog($"{playerName}は{GetSpecialAbilityDisplayName(selectedAbility.Value)}を習得した！");
-                
+
+                // 進化後の画像に切り替える（全クライアントに通知）
+                // hasEvolved=trueを明示的に渡すことで、ネットワーク同期前でも確実に進化後画像を表示
+                RPC_UpdateUyopyonImageForPlayer(currentPlayer, true);
+
                 Debug.Log($"[GameFlowManager] プレイヤー {currentPlayer} の進化完了: {selectedAbility.Value}");
             }
             else
             {
                 Debug.LogWarning($"[GameFlowManager] プレイヤー {currentPlayer} の特殊能力が選択されませんでした");
-                
+
                 // タイムアウト時もHasEvolvedをtrueにして、再度選択させないようにする
                 state.HasEvolved = true;
                 Debug.Log($"[GameFlowManager] タイムアウトのためHasEvolved=trueに設定");
+
+                // タイムアウト時も進化後の画像に切り替える（全クライアントに通知）
+                // hasEvolved=trueを明示的に渡すことで、ネットワーク同期前でも確実に進化後画像を表示
+                RPC_UpdateUyopyonImageForPlayer(currentPlayer, true);
             }
 
             // 7.2修正: 全プレイヤーの待機パネルを非表示
