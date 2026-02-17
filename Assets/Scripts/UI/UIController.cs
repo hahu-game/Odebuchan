@@ -2765,16 +2765,15 @@ public class UIController : MonoBehaviour
     // === 8.3: リザルト画面 ===
 
     /// <summary>
-    /// リザルト画面を表示
+    /// リザルトパネルのUI準備処理（パネル非表示、raycast設定等）
+    /// ShowResultPanel と ShowResultPanelFromLocalData の共通処理
     /// </summary>
-    public void ShowResultPanel(PlayerRef winner, int day, bool isMorning)
+    private bool PrepareResultPanelUI()
     {
-        Debug.Log($"[UIController] ShowResultPanel: winner={winner}, day={day}, isMorning={isMorning}");
-
         if (resultPanel == null)
         {
             Debug.LogError("[UIController] resultPanel が null です");
-            return;
+            return false;
         }
 
         // 他のパネルを全て非表示にする
@@ -2860,8 +2859,21 @@ public class UIController : MonoBehaviour
             resultPanelImage.raycastTarget = false;
         }
 
+        return true;
+    }
+
+    /// <summary>
+    /// リザルト画面を表示（既存メソッド、フォールバック用に残す）
+    /// </summary>
+    public void ShowResultPanel(PlayerRef winner, int day, bool isMorning)
+    {
+        Debug.Log($"[UIController] ShowResultPanel: winner={winner}, day={day}, isMorning={isMorning}");
+
+        if (!PrepareResultPanelUI())
+            return;
+
         // NetworkRunnerから自分のPlayerRefを取得
-        var runner = FindFirstObjectByType<NetworkRunner>();
+        var runner = FindFirstObjectByType<Fusion.NetworkRunner>();
         if (runner == null)
         {
             Debug.LogError("[UIController] NetworkRunnerが見つかりません");
@@ -2877,8 +2889,6 @@ public class UIController : MonoBehaviour
             Debug.LogError($"[UIController] プレイヤーが2人ではありません: {allPlayers.Count}人");
             return;
         }
-
-        PlayerRef loser = allPlayers.FirstOrDefault(p => p != winner);
 
         // 勝者名を表示
         string winnerName = GetPlayerName(winner);
@@ -2964,8 +2974,84 @@ public class UIController : MonoBehaviour
     }
 
     /// <summary>
+    /// ローカルデータを使用してリザルト画面を表示（ネットワーク非依存）
+    /// Shutdown後もローカルデータのみで表示可能
+    /// </summary>
+    public void ShowResultPanelFromLocalData(LocalResultData data)
+    {
+        Debug.Log($"[UIController] ShowResultPanelFromLocalData: winner={data.WinnerName}, day={data.Day}, isMorning={data.IsMorning}");
+
+        if (!PrepareResultPanelUI())
+            return;
+
+        // 勝者名を表示
+        if (resultWinnerText != null)
+        {
+            resultWinnerText.text = $"{data.WinnerName} の勝ち！";
+            SetPlayerNameTextColor(resultWinnerText, data.WinnerIsHost);
+        }
+
+        // 終了日数・午前/午後を表示
+        if (resultDayText != null)
+        {
+            string timeOfDay = data.IsMorning ? "午前" : "午後";
+            resultDayText.text = $"{data.Day}日目 {timeOfDay}";
+        }
+
+        // 自分のステータスを表示
+        if (resultMyNameText != null)
+        {
+            resultMyNameText.text = data.MyName;
+            SetPlayerNameTextColor(resultMyNameText, data.MyIsHost);
+        }
+        if (resultMyWeightText != null)
+        {
+            resultMyWeightText.text = $"重さ: {data.MyWeight}kg";
+        }
+        if (resultMyEnergyText != null)
+        {
+            resultMyEnergyText.text = $"元気: {data.MyEnergy}";
+        }
+        if (resultMyAbilityText != null)
+        {
+            resultMyAbilityText.text = $"特殊能力: {data.MyAbilityDisplayName}";
+        }
+        if (resultMyJankenWinText != null)
+        {
+            resultMyJankenWinText.text = $"じゃんけん勝利数: {data.MyJankenWinCount}回";
+        }
+
+        // 相手のステータスを表示
+        if (resultOppNameText != null)
+        {
+            resultOppNameText.text = data.OppName;
+            SetPlayerNameTextColor(resultOppNameText, data.OppIsHost);
+        }
+        if (resultOppWeightText != null)
+        {
+            resultOppWeightText.text = $"重さ: {data.OppWeight}kg";
+        }
+        if (resultOppEnergyText != null)
+        {
+            resultOppEnergyText.text = $"元気: {data.OppEnergy}";
+        }
+        if (resultOppAbilityText != null)
+        {
+            resultOppAbilityText.text = $"特殊能力: {data.OppAbilityDisplayName}";
+        }
+        if (resultOppJankenWinText != null)
+        {
+            resultOppJankenWinText.text = $"じゃんけん勝利数: {data.OppJankenWinCount}回";
+        }
+
+        // リザルトパネルを表示
+        resultPanel.SetActive(true);
+    }
+
+    /// <summary>
     /// タイトルに戻るボタンがクリックされた時の処理
     /// Unity EditorのInspectorでButtonのOnClick()に設定してください
+    /// NetworkRunnerHandler.ReturnToTitleAsync() を経由してShutdown完了後にシーン遷移する
     /// </summary>
     public void OnReturnToTitleButtonClicked()
     {
@@ -2975,66 +3061,29 @@ public class UIController : MonoBehaviour
             resultReturnToTitleButton.interactable = false;
         }
 
-        Debug.Log("[UIController] OnReturnToTitleButtonClicked: ボタンがクリックされました");
+        Debug.Log("[UIController] OnReturnToTitleButtonClicked: タイトルへ戻る処理を開始します");
 
-        // ボタンを押したプレイヤーだけがタイトルに戻る（RPCを使わない）
-        StartReturnToTitleProcess();
+        // async処理を開始（ボタンハンドラからのfire-and-forget）
+        _ = ReturnToTitleAsync();
     }
 
     /// <summary>
-    /// タイトルに戻る処理を開始（ローカルプレイヤーのみ）
+    /// NetworkRunnerHandler経由でShutdown完了を待ってからタイトルシーンに遷移する
     /// </summary>
-    public void StartReturnToTitleProcess()
+    private async System.Threading.Tasks.Task ReturnToTitleAsync()
     {
-        Debug.Log("[UIController] StartReturnToTitleProcess: タイトル遷移処理を開始します");
-        StartCoroutine(ReturnToTitleCoroutine());
-    }
-
-    /// <summary>
-    /// タイトルシーンに戻るコルーチン
-    /// NetworkRunnerをシャットダウンしてからシーン遷移を行う
-    /// </summary>
-    private IEnumerator ReturnToTitleCoroutine()
-    {
-        Debug.Log("[UIController] ReturnToTitleCoroutine: タイトルへの遷移を開始します");
-
-        // ステップ1: NetworkRunnerをシャットダウン（最優先）
-        NetworkRunner runner = FindFirstObjectByType<NetworkRunner>();
-        if (runner != null && runner.IsRunning)
+        var handler = FindFirstObjectByType<NetworkRunnerHandler>();
+        if (handler != null)
         {
-            Debug.Log("[UIController] NetworkRunnerをシャットダウンします");
-            try
-            {
-                runner.Shutdown();
-                Debug.Log("[UIController] Shutdown呼び出し完了");
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[UIController] Shutdown中に例外発生: {e.Message}");
-            }
+            // Shutdown完了を待ってからシーン遷移（既にShutdown済みなら即座に通過）
+            await handler.ReturnToTitleAsync();
         }
         else
         {
-            Debug.Log("[UIController] NetworkRunnerは既にシャットダウンされているか、存在しません");
-        }
-
-        // ステップ2: シーン遷移を即座に実行（GameSceneのオブジェクトは自動的に破棄される）
-        Debug.Log("[UIController] ReturnToTitleCoroutine: TitleSceneに遷移します");
-
-        try
-        {
+            // handlerが見つからない場合は直接シーン遷移
+            Debug.LogWarning("[UIController] NetworkRunnerHandlerが見つかりません。直接シーン遷移します");
             UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
-            Debug.Log("[UIController] LoadScene呼び出し完了");
         }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[UIController] LoadScene中に例外発生: {e.Message}");
-        }
-
-        // シーン遷移によってGameSceneのオブジェクトは自動的に破棄されます
-        // 手動での破棄は不要（むしろ破棄するとエラーの原因になる）
-
-        yield break;
     }
 
     /// <summary>
