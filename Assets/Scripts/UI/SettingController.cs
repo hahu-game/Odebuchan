@@ -141,6 +141,12 @@ public class SettingController : MonoBehaviour
         // ボタンイベントを再登録
         RegisterButtonEvents();
 
+        // スライダーのイベントを再登録
+        RegisterSliderEvents();
+
+        // 音量設定を再適用
+        LoadVolumeSettings();
+
         Debug.Log("[SettingController] ReassignUIReferences: UI参照の再取得完了");
     }
 
@@ -152,17 +158,7 @@ public class SettingController : MonoBehaviour
         LoadVolumeSettings();
 
         // スライダーのイベント設定
-        if (bgmVolumeSlider != null)
-        {
-            bgmVolumeSlider.onValueChanged.RemoveAllListeners(); // 重複登録を防ぐ
-            bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
-        }
-
-        if (seVolumeSlider != null)
-        {
-            seVolumeSlider.onValueChanged.RemoveAllListeners(); // 重複登録を防ぐ
-            seVolumeSlider.onValueChanged.AddListener(OnSEVolumeChanged);
-        }
+        RegisterSliderEvents();
 
         // 確認パネルのボタンイベント設定
         if (yesButton != null)
@@ -175,6 +171,24 @@ public class SettingController : MonoBehaviour
         {
             noButton.onClick.RemoveAllListeners(); // 重複登録を防ぐ
             noButton.onClick.AddListener(OnConfirmNoClicked);
+        }
+    }
+
+    /// <summary>
+    /// スライダーのイベントを登録（Start時およびシーン遷移時に呼ばれる）
+    /// </summary>
+    private void RegisterSliderEvents()
+    {
+        if (bgmVolumeSlider != null)
+        {
+            bgmVolumeSlider.onValueChanged.RemoveAllListeners();
+            bgmVolumeSlider.onValueChanged.AddListener(OnBGMVolumeChanged);
+        }
+
+        if (seVolumeSlider != null)
+        {
+            seVolumeSlider.onValueChanged.RemoveAllListeners();
+            seVolumeSlider.onValueChanged.AddListener(OnSEVolumeChanged);
         }
     }
 

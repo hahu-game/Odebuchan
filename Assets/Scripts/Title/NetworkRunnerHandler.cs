@@ -9,13 +9,27 @@ using System.Linq; // ActivePlayers.Count()を使うために必要
 
 /// <summary>
 /// Photon Fusionの接続開始、切断、イベントコールバックを管理する。
+/// Runnerのシャットダウンは必ずこのクラスを経由して行う（ShutdownRunnerAsync）。
 /// INetworkRunnerCallbacksのメソッドは明示的なインターフェース実装として定義し、Unity経由で呼ばれる。
 /// </summary>
 public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 {
     private NetworkRunner _runner;
     private bool _started = false;
+    private bool _isShuttingDown = false;
+    private bool _clientDisconnectedAfterGameEnd = false;
     public NetworkObject playerPrefab;
+
+    /// <summary>
+    /// ゲーム終了がローカルで確認済みかどうか（Shutdown後も参照可能）
+    /// </summary>
+    public bool IsGameEndedLocal { get; set; } = false;
+
+    /// <summary>
+    /// ゲーム終了後にクライアントが切断したかどうか（ホスト側で使用）
+    /// WaitForAcksAndShutdownでクライアントの切断を待つために使用する
+    /// </summary>
+    public bool ClientDisconnectedAfterGameEnd => _clientDisconnectedAfterGameEnd;
 
     private void Awake()
     {
@@ -69,6 +83,67 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     // }
     // 【テスト終了後】本番に戻す際は上記 Start() メソッドを削除すること
 
+    // ========== Shutdown統一メソッド ==========
+
+    /// <summary>
+    /// Runnerを安全にシャットダウンする（async版・await必須）。
+    /// 二重Shutdown防止ガード付き。
+    /// 全クラスからのShutdownはこのメソッドを経由すること。
+    /// </summary>
+    public async Task ShutdownRunnerAsync()
+    {
+        if (_isShuttingDown)
+        {
+            Debug.Log("[NetworkRunnerHandler] ShutdownRunnerAsync: 既にシャットダウン中のためスキップ");
+            return;
+        }
+
+        _isShuttingDown = true;
+
+        try
+        {
+            if (_runner != null && _runner.IsRunning)
+            {
+                Debug.Log("[NetworkRunnerHandler] ShutdownRunnerAsync: Runnerをシャットダウンします");
+                await _runner.Shutdown();
+                Debug.Log("[NetworkRunnerHandler] ShutdownRunnerAsync: シャットダウン完了");
+            }
+            else
+            {
+                Debug.Log("[NetworkRunnerHandler] ShutdownRunnerAsync: Runnerは既に停止済み");
+            }
+
+            _started = false;
+        }
+        finally
+        {
+            _isShuttingDown = false;
+        }
+    }
+
+    /// <summary>
+    /// Runnerをシャットダウンした後、タイトルシーンに遷移する。
+    /// UIControllerの「タイトルに戻る」ボタンから呼ばれる。
+    /// </summary>
+    public async Task ReturnToTitleAsync()
+    {
+        await ShutdownRunnerAsync();
+        Debug.Log("[NetworkRunnerHandler] ReturnToTitleAsync: TitleSceneに遷移します");
+        SceneManager.LoadScene("TitleScene");
+    }
+
+    /// <summary>
+    /// 接続をシャットダウンする（同期版・TitleScreenManagerのキャンセルボタン用）。
+    /// 内部でShutdownRunnerAsyncを呼ぶが、awaitはしない（fire-and-forget）。
+    /// </summary>
+    public void ShutdownRunner()
+    {
+        if (_isShuttingDown) return;
+        _ = ShutdownRunnerAsync();
+    }
+
+    // ========== ゲーム接続開始 ==========
+
     /// <summary>
     /// ネットワーク接続を開始する。(async Task に変更)
     /// sessionName が null または空文字の場合はランダムマッチング、それ以外はフレンドマッチング
@@ -109,6 +184,8 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         _runner.ProvideInput = true;
         _started = false;  // フラグをリセット
         _started = true;
+        IsGameEndedLocal = false;  // ゲーム終了フラグをリセット
+        _clientDisconnectedAfterGameEnd = false;  // クライアント切断フラグをリセット
 
         Debug.Log($"[StartGame] NetworkRunnerの準備完了。GameObject: {gameObject.name}");
 
@@ -170,19 +247,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             // 失敗時、TitleScreenManagerに通知してUIを戻す
             TitleScreenManager.Instance?.HideMatchingUI();
         }
-    }
-
-    /// <summary>
-    /// 接続をシャットダウンし、TitleScreenManagerから呼ばれる
-    /// </summary>
-    public void ShutdownRunner()
-    {
-        if (_runner != null && _started)
-        {
-            _runner.Shutdown();
-            _started = false;
-        }
-        // UIの非表示はTitleScreenManager側で行う
     }
 
     // ========== INetworkRunnerCallbacks の Fusion 2.0.7 完全な実装 ==========
@@ -253,6 +317,13 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     void INetworkRunnerCallbacks.OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         Debug.Log($"プレイヤーが退出しました: PlayerRef={player}");
+
+        // ゲーム終了後のクライアント切断を検知（ホスト側のShutdown待機に使用）
+        if (IsGameEndedLocal)
+        {
+            _clientDisconnectedAfterGameEnd = true;
+            Debug.Log("[NetworkRunnerHandler] ゲーム終了後にクライアントが切断されました");
+        }
     }
 
     void INetworkRunnerCallbacks.OnInput(NetworkRunner runner, NetworkInput input)
@@ -264,8 +335,13 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
 
     void INetworkRunnerCallbacks.OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
-        Debug.Log($"シャットダウン: {shutdownReason}");
+        Debug.Log($"[NetworkRunnerHandler] OnShutdown: {shutdownReason}");
         _started = false;
+
+        // Runner.Spawn()でスポーンされたネットワークオブジェクトを破棄
+        // DontDestroyOnLoadのRunnerからスポーンされたオブジェクトは
+        // シーン遷移後も残ってしまうため、明示的に破棄する
+        DestroySpawnedNetworkObjects();
 
         // シャットダウン時にタイトル画面のUIを復元
         // （キャンセルボタンやネットワークエラーでシャットダウンした場合）
@@ -274,6 +350,60 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
             Debug.Log("[OnShutdown] タイトル画面のUIを復元します");
             TitleScreenManager.Instance.HideMatchingUI();
         }
+
+        // GameScene中の予期しない切断時、タイトル画面に自動遷移する
+        // （リザルト画面からの意図的なシャットダウンの場合はIsGameEndedLocalで除外）
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        if (currentSceneName == "GameScene" && !IsGameEndedLocal)
+        {
+            Debug.Log("[NetworkRunnerHandler] OnShutdown: GameScene中の予期しない切断を検出。タイトル画面に戻ります");
+            SceneManager.LoadScene("TitleScene");
+        }
+    }
+
+    /// <summary>
+    /// Fusionでスポーンされたネットワークオブジェクトを破棄する
+    /// DontDestroyOnLoadのRunnerからスポーンされたオブジェクトが
+    /// シーン遷移後もタイトル画面に残る問題を防ぐ
+    /// </summary>
+    private void DestroySpawnedNetworkObjects()
+    {
+        Debug.Log("[NetworkRunnerHandler] スポーンされたネットワークオブジェクトを破棄します");
+
+        // UyopyonState オブジェクト
+        var uyopyons = FindObjectsByType<UyopyonState>(FindObjectsSortMode.None);
+        foreach (var u in uyopyons)
+        {
+            if (u != null)
+            {
+                Debug.Log($"[NetworkRunnerHandler] UyopyonState を破棄: {u.gameObject.name}");
+                Destroy(u.gameObject);
+            }
+        }
+
+        // NetworkPlayer オブジェクト
+        var players = FindObjectsByType<NetworkPlayer>(FindObjectsSortMode.None);
+        foreach (var p in players)
+        {
+            if (p != null)
+            {
+                Debug.Log($"[NetworkRunnerHandler] NetworkPlayer を破棄: {p.gameObject.name}");
+                Destroy(p.gameObject);
+            }
+        }
+
+        // PlayerActionData オブジェクト
+        var actions = FindObjectsByType<PlayerActionData>(FindObjectsSortMode.None);
+        foreach (var a in actions)
+        {
+            if (a != null)
+            {
+                Debug.Log($"[NetworkRunnerHandler] PlayerActionData を破棄: {a.gameObject.name}");
+                Destroy(a.gameObject);
+            }
+        }
+
+        Debug.Log("[NetworkRunnerHandler] ネットワークオブジェクトの破棄完了");
     }
 
     // 以前は無かったメソッドの追加
@@ -292,56 +422,16 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log($"Runner.IsSharedModeMasterClient: {runner.IsSharedModeMasterClient}");
     }
 
-    // 以前は無かったメソッドの追加
+    /// <summary>
+    /// サーバーから切断されたときのコールバック。
+    /// シーン遷移はOnShutdownに一元化しているため、ここではログのみ出力する。
+    /// （OnDisconnectedFromServer の後に OnShutdown が Fusion から自動的に呼ばれる）
+    /// </summary>
     void INetworkRunnerCallbacks.OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
     {
         Debug.Log($"[NetworkRunnerHandler] サーバーから切断されました: {reason}");
-
-        // 現在のシーンを確認
-        string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        Debug.Log($"[NetworkRunnerHandler] 現在のシーン: {currentSceneName}");
-
-        // TitleSceneにいる場合は何もしない（既にタイトルに戻っている）
-        if (currentSceneName == "TitleScene")
-        {
-            Debug.Log("[NetworkRunnerHandler] 既にTitleSceneにいるため、何もしません");
-            return;
-        }
-
-        // GameFlowManagerが存在し、ゲーム終了フラグが立っている場合は何もしない
-        // （UIController等から意図的にシャットダウンされた場合）
-        var gameFlowManager = FindFirstObjectByType<GameFlowManager>();
-        if (gameFlowManager != null && gameFlowManager.IsGameEnded)
-        {
-            Debug.Log("[NetworkRunnerHandler] ゲーム終了フラグが立っているため、タイトル遷移をスキップします（リザルト画面からの遷移）");
-            return;
-        }
-
-        // GameScene中の予期しない切断の場合のみ、タイトル画面に戻る
-        if (currentSceneName == "GameScene")
-        {
-            Debug.Log("[NetworkRunnerHandler] GameScene中の予期しない切断を検出。タイトル画面に戻ります");
-            StartCoroutine(ReturnToTitleAfterDisconnect());
-        }
-    }
-
-    /// <summary>
-    /// 切断後にタイトル画面に戻るコルーチン
-    /// </summary>
-    private System.Collections.IEnumerator ReturnToTitleAfterDisconnect()
-    {
-        // 次のフレームでシーン遷移を実行（待機時間を最小限にする）
-        yield return null;
-
-        Debug.Log("[NetworkRunnerHandler] TitleSceneに遷移します");
-        try
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[NetworkRunnerHandler] LoadScene中に例外発生: {e.Message}");
-        }
+        // シーン遷移やShutdown呼び出しはここでは行わない。
+        // Fusionが自動的にOnShutdownを呼び出し、そこで一元的に処理する。
     }
 
     // 以下のメソッドはすべて明示的な実装に変更します
