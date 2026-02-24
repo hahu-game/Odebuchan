@@ -17,19 +17,12 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     private NetworkRunner _runner;
     private bool _started = false;
     private bool _isShuttingDown = false;
-    private bool _clientDisconnectedAfterGameEnd = false;
     public NetworkObject playerPrefab;
 
     /// <summary>
     /// ゲーム終了がローカルで確認済みかどうか（Shutdown後も参照可能）
     /// </summary>
     public bool IsGameEndedLocal { get; set; } = false;
-
-    /// <summary>
-    /// ゲーム終了後にクライアントが切断したかどうか（ホスト側で使用）
-    /// WaitForAcksAndShutdownでクライアントの切断を待つために使用する
-    /// </summary>
-    public bool ClientDisconnectedAfterGameEnd => _clientDisconnectedAfterGameEnd;
 
     private void Awake()
     {
@@ -185,7 +178,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         _started = false;  // フラグをリセット
         _started = true;
         IsGameEndedLocal = false;  // ゲーム終了フラグをリセット
-        _clientDisconnectedAfterGameEnd = false;  // クライアント切断フラグをリセット
 
         Debug.Log($"[StartGame] NetworkRunnerの準備完了。GameObject: {gameObject.name}");
 
@@ -317,13 +309,6 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     void INetworkRunnerCallbacks.OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         Debug.Log($"プレイヤーが退出しました: PlayerRef={player}");
-
-        // ゲーム終了後のクライアント切断を検知（ホスト側のShutdown待機に使用）
-        if (IsGameEndedLocal)
-        {
-            _clientDisconnectedAfterGameEnd = true;
-            Debug.Log("[NetworkRunnerHandler] ゲーム終了後にクライアントが切断されました");
-        }
     }
 
     void INetworkRunnerCallbacks.OnInput(NetworkRunner runner, NetworkInput input)
