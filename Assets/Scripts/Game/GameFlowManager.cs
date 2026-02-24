@@ -62,10 +62,6 @@ public class GameFlowManager : NetworkBehaviour
     private bool _selectionPhaseActive = false;
     private float _selectionPhaseElapsedTime = 0f;
 
-    // === ACKハンドシェイク関連 ===
-    private HashSet<PlayerRef> _ackReceivedFrom = new HashSet<PlayerRef>();
-    private const float ACK_TIMEOUT_SECONDS = 5.0f;
-
     // === 7.2で追加: 特殊能力選択完了フラグ ===
     private bool _abilitySelectionComplete = false;
     private SpecialAbilityType? _selectedAbilityFromClient = null;
@@ -1552,17 +1548,8 @@ public class GameFlowManager : NetworkBehaviour
         await UniTask.Delay(4000);
         Debug.Log("[GameFlowManager] アニメーション再生完了、4秒待機後");
 
-        // ACK受信トラッキングをリセット
-        _ackReceivedFrom.Clear();
-
-        // 8.3: リザルト画面表示
+        // 8.3: リザルト画面表示（シャットダウンはRPC内で制御）
         RPC_ShowResultPanel(winner, CurrentDay, isMorning);
-
-        // ホスト側: ACK受信を待機してからShutdown
-        if (Runner.IsSharedModeMasterClient)
-        {
-            _ = WaitForAcksAndShutdown();
-        }
     }
 
     /// <summary>
@@ -1592,8 +1579,8 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// 8.3: リザルト画面表示をRPC経由で全クライアントに通知
-    /// ACKハンドシェイクでデータ受信を確認後、セッションをシャットダウンする
+    /// 8.3: リザルト画面表示をRPC経由で全クライアントに通知し、シャットダウンを開始する。
+    /// ホストは3フレーム待機後にShutdown（RPCパケット到達保証）、クライアントは即時Shutdown。
     /// </summary>
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_ShowResultPanel(PlayerRef winner, int day, bool isMorning)
@@ -1625,104 +1612,36 @@ public class GameFlowManager : NetworkBehaviour
             Debug.LogError("[GameFlowManager] UIController.Instance が null です");
         }
 
-        // 5. ACK送信（ホストに「リザルトデータ受信完了」を通知）
-        RPC_AckResultReceived();
-
-        // 6. クライアント（非ホスト）の場合: 2フレーム待機後にShutdown
-        if (Runner != null && !Runner.IsSharedModeMasterClient)
-        {
-            Debug.Log("[GameFlowManager] クライアント側: 2フレーム待機後にShutdownします");
-            _ = ClientDelayedShutdown();
-        }
+        // 5. シャットダウン開始（ホスト: 3フレーム待機でRPCパケットの到達を保証、クライアント: 即時）
+        int shutdownDelayFrames = Runner.IsSharedModeMasterClient ? 10 : 0; //3→10にした
+        Debug.Log($"[GameFlowManager] シャットダウンを開始します（{(Runner.IsSharedModeMasterClient ? "ホスト: 10フレーム後" : "クライアント: 即時")}）");
+        _ = InitiateShutdown(shutdownDelayFrames);
 
         Debug.Log("[GameFlowManager] リザルト画面を表示しました。セッション終了処理を開始します。");
     }
 
     /// <summary>
-    /// クライアント側のACK送信後に2フレーム待機してからShutdownする
+    /// ホスト・クライアント共通のシャットダウン処理。
+    /// ホストはRPCパケットがPhoton Cloudリレーに届く時間を確保するため3フレーム待機する。
+    /// クライアントはRPC受信後に即時シャットダウンする。
     /// </summary>
-    private async UniTask ClientDelayedShutdown()
+    private async UniTask InitiateShutdown(int delayFrames)
     {
-        // 2フレーム待機（ACK RPCが確実に送信されるのを待つ）
-        await UniTask.DelayFrame(2);
+        if (delayFrames > 0)
+        {
+            Debug.Log($"[GameFlowManager] シャットダウン前に {delayFrames} フレーム待機します（RPCパケット送信保証）");
+            await UniTask.DelayFrame(delayFrames);
+        }
 
-        // NetworkRunnerHandler経由でShutdown（await で完了を待つ）
         var handler = FindFirstObjectByType<NetworkRunnerHandler>();
         if (handler != null)
         {
-            Debug.Log("[GameFlowManager] クライアント側: NetworkRunnerHandler.ShutdownRunnerAsync() を実行します");
+            Debug.Log("[GameFlowManager] NetworkRunnerHandler.ShutdownRunnerAsync() を実行します");
             await handler.ShutdownRunnerAsync();
         }
-    }
-
-    /// <summary>
-    /// リザルトデータ受信完了をホストに通知するRPC
-    /// </summary>
-    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
-    private void RPC_AckResultReceived(RpcInfo info = default)
-    {
-        PlayerRef sender = info.Source;
-        _ackReceivedFrom.Add(sender);
-        Debug.Log($"[GameFlowManager] RPC_AckResultReceived: Player {sender} からACKを受信（合計: {_ackReceivedFrom.Count}）");
-    }
-
-    /// <summary>
-    /// ホスト側: 全ACK受信 → クライアント切断確認 → Shutdownする
-    /// クライアントがShutdownしたことを確認してからホストがShutdownする
-    /// </summary>
-    private async UniTask WaitForAcksAndShutdown()
-    {
-        Debug.Log("[GameFlowManager] WaitForAcksAndShutdown: ACK待機を開始します");
-
-        float elapsed = 0f;
-        int expectedAckCount = Runner.ActivePlayers.Count();
-
-        // Phase 1: 全クライアントからのACK受信を待機
-        while (elapsed < ACK_TIMEOUT_SECONDS)
+        else
         {
-            if (_ackReceivedFrom.Count >= expectedAckCount)
-            {
-                Debug.Log($"[GameFlowManager] 全ACKを受信しました（{_ackReceivedFrom.Count}/{expectedAckCount}）");
-                break;
-            }
-
-            await UniTask.Yield();
-            elapsed += Time.deltaTime;
-        }
-
-        if (_ackReceivedFrom.Count < expectedAckCount)
-        {
-            Debug.LogWarning($"[GameFlowManager] ACKタイムアウト（{elapsed:F1}秒）: {_ackReceivedFrom.Count}/{expectedAckCount} ACK受信");
-        }
-
-        // Phase 2: クライアントの切断を待機（OnPlayerLeftで検知）
-        Debug.Log("[GameFlowManager] WaitForAcksAndShutdown: クライアントの切断を待機します");
-        var handler = FindFirstObjectByType<NetworkRunnerHandler>();
-        const float CLIENT_DISCONNECT_TIMEOUT = 10.0f;
-        float disconnectElapsed = 0f;
-
-        while (disconnectElapsed < CLIENT_DISCONNECT_TIMEOUT)
-        {
-            if (handler != null && handler.ClientDisconnectedAfterGameEnd)
-            {
-                Debug.Log("[GameFlowManager] クライアントの切断を確認しました");
-                break;
-            }
-
-            await UniTask.Yield();
-            disconnectElapsed += Time.deltaTime;
-        }
-
-        if (disconnectElapsed >= CLIENT_DISCONNECT_TIMEOUT)
-        {
-            Debug.LogWarning($"[GameFlowManager] クライアント切断タイムアウト（{disconnectElapsed:F1}秒）");
-        }
-
-        // Phase 3: ホスト側のShutdown（クライアント切断確認後）
-        if (handler != null)
-        {
-            Debug.Log("[GameFlowManager] ホスト側: NetworkRunnerHandler.ShutdownRunnerAsync() を実行します");
-            await handler.ShutdownRunnerAsync();
+            Debug.LogWarning("[GameFlowManager] NetworkRunnerHandlerが見つかりません。シャットダウンをスキップします");
         }
     }
 
