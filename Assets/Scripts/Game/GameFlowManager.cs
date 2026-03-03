@@ -1612,37 +1612,16 @@ public class GameFlowManager : NetworkBehaviour
             Debug.LogError("[GameFlowManager] UIController.Instance が null です");
         }
 
-        // 5. シャットダウン開始（ホスト: 3フレーム待機でRPCパケットの到達を保証、クライアント: 即時）
-        int shutdownDelayFrames = Runner.IsSharedModeMasterClient ? 10 : 0; //3→10にした
-        Debug.Log($"[GameFlowManager] シャットダウンを開始します（{(Runner.IsSharedModeMasterClient ? "ホスト: 10フレーム後" : "クライアント: 即時")}）");
-        _ = InitiateShutdown(shutdownDelayFrames);
+        // クライアントのみ: 自分でShutdown（Shared ModeではRunner.Disconnect不可のため自己切断）
+        // ホストはOnPlayerLeftでクライアント退出を検知してからShutdownする
+        if (!Runner.IsSharedModeMasterClient)
+        {
+            Debug.Log("[GameFlowManager] RPC_ShowResultPanel: クライアントがShutdownします");
+            var handler = FindFirstObjectByType<NetworkRunnerHandler>();
+            _ = handler?.ShutdownRunnerAsync();
+        }
 
         Debug.Log("[GameFlowManager] リザルト画面を表示しました。セッション終了処理を開始します。");
-    }
-
-    /// <summary>
-    /// ホスト・クライアント共通のシャットダウン処理。
-    /// ホストはRPCパケットがPhoton Cloudリレーに届く時間を確保するため3フレーム待機する。
-    /// クライアントはRPC受信後に即時シャットダウンする。
-    /// </summary>
-    private async UniTask InitiateShutdown(int delayFrames)
-    {
-        if (delayFrames > 0)
-        {
-            Debug.Log($"[GameFlowManager] シャットダウン前に {delayFrames} フレーム待機します（RPCパケット送信保証）");
-            await UniTask.DelayFrame(delayFrames);
-        }
-
-        var handler = FindFirstObjectByType<NetworkRunnerHandler>();
-        if (handler != null)
-        {
-            Debug.Log("[GameFlowManager] NetworkRunnerHandler.ShutdownRunnerAsync() を実行します");
-            await handler.ShutdownRunnerAsync();
-        }
-        else
-        {
-            Debug.LogWarning("[GameFlowManager] NetworkRunnerHandlerが見つかりません。シャットダウンをスキップします");
-        }
     }
 
     // === 9.2: 投了機能 ===

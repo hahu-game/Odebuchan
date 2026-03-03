@@ -4549,7 +4549,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.5
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -6278,7 +6278,7 @@ MonoBehaviour:
   seSurrender: {fileID: 0}
   seEndGame: {fileID: 8300000, guid: a67c21c93593f0841a9725384e57017d, type: 3}
   seStartAction: {fileID: 8300000, guid: 5f6ea947390a33b4b8f3c35b01634293, type: 3}
-  bgmVolume: 0.5
+  bgmVolume: 0.05
   seVolume: 0.7
 --- !u!4 &1702345772
 Transform:
