@@ -309,6 +309,13 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
     void INetworkRunnerCallbacks.OnPlayerLeft(NetworkRunner runner, PlayerRef player)
     {
         Debug.Log($"プレイヤーが退出しました: PlayerRef={player}");
+
+        // ゲーム終了後のクライアント退出 → ホストがShutdown
+        if (IsGameEndedLocal && runner.IsSharedModeMasterClient)
+        {
+            Debug.Log("[NetworkRunnerHandler] OnPlayerLeft: ゲーム終了後のクライアント切断を確認。Shutdownします");
+            _ = ShutdownRunnerAsync();
+        }
     }
 
     void INetworkRunnerCallbacks.OnInput(NetworkRunner runner, NetworkInput input)

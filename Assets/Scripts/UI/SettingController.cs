@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -73,7 +74,18 @@ public class SettingController : MonoBehaviour
         // すべてのパネルを非表示
         ForceHideAllPanels();
 
-        // UI参照を再取得
+        // UI参照の再取得は1フレーム後に行う
+        // （同フレーム内でDestroy()された重複インスタンスのオブジェクトを誤検出しないため）
+        StartCoroutine(ReassignUIReferencesAfterDestroy(scene));
+    }
+
+    /// <summary>
+    /// Destroy() が完了する次フレームまで待機してからUI参照を再取得する
+    /// </summary>
+    private IEnumerator ReassignUIReferencesAfterDestroy(Scene scene)
+    {
+        yield return null; // Destroy() が完了するまで1フレーム待機
+
         ReassignUIReferences();
 
         // TitleSceneでは降参ボタンを非表示
