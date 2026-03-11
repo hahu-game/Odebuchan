@@ -3,7 +3,11 @@
   "WorkspaceRootPath": "C:\\Users\\helic\\Odebuchan\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\title\\titlescreenmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|c:\\users\\helic\\odebuchan\\assets\\scripts\\title\\titlescreenmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\title\\titlescreenmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
@@ -23,16 +27,12 @@
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\game\\gamemanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|c:\\users\\helic\\odebuchan\\assets\\scripts\\network\\networkplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\network\\networkplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\network\\networkplayer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\data\\playeractiondata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\data\\playeractiondata.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|solutionrelative:assets\\scripts\\ui\\uicontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B440FCF9-86B8-5C2B-C1A8-D3317FC78A72}|Assembly-CSharp.csproj|C:\\Users\\helic\\Odebuchan\\assets\\scripts\\ui\\settingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -102,7 +102,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 9,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
@@ -118,15 +118,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 0,
               "Title": "UIController.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\UI\\UIController.cs",
               "ToolTip": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\UI\\UIController.cs",
               "RelativeToolTip": "Assets\\Scripts\\UI\\UIController.cs",
-              "ViewState": "AgIAANEDAAAAAAAAAAAqwN8DAAAmAAAAAAAAAA==",
+              "ViewState": "AgIAAMIDAAAAAAAAAAA6wNwDAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T11:36:58.038Z"
+              "WhenOpened": "2025-11-02T11:36:58.038Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -142,7 +143,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "PlayerActionData.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Data\\PlayerActionData.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Data\\PlayerActionData.cs",
@@ -166,7 +167,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "GameFlowManager.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameFlowManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameFlowManager.cs",
@@ -174,8 +175,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Game\\GameFlowManager.cs",
               "ViewState": "AgIAAOsFAAAAAAAAAAAawDgGAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-02T12:59:19.56Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-02T12:59:19.56Z"
             },
             {
               "$type": "Document",
@@ -215,7 +215,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "TitleScreenManager.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\TitleScreenManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Title\\TitleScreenManager.cs",
@@ -228,7 +228,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "GameManager.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Game\\GameManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Game\\GameManager.cs",
@@ -236,8 +236,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Game\\GameManager.cs",
               "ViewState": "AgIAADAAAAAAAAAAAIAzwEIAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T16:16:16.97Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-22T16:16:16.97Z"
             },
             {
               "$type": "Document",
@@ -253,7 +252,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "AudioManager.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Audio\\AudioManager.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Audio\\AudioManager.cs",
@@ -261,8 +260,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Audio\\AudioManager.cs",
               "ViewState": "AgIAAD0AAAAAAAAAAAAAwEgAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-01-06T09:01:04.677Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-01-06T09:01:04.677Z"
             },
             {
               "$type": "Document",
@@ -326,7 +324,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "NetworkRunnerHandler.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
@@ -334,8 +332,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Title\\NetworkRunnerHandler.cs",
               "ViewState": "AgIAABwAAAAAAAAAAAAhwCsAAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T14:31:59.714Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-22T14:31:59.714Z"
             },
             {
               "$type": "Document",
@@ -351,7 +348,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "NetworkPlayer.cs",
               "DocumentMoniker": "C:\\Users\\helic\\Odebuchan\\Assets\\Scripts\\Network\\NetworkPlayer.cs",
               "RelativeDocumentMoniker": "Assets\\Scripts\\Network\\NetworkPlayer.cs",
@@ -359,8 +356,7 @@
               "RelativeToolTip": "Assets\\Scripts\\Network\\NetworkPlayer.cs",
               "ViewState": "AgIAAGIAAAAAAAAAAAAcwBYAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-22T15:20:09.066Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-10-22T15:20:09.066Z"
             },
             {
               "$type": "Document",

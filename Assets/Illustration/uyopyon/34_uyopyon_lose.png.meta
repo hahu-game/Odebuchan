@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: c8db103c073396a43ad16de97b41ac96
+guid: a288901d20cdc3b4e94dbed5682d289a
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6270953770400647376
-    second: 14_0
+      213: 6214936641139653916
+    second: 34_uyopyon_lose_0
+  - first:
+      213: -6434108990671212951
+    second: 34_uyopyon_lose_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +49,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -113,13 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: 14_0
+      name: 34_uyopyon_lose_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 2500
-        height: 1458
+        x: 194
+        y: 1097
+        width: 57
+        height: 400
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +131,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0377f5055c819f8a0800000000000000
-      internalID: -6270953770400647376
+      spriteID: c1d30bc62f3ef3650800000000000000
+      internalID: 6214936641139653916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: 34_uyopyon_lose_1
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 97
+        width: 1317
+        height: 1627
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96e25ec56f375b6a0800000000000000
+      internalID: -6434108990671212951
       vertices: []
       indices: 
       edges: []
@@ -138,7 +163,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -148,7 +173,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      14_0: -6270953770400647376
+      34_uyopyon_lose_0: 6214936641139653916
+      34_uyopyon_lose_1: -6434108990671212951
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

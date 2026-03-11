@@ -144,6 +144,12 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI resultOppJankenWinText;
     public UnityEngine.UI.Button resultReturnToTitleButton;
 
+    [Header("Result Win/Lose Images")]
+    public GameObject resultMyWinImage;   // 自分が勝利時に自分の名前横に表示（33_uyopyon_win）
+    public GameObject resultMyLoseImage;  // 自分が敗北時に自分の名前横に表示（34_uyopyon_lose）
+    public GameObject resultOppWinImage;  // 相手が勝利時に相手の名前横に表示（33_uyopyon_win）
+    public GameObject resultOppLoseImage; // 相手が敗北時に相手の名前横に表示（34_uyopyon_lose）
+
     // === 9.2で追加: 設定パネル ===
     // SettingControllerはシングルトン（DontDestroyOnLoad）になったため、
     // SettingController.Instanceを使用する
@@ -316,6 +322,12 @@ public class UIController : MonoBehaviour
             resultPanel.SetActive(false);
             Debug.Log("[UIController] リザルトパネルを非表示に設定");
         }
+
+        // 勝敗画像の初期化
+        if (resultMyWinImage != null)   resultMyWinImage.SetActive(false);
+        if (resultMyLoseImage != null)  resultMyLoseImage.SetActive(false);
+        if (resultOppWinImage != null)  resultOppWinImage.SetActive(false);
+        if (resultOppLoseImage != null) resultOppLoseImage.SetActive(false);
         
         // ゲーム開始時にログをクリア（メモリリーク防止）
         ClearLog();
@@ -2969,6 +2981,9 @@ public class UIController : MonoBehaviour
             resultOppJankenWinText.text = $"じゃんけん勝利数: {oppState.JankenWinCount}回";
         }
 
+        // 勝敗画像を表示
+        ShowResultWinLoseImages(myPlayer == winner);
+
         // リザルトパネルを表示
         resultPanel.SetActive(true);
     }
@@ -3044,8 +3059,23 @@ public class UIController : MonoBehaviour
             resultOppJankenWinText.text = $"じゃんけん勝利数: {data.OppJankenWinCount}回";
         }
 
+        // 勝敗画像を表示（WinnerIsHost と MyIsHost が一致すれば自分が勝者）
+        ShowResultWinLoseImages(data.WinnerIsHost == data.MyIsHost);
+
         // リザルトパネルを表示
         resultPanel.SetActive(true);
+    }
+
+    /// <summary>
+    /// リザルト画面の勝敗画像を表示する
+    /// </summary>
+    /// <param name="myWon">自分が勝者ならtrue、敗者ならfalse</param>
+    private void ShowResultWinLoseImages(bool myWon)
+    {
+        if (resultMyWinImage != null)   resultMyWinImage.SetActive(myWon);
+        if (resultMyLoseImage != null)  resultMyLoseImage.SetActive(!myWon);
+        if (resultOppWinImage != null)  resultOppWinImage.SetActive(!myWon);
+        if (resultOppLoseImage != null) resultOppLoseImage.SetActive(myWon);
     }
 
     /// <summary>
