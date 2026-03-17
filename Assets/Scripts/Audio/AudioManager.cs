@@ -54,7 +54,6 @@ public class AudioManager : MonoBehaviour
     public AudioClip seSicknessOnset;
     public AudioClip seInjuryOnset;
     public AudioClip seAilmentCure;
-    public AudioClip seParameterChange;
 
     [Header("SE Clips - Janken")]
     public AudioClip seJankenWin;
@@ -240,7 +239,6 @@ public class AudioManager : MonoBehaviour
     public void PlaySicknessOnsetSE() => PlaySE(seSicknessOnset);
     public void PlayInjuryOnsetSE() => PlaySE(seInjuryOnset);
     public void PlayAilmentCureSE() => PlaySE(seAilmentCure);
-    public void PlayParameterChangeSE() => PlaySE(seParameterChange);
 
     // 便利メソッド - Janken
     public void PlayJankenWinSE() => PlaySE(seJankenWin);

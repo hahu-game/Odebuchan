@@ -27,11 +27,11 @@ public class UIController : MonoBehaviour
 
     // === プレイヤー名の文字色設定 ===
     [Header("Player Name Text Colors")]
-    [Tooltip("ホストプレイヤーの名前文字色（デフォルト: #800000 濃い赤）")]
-    public Color hostPlayerNameColor = new Color(0.502f, 0.0f, 0.0f, 1.0f); // #800000
+    [Tooltip("ホストプレイヤーの名前文字色（デフォルト: #1565C0 青）")]
+    public Color hostPlayerNameColor = new Color(0.0824f, 0.396f, 0.753f, 1.0f); // #1565C0
 
-    [Tooltip("クライアントプレイヤーの名前文字色（デフォルト: #008000 緑）")]
-    public Color clientPlayerNameColor = new Color(0.0f, 0.502f, 0.0f, 1.0f); // #008000
+    [Tooltip("クライアントプレイヤーの名前文字色（デフォルト: #EF6C00 オレンジ）")]
+    public Color clientPlayerNameColor = new Color(0.937f, 0.424f, 0.0f, 1.0f); // #EF6C00
 
     // === 自分のUI要素 ===
     public TextMeshProUGUI myNameText;
@@ -723,12 +723,12 @@ public class UIController : MonoBehaviour
             rectTransform.pivot = new Vector2(0, 1);
             rectTransform.anchoredPosition = new Vector2(0, 0);
 
-            // sizeDeltaで横幅を明示的に設定（親の幅-10px（左右5pxずつマージン））
+            // sizeDeltaで横幅を明示的に設定（親の幅+10px（左右5pxずつマージン））
             RectTransform parentRect = logContent as RectTransform;
             if (parentRect != null)
             {
                 float parentWidth = parentRect.rect.width;
-                rectTransform.sizeDelta = new Vector2(parentWidth - 10f, 0);
+                rectTransform.sizeDelta = new Vector2(parentWidth + 10f, 0);
             }
             else
             {
@@ -789,7 +789,7 @@ public class UIController : MonoBehaviour
         spacerRect.anchorMin = new Vector2(0, 1);
         spacerRect.anchorMax = new Vector2(1, 1);
         spacerRect.pivot = new Vector2(0, 1);
-        spacerRect.sizeDelta = new Vector2(0, 60f); // 高さ60pxの余白
+        spacerRect.sizeDelta = new Vector2(0, 180f); // 高さ60pxの余白
         spacer.transform.SetAsLastSibling(); // 最後に配置
 
         // 自動的に最下部にスクロール（重複実行を防ぐ）
