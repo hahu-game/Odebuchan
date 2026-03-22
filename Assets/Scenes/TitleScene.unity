@@ -1094,7 +1094,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 439.4, y: 257.25}
+  m_AnchoredPosition: {x: 434, y: 257.25}
   m_SizeDelta: {x: 100, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &142168253
@@ -1373,7 +1373,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -19.11}
+  m_AnchoredPosition: {x: 0, y: -22}
   m_SizeDelta: {x: 90, y: 50.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &149666581
@@ -2913,7 +2913,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -19.11}
+  m_AnchoredPosition: {x: 0, y: -22}
   m_SizeDelta: {x: 90, y: 50.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &625420858
@@ -5439,7 +5439,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 369.3, y: 257.25}
+  m_AnchoredPosition: {x: 354, y: 257.25}
   m_SizeDelta: {x: 100, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1126074675
@@ -7127,7 +7127,6 @@ MonoBehaviour:
   seSicknessOnset: {fileID: 0}
   seInjuryOnset: {fileID: 8300000, guid: 8da9fee72ad25854fba06c55360f967c, type: 3}
   seAilmentCure: {fileID: 8300000, guid: 8da9fee72ad25854fba06c55360f967c, type: 3}
-  seParameterChange: {fileID: 8300000, guid: e4e20cd094320c34498be82bf8869269, type: 3}
   seJankenWin: {fileID: 8300000, guid: 9d38b72b643cc6440882c44aab9f3ebf, type: 3}
   seJankenLose: {fileID: 8300000, guid: 24ca6496e7349ad4cbb6e4293b8f700b, type: 3}
   seVictory: {fileID: 0}

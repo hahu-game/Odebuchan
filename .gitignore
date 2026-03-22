@@ -8,6 +8,8 @@
 [Bb]uilds/
 [Ll]ogs/
 MemoryCaptures/
+# Visual Studio folder
+.vs/
 
 # Uncomment this line if you have a local Unity Package Manager cache
 # [Pp]ackages/*/LocalPackages/
@@ -53,3 +55,4 @@ sysinfo.txt
 # Unity Cache Server files #
 # ======================== #
 /Library/Cache/
+
