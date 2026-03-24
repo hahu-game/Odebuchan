@@ -281,7 +281,8 @@ public class UIController : MonoBehaviour
 
     // === フォントサイズのデフォルト値保存 ===
     // 9.3: _defaultSpecialAbilityButtonTextSize は削除されました
-    private float _defaultActionTextSize;
+    private float _defaultTodayActionTextSize;
+    private float _defaultYesterdayAfternoonActionTextSize;
 
 
 
@@ -301,7 +302,8 @@ public class UIController : MonoBehaviour
         // 9.3: specialAbilityButtonText は削除されました
         if (myTodayMorningActionText != null)
         {
-            _defaultActionTextSize = myTodayMorningActionText.fontSize;
+            _defaultTodayActionTextSize = myTodayMorningActionText.fontSize;
+            _defaultYesterdayAfternoonActionTextSize = myYesterdayAfternoonActionText.fontSize;
         }
 
         // パラメータアニメーションコンポーネントを追加
@@ -992,7 +994,7 @@ public class UIController : MonoBehaviour
             if (myTodayAfternoonActionText != null)
             {
                 myTodayAfternoonActionText.text = "";
-                myTodayAfternoonActionText.fontSize = _defaultActionTextSize;
+                myTodayAfternoonActionText.fontSize = _defaultTodayActionTextSize;
             }
 
             // 午後選択中のハイライトを維持
@@ -1022,12 +1024,12 @@ public class UIController : MonoBehaviour
             if (myTodayMorningActionText != null)
             {
                 myTodayMorningActionText.text = "";
-                myTodayMorningActionText.fontSize = _defaultActionTextSize;
+                myTodayMorningActionText.fontSize = _defaultTodayActionTextSize;
             }
             if (myTodayAfternoonActionText != null)
             {
                 myTodayAfternoonActionText.text = "";
-                myTodayAfternoonActionText.fontSize = _defaultActionTextSize;
+                myTodayAfternoonActionText.fontSize = _defaultTodayActionTextSize;
             }
 
             // 午前選択中のハイライトに戻す
@@ -1050,10 +1052,6 @@ public class UIController : MonoBehaviour
 
 
 
-    /// <summary>
-    /// 6つの特殊能力ボタンがクリックされた時の処理（特殊能力タイプを直接指定）
-    /// 9.3: べんきょうボタン修正 - 特殊能力タイプを直接渡すように変更
-    /// </summary>
     private void OnActionButtonClicked(ActionType actionType, SpecialAbilityType abilityType)
     {
         Debug.Log($"[UIController] OnActionButtonClicked 開始: actionType={actionType}, abilityType={abilityType}");
@@ -1084,7 +1082,7 @@ public class UIController : MonoBehaviour
                 UpdateActionDisplay(runner.LocalPlayer, true, selectedAction);
             }
 
-            HighlightCurrentSelection(false); // 午前選択中を表示
+            HighlightCurrentSelection(true); // 午後選択中を表示
 
             // 午前の行動が選択されたので、午後のボタン状態を更新
             // 9.3修正: 午後の行動ボタンの効果表示を更新（連続使用デバフを反映）
@@ -1113,7 +1111,7 @@ public class UIController : MonoBehaviour
             }
 
             // 午前・午後の両方が選択されたので、選択完了
-            HighlightCurrentSelection(false); // ハイライト解除（未選択状態に戻す）
+            HighlightCurrentSelection(true); // ハイライト解除（未選択状態に戻す）
         }
     }
 
@@ -1178,7 +1176,7 @@ public class UIController : MonoBehaviour
                 }
 
                 UpdateActionDisplay(runner.LocalPlayer, true, selectedAction);
-                HighlightCurrentSelection(false); // 午前選択中を表示
+                HighlightCurrentSelection(true); // 午後選択中を表示
             }
 
             // 午前の行動が選択されたので、午後の選択肢を午前+午後の合計で再チェック
@@ -1251,12 +1249,12 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 myTodayMorningActionText.text = actionText;
-                SetFontSizeForSpecialAbility(myTodayMorningActionText, actionText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(myTodayMorningActionText, actionText, _defaultTodayActionTextSize, 30f);
             }
             else
             {
                 myTodayAfternoonActionText.text = actionText;
-                SetFontSizeForSpecialAbility(myTodayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(myTodayAfternoonActionText, actionText, _defaultTodayActionTextSize, 30f);
             }
         }
         else
@@ -1264,12 +1262,12 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 oppTodayMorningActionText.text = actionText;
-                SetFontSizeForSpecialAbility(oppTodayMorningActionText, actionText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(oppTodayMorningActionText, actionText, _defaultTodayActionTextSize, 30f);
             }
             else
             {
                 oppTodayAfternoonActionText.text = actionText;
-                SetFontSizeForSpecialAbility(oppTodayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(oppTodayAfternoonActionText, actionText, _defaultTodayActionTextSize, 30f);
             }
         }
     }
@@ -1289,12 +1287,12 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 myTodayMorningActionText.text = customText;
-                SetFontSizeForSpecialAbility(myTodayMorningActionText, customText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(myTodayMorningActionText, customText, _defaultTodayActionTextSize, 30f);
             }
             else
             {
                 myTodayAfternoonActionText.text = customText;
-                SetFontSizeForSpecialAbility(myTodayAfternoonActionText, customText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(myTodayAfternoonActionText, customText, _defaultTodayActionTextSize, 30f);
             }
         }
         else
@@ -1302,12 +1300,12 @@ public class UIController : MonoBehaviour
             if (isMorning)
             {
                 oppTodayMorningActionText.text = customText;
-                SetFontSizeForSpecialAbility(oppTodayMorningActionText, customText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(oppTodayMorningActionText, customText, _defaultTodayActionTextSize, 30f);
             }
             else
             {
                 oppTodayAfternoonActionText.text = customText;
-                SetFontSizeForSpecialAbility(oppTodayAfternoonActionText, customText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(oppTodayAfternoonActionText, customText, _defaultTodayActionTextSize, 30f);
             }
         }
     }
@@ -1350,7 +1348,7 @@ public class UIController : MonoBehaviour
             if (myYesterdayAfternoonActionText != null)
             {
                 myYesterdayAfternoonActionText.text = actionText;
-                SetFontSizeForSpecialAbility(myYesterdayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(myYesterdayAfternoonActionText, actionText, _defaultYesterdayAfternoonActionTextSize, 26f);
             }
         }
         else
@@ -1358,7 +1356,7 @@ public class UIController : MonoBehaviour
             if (oppYesterdayAfternoonActionText != null)
             {
                 oppYesterdayAfternoonActionText.text = actionText;
-                SetFontSizeForSpecialAbility(oppYesterdayAfternoonActionText, actionText, _defaultActionTextSize, 160f);
+                SetFontSizeForSpecialAbility(oppYesterdayAfternoonActionText, actionText, _defaultYesterdayAfternoonActionTextSize, 26f);
             }
         }
     }
@@ -1391,24 +1389,20 @@ public class UIController : MonoBehaviour
 
         if (isAfternoon)
         {
-            // 午後を選択中 - 午前は薄いグレー、午後は黄色
-            morningOutline.effectColor = Color.gray;
-            morningOutline.enabled = true;  // 両方とも表示する
+            // 午後を選択中 
+            morningOutline.enabled = false;  
             Debug.Log($"[UIController] 午前Outline設定: effectColor=Gray, enabled=true");
 
-            afternoonOutline.effectColor = Color.yellow;
             afternoonOutline.enabled = true;
             Debug.Log($"[UIController] 午後Outline設定: effectColor=Yellow, enabled=true");
         }
         else
         {
-            // 午前を選択中 - 午前は黄色、午後は薄いグレー
-            morningOutline.effectColor = Color.yellow;
+            // 午前を選択中
             morningOutline.enabled = true;
             Debug.Log($"[UIController] 午前Outline設定: effectColor=Yellow, enabled=true");
 
-            afternoonOutline.effectColor = Color.gray;
-            afternoonOutline.enabled = true;  // 両方とも表示する
+            afternoonOutline.enabled = false;  
             Debug.Log($"[UIController] 午後Outline設定: effectColor=Gray, enabled=true");
         }
     }
@@ -1769,7 +1763,7 @@ public class UIController : MonoBehaviour
             if (myTodayMorningActionText != null)
             {
                 myTodayMorningActionText.text = "つういん";
-                myTodayMorningActionText.fontSize = _defaultActionTextSize;
+                myTodayMorningActionText.fontSize = _defaultTodayActionTextSize;
             }
 
             // 午後選択中のハイライト
