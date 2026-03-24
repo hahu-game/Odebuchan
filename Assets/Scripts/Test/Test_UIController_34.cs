@@ -153,12 +153,12 @@ public class Test_UIController_34 : MonoBehaviour
     }
 
     /// <summary>
-    /// テスト用: 体重を650増加させるボタンがクリックされた時の処理
+    /// テスト用: 体重を350増加させるボタンがクリックされた時の処理
     /// UIボタンから呼び出し可能
     /// </summary>
     public void ManualTestIncreaseWeight()
     {
-        Debug.Log("[Test_34] 手動テスト: 体重+650");
+        Debug.Log("[Test_34] 手動テスト: 体重+350");
 
         // NetworkRunnerから現在のLocalPlayerを取得
         var runner = FindFirstObjectByType<NetworkRunner>();
