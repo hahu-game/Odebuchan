@@ -308,6 +308,7 @@ public class UyopyonState : NetworkBehaviour
             UIController.Instance?.UpdateWeightDisplay(OwnerPlayer, Weight);
             // 注: じゅくすい・どかぐいのボタン状態は選択フェーズ開始時にのみ更新される
             // （選択フェーズ開始時の重さ合計で判定するため、途中で重さが変わっても再判定しない）
+            UpdateScale();
 
             _lastWeight = Weight;
         }
@@ -427,6 +428,8 @@ public class UyopyonState : NetworkBehaviour
     {
         DebugLogger.Log($"[UyopyonState] UpdateDisplay: OwnerPlayer={OwnerPlayer}, Weight={Weight}, Energy={Energy}");
 
+        UpdateScale();
+
         if (UIController.Instance != null)
         {
             UIController.Instance.UpdateWeightDisplay(OwnerPlayer, Weight);
@@ -452,6 +455,17 @@ public class UyopyonState : NetworkBehaviour
     }
 
     // === ヘルパーメソッド ===
+
+    /// <summary>
+    /// 体重に比例してオブジェクトのスケールを更新する
+    /// Weight=10 → scale(1, 1)、Weight=1000 → scale(5, 5)
+    /// </summary>
+    private void UpdateScale()
+    {
+        float clampedWeight = Mathf.Clamp(Weight, 10f, 1000f);
+        float scale = Mathf.Lerp(1f, 5f, (clampedWeight - 10f) / 990f);
+        transform.localScale = new Vector3(scale, scale, 1f);
+    }
 
     /// <summary>
     /// 特定の状態異常を持っているかチェック

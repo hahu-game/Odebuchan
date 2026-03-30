@@ -25,10 +25,10 @@ public class GameManager : MonoBehaviour
     // === プレイヤーごとの生成座標 ===
     [Header("Uyopyon生成座標設定")]
     [Tooltip("プレイヤー1（自分）の生成座標 - 各クライアントでローカル表示に使用")]
-    public Vector3 player1SpawnPosition = new Vector3(-3, 0, 0);
+    public Vector3 player1SpawnPosition = new Vector3(-3, 1, 0);
 
     [Tooltip("プレイヤー2（相手）の生成座標 - 各クライアントでローカル表示に使用")]
-    public Vector3 player2SpawnPosition = new Vector3(3, 0, 0);
+    public Vector3 player2SpawnPosition = new Vector3(4, 1, 0);
 
     // プレイヤーIDと対応するUyopyonStateの参照を保持
     private Dictionary<PlayerRef, UyopyonState> _playerStates = new Dictionary<PlayerRef, UyopyonState>();
