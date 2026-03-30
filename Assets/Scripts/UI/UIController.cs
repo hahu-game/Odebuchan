@@ -1641,7 +1641,7 @@ public class UIController : MonoBehaviour
         // ねむる
         if (sleepButton != null)
         {
-            sleepButton.interactable = EnergyCheck.CanPerformAction(currentEnergy, ActionType.Sleep, isMorning, morningAction, previousAction, gameParams);
+            sleepButton.interactable = true;
         }
 
         // あそぶ
@@ -1653,7 +1653,7 @@ public class UIController : MonoBehaviour
         // つういん
         if (clinicButton != null)
         {
-            clinicButton.interactable = EnergyCheck.CanPerformAction(currentEnergy, ActionType.Clinic, isMorning, morningAction, previousAction, gameParams);
+            clinicButton.interactable = true;
         }
 
         // 9.3: 特殊能力ボタン（6つ個別に、進化後のみ、アクティブなボタンのみ）
@@ -1671,7 +1671,7 @@ public class UIController : MonoBehaviour
             if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
                 benkyouButton.interactable = canUseAbility;
             if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
-                jukusuiButton.interactable = canUseAbility;
+                jukusuiButton.interactable = true;
             if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
                 dokaguiButton.interactable = canUseAbility;
         }
@@ -1878,15 +1878,6 @@ public class UIController : MonoBehaviour
 
         Debug.Log($"[UIController] 特殊能力タイプ: {abilityType}");
 
-        // じゅくすい・どかぐい以外の場合は常に有効（該当するボタンのみ）
-        if (abilityType != SpecialAbilityType.Jukusui && abilityType != SpecialAbilityType.Dokagui)
-        {
-            // 9.3: 該当する特殊能力ボタンを有効化
-            EnableSpecialAbilityButton(abilityType, true);
-            Debug.Log($"[UIController] {abilityType} は条件なしで有効化");
-            return;
-        }
-
         // 選択フェーズ開始時に保存された重さ合計を使用
         int totalWeight = _selectionPhaseStartWeightTotal;
         Debug.Log($"[UIController] 使用する重さ合計（選択フェーズ開始時）: {totalWeight}");
@@ -1908,7 +1899,10 @@ public class UIController : MonoBehaviour
         }
 
         // 9.3: 該当する特殊能力ボタンを有効/無効化
-        EnableSpecialAbilityButton(abilityType, shouldEnable);
+        if (shouldEnable == false) 
+        {
+            EnableSpecialAbilityButton(abilityType, shouldEnable);
+        }
         Debug.Log($"[UIController] {abilityType} ボタンのinteractableを {shouldEnable} に設定");
     }
 
@@ -2337,6 +2331,22 @@ public class UIController : MonoBehaviour
                     {
                         specialAbilityButtonTexts[i].text = GetSpecialAbilityDisplayName(choices[i]);
                     }
+
+                    // ジャンケン画像をジャンルに応じて表示
+                    Genre abilityGenre = choices[i] switch
+                    {
+                        SpecialAbilityType.Gaishoku => Genre.Paper,
+                        SpecialAbilityType.Kintre   => Genre.Scissors,
+                        SpecialAbilityType.Gamushara => Genre.None,
+                        SpecialAbilityType.Benkyou   => Genre.Scissors,
+                        SpecialAbilityType.Jukusui   => Genre.Paper,
+                        SpecialAbilityType.Dokagui   => Genre.Rock,
+                        _ => Genre.None
+                    };
+                    Transform btnTransform = specialAbilityButtons[i].transform;
+                    btnTransform.Find("janken_gu")?.gameObject.SetActive(abilityGenre == Genre.Rock);
+                    btnTransform.Find("janken_choki")?.gameObject.SetActive(abilityGenre == Genre.Scissors);
+                    btnTransform.Find("janken_pa")?.gameObject.SetActive(abilityGenre == Genre.Paper);
 
                     // 無効化チェック
                     bool isDisabled = disabledAbilities != null && System.Array.Exists(disabledAbilities, ability => ability == choices[i]);
