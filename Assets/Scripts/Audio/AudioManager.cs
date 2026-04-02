@@ -159,42 +159,45 @@ public class AudioManager : MonoBehaviour
     private Coroutine _seStopCoroutine;
 
     /// <summary>
-    /// 効果音を再生する（2秒制限付き）
+    /// 効果音を再生する
     /// </summary>
     public void PlaySE(AudioClip clip)
     {
         if (seSource == null || clip == null) return;
 
-        // 既存のSE停止処理があればキャンセル
+        seSource.PlayOneShot(clip, seVolume);
+    }
+
+    /// <summary>
+    /// Action Execution SE を再生する（2秒で必ず停止）
+    /// </summary>
+    private void PlayActionExecutionSE(AudioClip clip)
+    {
+        if (seSource == null || clip == null) return;
+
+        // 既存の停止コルーチンをキャンセル
         if (_seStopCoroutine != null)
         {
             StopCoroutine(_seStopCoroutine);
             _seStopCoroutine = null;
         }
 
-        // SEを再生
-        seSource.PlayOneShot(clip, seVolume);
+        // PlayOneShot ではなく clip + Play() で再生（Stop()で確実に止めるため）
+        seSource.clip = clip;
+        seSource.volume = seVolume;
+        seSource.Play();
 
-        // 2秒制限処理を開始
-        _seStopCoroutine = StartCoroutine(StopSEAfterDuration(clip.length));
+        // 2秒後に停止
+        _seStopCoroutine = StartCoroutine(StopSEAfterDuration(2f));
     }
 
     /// <summary>
-    /// SEを指定時間後に停止する（最大2秒）
+    /// SEを指定秒数後に停止する
     /// </summary>
-    private IEnumerator StopSEAfterDuration(float clipLength)
+    private IEnumerator StopSEAfterDuration(float waitSeconds)
     {
-        // クリップの長さが2秒以下の場合は、停止処理をスキップ
-        if (clipLength <= 2f)
-        {
-            _seStopCoroutine = null;
-            yield break;
-        }
+        yield return new WaitForSeconds(waitSeconds);
 
-        // 2秒待機
-        yield return new WaitForSeconds(2f);
-
-        // SEを停止
         if (seSource != null)
         {
             seSource.Stop();
@@ -223,14 +226,14 @@ public class AudioManager : MonoBehaviour
     public void PlayActionRevealSE() => PlaySE(seActionReveal);
 
     // 便利メソッド - Action Execution
-    public void PlayEatSE() => PlaySE(seEat);
-    public void PlaySleepSE() => PlaySE(seSleep);
-    public void PlayPlaySE() => PlaySE(sePlay);
-    public void PlayClinicSE() => PlaySE(seClinic);
-    public void PlaySpecialAbilitySE() => PlaySE(seSpecialAbility);
-    public void PlayKintreSE() => PlaySE(seKintre);
-    public void PlayGamusharaSE() => PlaySE(seGamushara);
-    public void PlayBenkyouSE() => PlaySE(seBenkyou);
+    public void PlayEatSE() => PlayActionExecutionSE(seEat);
+    public void PlaySleepSE() => PlayActionExecutionSE(seSleep);
+    public void PlayPlaySE() => PlayActionExecutionSE(sePlay);
+    public void PlayClinicSE() => PlayActionExecutionSE(seClinic);
+    public void PlaySpecialAbilitySE() => PlayActionExecutionSE(seSpecialAbility);
+    public void PlayKintreSE() => PlayActionExecutionSE(seKintre);
+    public void PlayGamusharaSE() => PlayActionExecutionSE(seGamushara);
+    public void PlayBenkyouSE() => PlayActionExecutionSE(seBenkyou);
 
     // 便利メソッド - Status Change
     public void PlayEvolutionSE() => PlaySE(seEvolution);
