@@ -7127,8 +7127,8 @@ MonoBehaviour:
   seSicknessOnset: {fileID: 0}
   seInjuryOnset: {fileID: 8300000, guid: 8da9fee72ad25854fba06c55360f967c, type: 3}
   seAilmentCure: {fileID: 8300000, guid: 8da9fee72ad25854fba06c55360f967c, type: 3}
-  seJankenWin: {fileID: 8300000, guid: 9d38b72b643cc6440882c44aab9f3ebf, type: 3}
-  seJankenLose: {fileID: 8300000, guid: 24ca6496e7349ad4cbb6e4293b8f700b, type: 3}
+  seJankenWin: {fileID: 0}
+  seJankenLose: {fileID: 0}
   seVictory: {fileID: 0}
   seDefeat: {fileID: 0}
   seDraw: {fileID: 0}

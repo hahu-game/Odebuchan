@@ -1663,17 +1663,17 @@ public class UIController : MonoBehaviour
             bool canUseAbility = EnergyCheck.CanUseSpecialAbility(currentEnergy, abilityName, isMorning, morningAction, previousAction, gameParams);
 
             if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
-                gaishokuButton.interactable = canUseAbility;
-            if (kintreButton != null && kintreButton.gameObject.activeSelf)
-                kintreButton.interactable = canUseAbility;
-            if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
-                gamusharaButton.interactable = canUseAbility;
-            if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
-                benkyouButton.interactable = canUseAbility;
-            if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
-                jukusuiButton.interactable = true;
+                  gaishokuButton.interactable = canUseAbility;
+                if (kintreButton != null && kintreButton.gameObject.activeSelf)
+                  kintreButton.interactable = canUseAbility;
+                if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
+                  gamusharaButton.interactable = canUseAbility;
+                if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
+                  benkyouButton.interactable = canUseAbility;
+                if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
+                  jukusuiButton.interactable = true;
             if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
-                dokaguiButton.interactable = canUseAbility;
+                  dokaguiButton.interactable = canUseAbility;
         }
 
         // 確定・クリアボタンは常に有効
@@ -1798,25 +1798,25 @@ public class UIController : MonoBehaviour
         Debug.Log("[UIController] UpdateSpecialAbilityButtonState 開始");
 
         // ゲームフェーズをチェック（選択フェーズ以外ではボタンを無効化）
-        if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentPhase != GamePhase.Selection)
-        {
-            // 9.3: 6つのボタンすべてを無効化
-            if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
-                gaishokuButton.interactable = false;
-            if (kintreButton != null && kintreButton.gameObject.activeSelf)
-                kintreButton.interactable = false;
-            if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
-                gamusharaButton.interactable = false;
-            if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
-                benkyouButton.interactable = false;
-            if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
-                jukusuiButton.interactable = false;
-            if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
-                dokaguiButton.interactable = false;
-
-            Debug.Log($"[UIController] 選択フェーズ以外のため特殊能力ボタンを無効化。CurrentPhase={GameFlowManager.Instance?.CurrentPhase}");
-            return;
-        }
+        //if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentPhase != GamePhase.Selection)
+        //{
+        //    // 9.3: 6つのボタンすべてを無効化
+        //    if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
+        //        gaishokuButton.interactable = false;
+        //    if (kintreButton != null && kintreButton.gameObject.activeSelf)
+        //        kintreButton.interactable = false;
+        //    if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
+        //        gamusharaButton.interactable = false;
+        //    if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
+        //        benkyouButton.interactable = false;
+        //    if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
+        //        jukusuiButton.interactable = false;
+        //    if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
+        //        dokaguiButton.interactable = false;
+        //
+        //    Debug.Log($"[UIController] 選択フェーズ以外のため特殊能力ボタンを無効化。CurrentPhase={GameFlowManager.Instance?.CurrentPhase}");
+        //    return;
+        //}
 
         // NetworkRunnerから自分のPlayerRefを取得
         var runner = FindFirstObjectByType<NetworkRunner>();
@@ -1885,25 +1885,28 @@ public class UIController : MonoBehaviour
         // じゅくすい: 重さ合計が奇数のときのみ有効
         // どかぐい: 重さ合計が偶数のときのみ有効
         bool isOdd = (totalWeight % 2) == 1;
-        bool shouldEnable = false;
 
         if (abilityType == SpecialAbilityType.Jukusui)
         {
-            shouldEnable = isOdd;
-            Debug.Log($"[UIController] じゅくすい: 重さ合計={totalWeight}, 奇数={isOdd}, 有効={shouldEnable}");
+            if (isOdd == false)
+            {
+                EnableSpecialAbilityButton(abilityType, false);
+            }
+            Debug.Log($"[UIController] {abilityType} ボタンのinteractableを 無効 に設定");
+            Debug.Log($"[UIController] じゅくすい: 重さ合計={totalWeight}, 奇数={isOdd}");
         }
         else if (abilityType == SpecialAbilityType.Dokagui)
         {
-            shouldEnable = !isOdd;
-            Debug.Log($"[UIController] どかぐい: 重さ合計={totalWeight}, 偶数={!isOdd}, 有効={shouldEnable}");
+            if (isOdd == true)
+            {
+                EnableSpecialAbilityButton(abilityType, false);
+            }
+            Debug.Log($"[UIController] {abilityType} ボタンのinteractableを 無効 に設定");
+            Debug.Log($"[UIController] どかぐい: 重さ合計={totalWeight}, 偶数={!isOdd}");
         }
 
         // 9.3: 該当する特殊能力ボタンを有効/無効化
-        if (shouldEnable == false) 
-        {
-            EnableSpecialAbilityButton(abilityType, shouldEnable);
-        }
-        Debug.Log($"[UIController] {abilityType} ボタンのinteractableを {shouldEnable} に設定");
+
     }
 
     /// <summary>
