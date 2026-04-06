@@ -82,7 +82,7 @@ public class TurnProcessor : NetworkBehaviour
         ActionData p2Action = playerActions[p2].MorningAction;
 
         // 1. ジャンケン判定と効果適用
-        await ProcessJanken(p1, p2, p1Action.Genre, p2Action.Genre);
+        await ProcessJanken(p1, p2, p1Action.Genre, p2Action.Genre, true);
 
         // 2. 連続使用ペナルティチェック（前日午後と今日午前）
         CheckConsecutivePenalty(p1, p1Action.Type, playerActions[p1].LastAfternoonAction.Type);
@@ -120,7 +120,7 @@ public class TurnProcessor : NetworkBehaviour
         ActionData p2Action = playerActions[p2].AfternoonAction;
 
         // 1. ジャンケン判定と効果適用
-        await ProcessJanken(p1, p2, p1Action.Genre, p2Action.Genre);
+        await ProcessJanken(p1, p2, p1Action.Genre, p2Action.Genre, false);
 
         // 2. 連続使用ペナルティチェック（今日午前と今日午後）
         CheckConsecutivePenalty(p1, p1Action.Type, playerActions[p1].MorningAction.Type);
@@ -144,7 +144,7 @@ public class TurnProcessor : NetworkBehaviour
     /// <summary>
     /// ジャンケン判定と効果適用
     /// </summary>
-    private async Task ProcessJanken(PlayerRef p1, PlayerRef p2, Genre p1Genre, Genre p2Genre)
+    private async Task ProcessJanken(PlayerRef p1, PlayerRef p2, Genre p1Genre, Genre p2Genre, bool isMorning)
     {
         Debug.Log($"[TurnProcessor] ジャンケン判定: P1({p1})={p1Genre}, P2({p2})={p2Genre}");
 
@@ -189,7 +189,7 @@ public class TurnProcessor : NetworkBehaviour
         ApplyJankenEffect(winner, loser, winGenre, loseGenre);
 
         // エフェクト・効果音再生（2秒待機）
-        RPC_ShowJankenResult(winner, winGenre);
+        RPC_ShowJankenResult(winner, winGenre, isMorning);
 
         // じゃんけん勝敗SE再生
         RPC_PlayJankenResultSE(winner, loser);
@@ -320,8 +320,8 @@ public class TurnProcessor : NetworkBehaviour
             loserState.PlayBuffWeight -= 5;
             loserState.PlayBuffEnergy -= 5;
 
-            effectLog = $"{winnerName}のうーぴょんは独り占めしてたくさん食べた！重さ{FormatNumber(10)}。" +
-                       $"{loserName}のうーぴょんの好きな食べ物を取られて悲しい！たべる時の重さ{FormatNumber(-5)}、ねむる時の元気{FormatNumber(-5)}";
+            effectLog = $"{winnerName}はジャンケンに勝った！！重さ{FormatNumber(10)}。" +
+                       $"{loserName}は、たべる時の重さ{FormatNumber(-5)}、ねむる時の元気{FormatNumber(-5)}";
         }
         else if (winGenre == Genre.Scissors && loseGenre == Genre.Paper)
         {
@@ -332,8 +332,8 @@ public class TurnProcessor : NetworkBehaviour
             // 敗者: 元気-10
             loserState.Energy -= 10;
 
-            effectLog = $"{winnerName}のうーぴょんはのびのびと遊んだ！たべる時の重さ{FormatNumber(5)}、ねむる時の元気{FormatNumber(5)}。" +
-                       $"{loserName}のうーぴょんは騒音で眠りが浅かった！元気{FormatNumber(-10)}";
+            effectLog = $"{winnerName}はジャンケンに勝った！！たべる時の重さ{FormatNumber(5)}、ねむる時の元気{FormatNumber(5)}。" +
+                       $"{loserName}は、元気{FormatNumber(-10)}";
         }
         else if (winGenre == Genre.Paper && loseGenre == Genre.Rock)
         {
@@ -343,8 +343,8 @@ public class TurnProcessor : NetworkBehaviour
             // 敗者: 重さ-10
             loserState.Weight -= 10;
 
-            effectLog = $"{winnerName}のうーぴょんはぐっすり眠った！元気{FormatNumber(10)}。" +
-                       $"{loserName}のうーぴょんはぼっち飯で少し寂しい！重さ{FormatNumber(-10)}";
+            effectLog = $"{winnerName}はジャンケンに勝った！！元気{FormatNumber(10)}。" +
+                       $"{loserName}は、重さ{FormatNumber(-10)}";
         }
 
         RPC_AddLog(effectLog);
@@ -451,10 +451,10 @@ public class TurnProcessor : NetworkBehaviour
     /// ジャンケン結果をRPC経由で全クライアントに通知
     /// </summary>
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    private void RPC_ShowJankenResult(PlayerRef winner, Genre winGenre)
+    private void RPC_ShowJankenResult(PlayerRef winner, Genre winGenre, NetworkBool isMorning)
     {
-        Debug.Log($"[TurnProcessor RPC] ジャンケン結果: Winner={winner}, Genre={winGenre}");
-        UIController.Instance?.ShowJankenEffect(winner, winGenre);
+        Debug.Log($"[TurnProcessor RPC] ジャンケン結果: Winner={winner}, Genre={winGenre}, isMorning={isMorning}");
+        UIController.Instance?.ShowJankenEffect(winner, winGenre, isMorning);
     }
 
     /// <summary>

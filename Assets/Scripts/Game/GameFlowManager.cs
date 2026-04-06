@@ -469,6 +469,7 @@ public class GameFlowManager : NetworkBehaviour
             RPC_AddLog("--- 午前 ---");
             await UniTask.Delay(500);
 
+            RPC_SetExecutionLine(1);
             Debug.Log("[GameFlowManager] 午前の処理を開始");
             await turnProcessor.ProcessMorning(playerActionDict);
             Debug.Log("[GameFlowManager] 午前の処理が完了");
@@ -477,6 +478,7 @@ public class GameFlowManager : NetworkBehaviour
             // Objectの有効性チェック（シャットダウン時の対応）
             if (!Object || !Object.IsValid)
             {
+                RPC_SetExecutionLine(-1);
                 Debug.LogWarning("[GameFlowManager] 午前処理後: Object無効（シャットダウン中の可能性）");
                 return;
             }
@@ -487,6 +489,7 @@ public class GameFlowManager : NetworkBehaviour
             // ゲーム終了チェック
             if (IsGameEnded)
             {
+                RPC_SetExecutionLine(-1);
                 Debug.Log("[GameFlowManager] ゲーム終了済みのため、処理を中断します");
                 return;
             }
@@ -495,10 +498,13 @@ public class GameFlowManager : NetworkBehaviour
             RPC_AddLog("--- 午後 ---");
             await UniTask.Delay(500);
 
+            RPC_SetExecutionLine(0);
             Debug.Log("[GameFlowManager] 午後の処理を開始");
             await turnProcessor.ProcessAfternoon(playerActionDict);
             Debug.Log("[GameFlowManager] 午後の処理が完了");
             await UniTask.Delay(2000); // アニメーション表示時間
+
+            RPC_SetExecutionLine(-1);
 
             // Objectの有効性チェック（シャットダウン時の対応）
             if (!Object || !Object.IsValid)
@@ -1683,6 +1689,16 @@ public class GameFlowManager : NetworkBehaviour
     }
 
     // === タイマー表示関連RPC ===
+
+    /// <summary>
+    /// 実行フェーズラインRPC（1=午前, 0=午後, -1=非活性）
+    /// </summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_SetExecutionLine(int state)
+    {
+        bool? isMorning = state == 1 ? true : state == 0 ? false : (bool?)null;
+        UIController.Instance?.SetExecutionLine(isMorning);
+    }
 
     /// <summary>
     /// タイマー表示RPC

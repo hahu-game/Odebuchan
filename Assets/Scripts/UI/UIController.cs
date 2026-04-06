@@ -99,6 +99,16 @@ public class UIController : MonoBehaviour
     public GameObject oppTodayAfternoonActionPanel;
     public TextMeshProUGUI oppTodayAfternoonActionText; // クリアボタン
 
+    [Header("Janken Images")]
+    public ActionPanelJankenDisplay myTodayMorningJanken;
+    public ActionPanelJankenDisplay myTodayAfternoonJanken;
+    public ActionPanelJankenDisplay oppTodayMorningJanken;
+    public ActionPanelJankenDisplay oppTodayAfternoonJanken;
+
+    [Header("Execution Phase Lines")]
+    public GameObject todayMorningLine;
+    public GameObject todayAfternoonLine;
+
     // === 6.7で追加: 状態異常テキスト表示 ===
     // 9.3修正: パネルを4つに分割（病気とケガを分離）
     [Header("Status Ailment Panels")]
@@ -1025,11 +1035,13 @@ public class UIController : MonoBehaviour
             {
                 myTodayMorningActionText.text = "";
                 myTodayMorningActionText.fontSize = _defaultTodayActionTextSize;
+                myTodayMorningJanken?.SetGenre(Genre.None);
             }
             if (myTodayAfternoonActionText != null)
             {
                 myTodayAfternoonActionText.text = "";
                 myTodayAfternoonActionText.fontSize = _defaultTodayActionTextSize;
+                myTodayAfternoonJanken?.SetGenre(Genre.None);
             }
 
             // 午前選択中のハイライトに戻す
@@ -1250,11 +1262,13 @@ public class UIController : MonoBehaviour
             {
                 myTodayMorningActionText.text = actionText;
                 SetFontSizeForSpecialAbility(myTodayMorningActionText, actionText, _defaultTodayActionTextSize, 30f);
+                myTodayMorningJanken?.SetGenre(actionData.Genre);
             }
             else
             {
                 myTodayAfternoonActionText.text = actionText;
                 SetFontSizeForSpecialAbility(myTodayAfternoonActionText, actionText, _defaultTodayActionTextSize, 30f);
+                myTodayAfternoonJanken?.SetGenre(actionData.Genre);
             }
         }
         else
@@ -1263,11 +1277,13 @@ public class UIController : MonoBehaviour
             {
                 oppTodayMorningActionText.text = actionText;
                 SetFontSizeForSpecialAbility(oppTodayMorningActionText, actionText, _defaultTodayActionTextSize, 30f);
+                oppTodayMorningJanken?.SetGenre(actionData.Genre);
             }
             else
             {
                 oppTodayAfternoonActionText.text = actionText;
                 SetFontSizeForSpecialAbility(oppTodayAfternoonActionText, actionText, _defaultTodayActionTextSize, 30f);
+                oppTodayAfternoonJanken?.SetGenre(actionData.Genre);
             }
         }
     }
@@ -1764,6 +1780,7 @@ public class UIController : MonoBehaviour
             {
                 myTodayMorningActionText.text = "つういん";
                 myTodayMorningActionText.fontSize = _defaultTodayActionTextSize;
+                myTodayMorningJanken?.SetGenre(Genre.None);
             }
 
             // 午後選択中のハイライト
@@ -1796,27 +1813,6 @@ public class UIController : MonoBehaviour
     public void UpdateSpecialAbilityButtonState()
     {
         Debug.Log("[UIController] UpdateSpecialAbilityButtonState 開始");
-
-        // ゲームフェーズをチェック（選択フェーズ以外ではボタンを無効化）
-        //if (GameFlowManager.Instance == null || GameFlowManager.Instance.CurrentPhase != GamePhase.Selection)
-        //{
-        //    // 9.3: 6つのボタンすべてを無効化
-        //    if (gaishokuButton != null && gaishokuButton.gameObject.activeSelf)
-        //        gaishokuButton.interactable = false;
-        //    if (kintreButton != null && kintreButton.gameObject.activeSelf)
-        //        kintreButton.interactable = false;
-        //    if (gamusharaButton != null && gamusharaButton.gameObject.activeSelf)
-        //        gamusharaButton.interactable = false;
-        //    if (benkyouButton != null && benkyouButton.gameObject.activeSelf)
-        //        benkyouButton.interactable = false;
-        //    if (jukusuiButton != null && jukusuiButton.gameObject.activeSelf)
-        //        jukusuiButton.interactable = false;
-        //    if (dokaguiButton != null && dokaguiButton.gameObject.activeSelf)
-        //        dokaguiButton.interactable = false;
-        //
-        //    Debug.Log($"[UIController] 選択フェーズ以外のため特殊能力ボタンを無効化。CurrentPhase={GameFlowManager.Instance?.CurrentPhase}");
-        //    return;
-        //}
 
         // NetworkRunnerから自分のPlayerRefを取得
         var runner = FindFirstObjectByType<NetworkRunner>();
@@ -1946,10 +1942,17 @@ public class UIController : MonoBehaviour
     /// <summary>
     /// ジャンケン結果エフェクトを表示（後で実装）
     /// </summary>
-    public void ShowJankenEffect(PlayerRef winner, Genre winGenre)
+    public void ShowJankenEffect(PlayerRef winner, Genre winGenre, bool isMorning)
     {
-        Debug.Log($"[UIController] ジャンケン結果エフェクト: Winner={winner}, Genre={winGenre}");
-        // 実装は後で（フェーズ10）
+        Debug.Log($"[UIController] ジャンケン結果エフェクト: Winner={winner}, Genre={winGenre}, isMorning={isMorning}");
+
+        bool isMyWin = IsMyPlayer(winner);
+
+        ActionPanelJankenDisplay winnerDisplay = isMorning
+            ? (isMyWin ? myTodayMorningJanken : oppTodayMorningJanken)
+            : (isMyWin ? myTodayAfternoonJanken : oppTodayAfternoonJanken);
+
+        winnerDisplay?.PlayWinAnimation();
     }
 
     /// <summary>
@@ -3801,6 +3804,18 @@ public class UIController : MonoBehaviour
         {
             timerDisplay.Hide();
         }
+    }
+
+    /// <summary>
+    /// 実行フェーズの午前/午後ラインを切り替える
+    /// true=午前中のみ活性、false=午後のみ活性、null=両方非活性
+    /// </summary>
+    public void SetExecutionLine(bool? isMorning)
+    {
+        if (todayMorningLine != null)
+            todayMorningLine.SetActive(isMorning == true);
+        if (todayAfternoonLine != null)
+            todayAfternoonLine.SetActive(isMorning == false);
     }
 
 
