@@ -193,7 +193,7 @@ public static class EnergyCheck
         }
         else if (abilityName == "Jukusui")
         {
-            return gameParams.JukusuiEnergyBonus; // +20 (回復)
+            return gameParams.JukusuiEnergyBonus; // +100 (回復)
         }
         else if (abilityName == "Dokagui")
         {

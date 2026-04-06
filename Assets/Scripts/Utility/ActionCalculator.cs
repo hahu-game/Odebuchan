@@ -273,7 +273,7 @@ public static class ActionCalculator
             case "Kintre": return gameParams.KintreEnergyCost;
             case "Gamushara": return gameParams.GamushuraEnergyCost;
             case "Benkyou": return gameParams.BenkyouEnergyCost;
-            // 9.3修正: じゅくすいは「ねむるの効果 + 20」なので、SleepEnergyChange + JukusuiEnergyBonusを返す
+            // 9.3修正: じゅくすいは「ねむるの効果 + 100」なので、SleepEnergyChange + JukusuiEnergyBonusを返す
             case "Jukusui": return gameParams.SleepEnergyChange + gameParams.JukusuiEnergyBonus;
             case "Dokagui": return gameParams.DokaguiEnergyCost;
             default: return 0;

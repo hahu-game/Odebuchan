@@ -16,15 +16,12 @@ public class TimerDisplay : MonoBehaviour
 
     [Header("Animation Settings")]
     [SerializeField] private bool enablePulseAnimation = true;
-    [SerializeField] private bool enableBlinkAnimation = true;
     [SerializeField] private float pulseScale = 1.1f;
-    [SerializeField] private float blinkAlpha = 0.3f;
     [SerializeField] private float animationSpeed = 0.5f;
 
     private int _lastDisplayedTime = -1;
     private bool _warningPlayed = false;
     private bool _isPulsing = false;
-    private bool _isBlinking = false;
     private float _animationTime = 0f;
 
     private void Awake()
@@ -98,10 +95,10 @@ public class TimerDisplay : MonoBehaviour
             // 危険（赤）
             timerText.color = dangerColor;
 
-            // 点滅 + パルスアニメーション開始
-            if (enableBlinkAnimation)
+            // パルスアニメーション開始
+            if (enablePulseAnimation)
             {
-                StartBlinkAnimation();
+                StartPulseAnimation();
             }
 
             // 警告音再生（1回のみ）
@@ -131,22 +128,11 @@ public class TimerDisplay : MonoBehaviour
     }
 
     /// <summary>
-    /// 点滅アニメーション
-    /// </summary>
-    private void StartBlinkAnimation()
-    {
-        _isBlinking = true;
-        _isPulsing = true;
-        _animationTime = 0f;
-    }
-
-    /// <summary>
     /// アニメーション停止
     /// </summary>
     private void StopAnimations()
     {
         _isPulsing = false;
-        _isBlinking = false;
         _animationTime = 0f;
 
         if (timerText != null)
@@ -175,23 +161,13 @@ public class TimerDisplay : MonoBehaviour
     private void Update()
     {
         // アニメーション更新
-        if (_isPulsing || _isBlinking)
+        if (_isPulsing)
         {
             _animationTime += Time.deltaTime;
 
             // パルスアニメーション（拡大縮小）
-            if (_isPulsing)
-            {
-                float scale = 1f + Mathf.Sin(_animationTime / animationSpeed * Mathf.PI) * (pulseScale - 1f);
-                timerText.transform.localScale = Vector3.one * scale;
-            }
-
-            // 点滅アニメーション
-            if (_isBlinking)
-            {
-                float alpha = 1f - (1f - blinkAlpha) * Mathf.Abs(Mathf.Sin(_animationTime / animationSpeed * Mathf.PI));
-                timerText.alpha = alpha;
-            }
+            float scale = 1f + Mathf.Sin(_animationTime / animationSpeed * Mathf.PI) * (pulseScale - 1f);
+            timerText.transform.localScale = Vector3.one * scale;
         }
     }
 
