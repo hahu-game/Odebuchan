@@ -787,22 +787,23 @@ public class UIController : MonoBehaviour
         layoutElement.minHeight = 20f;
         // preferredHeightやflexibleWidthは設定しない（ContentSizeFitterに任せる）
 
-        // 既存の余白スペーサーを削除（あれば）
+        // 既存の余白スペーサーを末尾に移動（なければ新規作成）
         Transform existingSpacer = logContent.Find("BottomSpacer");
         if (existingSpacer != null)
         {
-            Destroy(existingSpacer.gameObject);
+            existingSpacer.SetAsLastSibling();
         }
-
-        // 新しい余白スペーサーを追加（最後のログの下に余白を作る）
-        GameObject spacer = new GameObject("BottomSpacer");
-        spacer.transform.SetParent(logContent, false);
-        RectTransform spacerRect = spacer.AddComponent<RectTransform>();
-        spacerRect.anchorMin = new Vector2(0, 1);
-        spacerRect.anchorMax = new Vector2(1, 1);
-        spacerRect.pivot = new Vector2(0, 1);
-        spacerRect.sizeDelta = new Vector2(0, 180f); // 高さ60pxの余白
-        spacer.transform.SetAsLastSibling(); // 最後に配置
+        else
+        {
+            GameObject spacer = new GameObject("BottomSpacer");
+            spacer.transform.SetParent(logContent, false);
+            RectTransform spacerRect = spacer.AddComponent<RectTransform>();
+            spacerRect.anchorMin = new Vector2(0, 1);
+            spacerRect.anchorMax = new Vector2(1, 1);
+            spacerRect.pivot = new Vector2(0, 1);
+            spacerRect.sizeDelta = new Vector2(0, 180f);
+            spacer.transform.SetAsLastSibling();
+        }
 
         // 自動的に最下部にスクロール（重複実行を防ぐ）
         if (_scrollToBottomCoroutine != null)
