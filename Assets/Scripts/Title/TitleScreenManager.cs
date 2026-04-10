@@ -24,6 +24,8 @@ public class TitleScreenManager : MonoBehaviour
     public Button friendMatchButton;        // フレンドマッチボタン
     public TextMeshProUGUI errorMessageText; // エラーメッセージ表示用テキスト（フレンドマッチボタンの上）
     public TextMeshProUGUI playerNameErrorMessageText; // プレイヤー名エラーメッセージ表示用テキスト（PlayerNameInputFieldの下）
+    public GameObject networkErrorPanel; // 通信切断エラーパネル
+    public Button networkErrorCloseButton; // 通信切断エラーパネルの閉じるボタン
 
     // PlayerPrefsのキーを取得（ParrelSync対応）
     public static string GetPlayerNameKey()
@@ -52,6 +54,9 @@ public class TitleScreenManager : MonoBehaviour
 
     // マッチング処理中フラグ（二重実行防止）
     private bool _isMatchingInProgress = false;
+
+    // 通信切断エラーパネルをTitleScene遷移後に表示するフラグ
+    private bool _pendingNetworkError = false;
 
     private void Awake()
     {
@@ -150,6 +155,13 @@ public class TitleScreenManager : MonoBehaviour
             Debug.Log("[TitleScreenManager] TitleSceneに戻ってきました。UI参照を再取得します");
             ReassignUIReferences();
             InitializeUIState();
+
+            // 通信切断エラーが保留されていれば、パネルを表示する
+            if (_pendingNetworkError)
+            {
+                _pendingNetworkError = false;
+                ShowNetworkErrorPanel();
+            }
         }
     }
 
@@ -207,6 +219,12 @@ public class TitleScreenManager : MonoBehaviour
                 case "PlayerNameErrorText":  // 実際のGameObject名に修正
                     playerNameErrorMessageText = obj.GetComponent<TextMeshProUGUI>();
                     break;
+                case "NetworkErrorPanel":
+                    networkErrorPanel = obj;
+                    break;
+                case "NetworkErrorCloseButton":
+                    networkErrorCloseButton = obj.GetComponent<Button>();
+                    break;
             }
         }
 
@@ -219,6 +237,8 @@ public class TitleScreenManager : MonoBehaviour
         Debug.Log($"[ReassignUIReferences] cancelButton: {(cancelButton != null ? "OK" : "NULL")}");
         Debug.Log($"[ReassignUIReferences] errorMessageText: {(errorMessageText != null ? "OK" : "NULL")}");
         Debug.Log($"[ReassignUIReferences] playerNameErrorMessageText: {(playerNameErrorMessageText != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] networkErrorPanel: {(networkErrorPanel != null ? "OK" : "NULL")}");
+        Debug.Log($"[ReassignUIReferences] networkErrorCloseButton: {(networkErrorCloseButton != null ? "OK" : "NULL")}");
 
         // 再取得後、リッチテキストを無効化（セキュリティ対策）
         if (playerNameInputField != null)
@@ -283,6 +303,13 @@ public class TitleScreenManager : MonoBehaviour
             cancelButton.onClick.RemoveAllListeners();
             cancelButton.onClick.AddListener(OnCancelMatchClicked);
             Debug.Log("[TitleScreenManager] cancelButtonのイベントを再登録");
+        }
+
+        if (networkErrorCloseButton != null)
+        {
+            networkErrorCloseButton.onClick.RemoveAllListeners();
+            networkErrorCloseButton.onClick.AddListener(OnNetworkErrorPanelCloseClicked);
+            Debug.Log("[TitleScreenManager] networkErrorCloseButtonのイベントを再登録");
         }
 
         Debug.Log("[TitleScreenManager] ReassignButtonEvents: ボタンイベントの再登録完了");
@@ -410,6 +437,10 @@ public class TitleScreenManager : MonoBehaviour
         // 4. エラーメッセージを非表示にする
         HideErrorMessage();
         HidePlayerNameError();
+
+        // 通信切断エラーパネルを非表示にする（正常な遷移の場合）
+        if (networkErrorPanel != null)
+            networkErrorPanel.SetActive(false);
 
         // 5. SettingControllerのパネルを強制的に非表示にする（GameSceneのUIがブロックしないように）
         if (SettingController.Instance != null)
@@ -604,6 +635,46 @@ public class TitleScreenManager : MonoBehaviour
         }
     }
 
+
+    // ------------------------------------------------------------------
+    // 通信切断エラーパネル
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// TitleScene遷移後にNetworkErrorPanelを表示するフラグを立てる。
+    /// NetworkRunnerHandlerのOnShutdownから呼ばれる。
+    /// </summary>
+    public void SetPendingNetworkError(bool value)
+    {
+        _pendingNetworkError = value;
+        Debug.Log($"[TitleScreenManager] SetPendingNetworkError: {value}");
+    }
+
+    /// <summary>
+    /// 通信切断エラーパネルを表示する。
+    /// </summary>
+    public void ShowNetworkErrorPanel()
+    {
+        Debug.Log("[TitleScreenManager] ShowNetworkErrorPanel: 通信切断エラーパネルを表示します");
+        if (networkErrorPanel != null)
+        {
+            networkErrorPanel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning("[TitleScreenManager] networkErrorPanel is NULL!");
+        }
+    }
+
+    /// <summary>
+    /// NetworkErrorPanelの「閉じる」ボタンから呼ばれる。
+    /// </summary>
+    public void OnNetworkErrorPanelCloseClicked()
+    {
+        Debug.Log("[TitleScreenManager] OnNetworkErrorPanelCloseClicked");
+        if (networkErrorPanel != null)
+            networkErrorPanel.SetActive(false);
+    }
 
     // ------------------------------------------------------------------
     // ボタンクリック処理

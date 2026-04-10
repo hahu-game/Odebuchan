@@ -192,6 +192,15 @@ public class UyopyonState : NetworkBehaviour
             }
         }
 
+        // CanvasScalerの設定
+        var canvasScaler = GetComponent<UnityEngine.UI.CanvasScaler>();
+        if (canvasScaler != null)
+        {
+            canvasScaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasScaler.referenceResolution = new Vector2(960f, 540f);
+            DebugLogger.Log($"[UyopyonState.Spawned] CanvasScalerを設定しました: ScaleWithScreenSize, 960x540");
+        }
+
         // 位置設定はRender()で行う（ネットワーク同期を待つため）
         DebugLogger.Log($"[UyopyonState.Spawned] 位置設定はRender()で行います。OwnerPlayer={OwnerPlayer}, LocalPlayer={(Runner != null ? Runner.LocalPlayer.ToString() : "N/A")}");
 
@@ -289,6 +298,9 @@ public class UyopyonState : NetworkBehaviour
             RectTransform rectTransform = GetComponent<RectTransform>();
             if (rectTransform != null)
             {
+                // アンカーを center/middle に設定
+                rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+                rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
                 rectTransform.anchoredPosition = new Vector2(_targetPosition.x, _targetPosition.y);
             }
             else
