@@ -315,6 +315,17 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         {
             Debug.Log("[NetworkRunnerHandler] OnPlayerLeft: ゲーム終了後のクライアント切断を確認。Shutdownします");
             _ = ShutdownRunnerAsync();
+            return;
+        }
+
+        // ゲーム中の相手切断（ホスト・クライアント共通）
+        // IsGameEndedLocal が false のまま GameScene で相手が抜けた場合は強制終了
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        if (!IsGameEndedLocal && currentSceneName == "GameScene")
+        {
+            Debug.Log($"[NetworkRunnerHandler] OnPlayerLeft: ゲーム中に相手({player})が切断しました。対戦を強制終了します");
+            // OnShutdown でエラーパネルフラグを立てて TitleScene に遷移させる
+            _ = ShutdownRunnerAsync();
         }
     }
 
@@ -348,7 +359,12 @@ public class NetworkRunnerHandler : MonoBehaviour, INetworkRunnerCallbacks
         string currentSceneName = SceneManager.GetActiveScene().name;
         if (currentSceneName == "GameScene" && !IsGameEndedLocal)
         {
-            Debug.Log("[NetworkRunnerHandler] OnShutdown: GameScene中の予期しない切断を検出。タイトル画面に戻ります");
+            Debug.Log("[NetworkRunnerHandler] OnShutdown: GameScene中の予期しない切断を検出。NetworkErrorPanelフラグを立ててタイトル画面に戻ります");
+            // TitleScene遷移後にエラーパネルを表示するフラグを立てる
+            if (TitleScreenManager.Instance != null)
+            {
+                TitleScreenManager.Instance.SetPendingNetworkError(true);
+            }
             SceneManager.LoadScene("TitleScene");
         }
     }
