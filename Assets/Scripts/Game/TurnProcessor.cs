@@ -585,8 +585,8 @@ public class TurnProcessor : NetworkBehaviour
         state.Energy += energyChange;
 
         // 永久バフを増加
-        int buffWeightIncrement = (int)(gameParams.PlayWeightBuffIncrement * state.BuffMultiplier);
-        int buffEnergyIncrement = (int)(gameParams.PlayEnergyBuffIncrement * state.BuffMultiplier);
+        int buffWeightIncrement = gameParams.PlayWeightBuffIncrement;
+        int buffEnergyIncrement = gameParams.PlayEnergyBuffIncrement;
 
         state.PlayBuffWeight += buffWeightIncrement;
         state.PlayBuffEnergy += buffEnergyIncrement;
@@ -894,7 +894,7 @@ public class TurnProcessor : NetworkBehaviour
                 if (isMorning)
                 {
                     // 午前に発症 → 今日の午後を「つういん」に強制変更
-                    playerActionData.AfternoonAction = new ActionData(ActionType.Clinic, Genre.Rock);
+                    playerActionData.AfternoonAction = new ActionData(ActionType.Clinic, Genre.None);
                     playerActionData.AfternoonActionLocked = true;
 
                     RPC_AddLog($"{playerName}は熱中症で動けない！午後の行動が「つういん」に固定された");

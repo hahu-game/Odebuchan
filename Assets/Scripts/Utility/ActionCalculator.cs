@@ -201,11 +201,11 @@ public static class ActionCalculator
     }
 
     /// <summary>
-    /// きんとれによるバフ倍率変化を計算（現在の倍率の2.5倍）
+    /// きんとれによるバフ倍率変化を計算（現在の倍率の2.0倍）
     /// </summary>
     public static float CalculateKintreBuffMultiplierChange(float currentMultiplier)
     {
-        return currentMultiplier * 2.5f;
+        return currentMultiplier * 2.0f;
     }
 
     /// <summary>
@@ -215,20 +215,16 @@ public static class ActionCalculator
         UyopyonState state,
         GameParameters gameParams)
     {
-        // 現在のバフ量を2.5倍にするための増加量（= 現在のバフ量の1.5倍）
-        int energyBuffIncrement = (int)(state.PlayBuffEnergy * 1.5f);
-        int weightBuffIncrement = (int)(state.PlayBuffWeight * 1.5f);
-        
-        return (energyBuffIncrement, weightBuffIncrement);
+        return (state.SleepEnergyGain, state.EatWeightGain);
     }
 
 
     /// <summary>
-    /// べんきょうによるバフ増加量を計算（15 × 連続使用数）
+    /// べんきょうによるバフ増加量を計算（30 × 連続使用数）
     /// </summary>
     public static int CalculateBenkyouBuffIncrement(int studyCombo)
     {
-        return 15 * studyCombo;
+        return 30 * studyCombo;
     }
 
     /// <summary>

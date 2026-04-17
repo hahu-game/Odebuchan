@@ -103,31 +103,30 @@ public class SpecialAbilityExecutor
 
     /// <summary>
     /// 7.5 特殊能力: べんきょうの実行
-    /// 効果: 元気-25、たべる時の重さバフ +10×連続回数（累積）
+    /// 効果: 元気-40、たべる時の重さバフ +10×連続回数（累積）
     /// ジャンル: Scissors（チョキ）
-    /// 例: 1回目+15, 2回目+330, 3回目+45, 4回目+60
     /// </summary>
     public void ExecuteBenkyou(PlayerRef player, UyopyonState state, string playerName, bool isMorning)
     {
         // 元気減少
-        state.Energy -= 25;
+        state.Energy -= 40;
 
         // 連続カウンタを増加
         state.StudyCombo += 1;
 
-        // 連続回数に応じて重さバフを加算（1回目+15, 2回目+30, 3回目+45, 4回目+60...）
-        int buffIncrease = 15 * state.StudyCombo;
+        // 連続回数に応じて重さバフを加算（1回目+30, 2回目+60, 3回目+90, 4回目+120...）
+        int buffIncrease = 30 * state.StudyCombo;
         state.PlayBuffWeight += buffIncrease;
 
         // ログに追加（今回加算された累積ボーナスを表示）
         string log;
         if (state.StudyCombo > 1)
         {
-            log = $"{playerName}は「べんきょう」を実行！元気-25、たべる時の重さバフ+{buffIncrease}（{state.StudyCombo}回連続）";
+            log = $"{playerName}は「べんきょう」を実行！元気-40、たべる時の重さバフ+{buffIncrease}（{state.StudyCombo}回連続）";
         }
         else
         {
-            log = $"{playerName}は「べんきょう」を実行！元気-25、たべる時の重さバフ+{buffIncrease}";
+            log = $"{playerName}は「べんきょう」を実行！元気-40、たべる時の重さバフ+{buffIncrease}";
         }
         turnProcessor.AddLog(log);
 
@@ -196,25 +195,21 @@ public class SpecialAbilityExecutor
     public void ExecuteKintre(PlayerRef player, UyopyonState state, string playerName, bool isMorning)
     {
         // 元気減少
-        state.Energy -= 120;
+        state.Energy -= 150;
 
         // 重さを半分に
         int oldWeight = state.Weight;
         state.Weight = (int)(state.Weight * 0.5f);
         int weightChange = state.Weight - oldWeight;
 
-        // 既存のバフ量を2.5倍に増加
-        state.PlayBuffEnergy = (int)(state.PlayBuffEnergy * 2.5f);
-        state.PlayBuffWeight = (int)(state.PlayBuffWeight * 2.5f);
-
-        // バフ倍率を2.5倍に増加（現在の値に2.5を掛ける）
-        state.BuffMultiplier *= 2.5f;
+        // バフ倍率を2倍に増加（EatWeightGain・SleepEnergyGainが2倍になる）
+        state.BuffMultiplier *= 2.0f;
 
         // ケガ判定（あそぶと同じ判定）
         turnProcessor.CheckInjury(player, state.Weight, isMorning);
 
         // ログに追加
-        string log = $"{playerName}は「きんとれ」を実行！元気-120、重さ{turnProcessor.FormatNumber(weightChange)}、今後の重さ増加が2.5倍に！";
+        string log = $"{playerName}は「きんとれ」を実行！元気-150、重さ{turnProcessor.FormatNumber(weightChange)}、今後の元気・重さ増加が2倍に！";
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");

@@ -123,6 +123,13 @@ public class UIController : MonoBehaviour
     public TextMeshProUGUI[] oppSicknessTexts = new TextMeshProUGUI[2]; // [0]=睡眠時無呼吸, [1]=糖尿病
     public TextMeshProUGUI[] oppInjuryTexts = new TextMeshProUGUI[2];   // [0]=腰痛, [1]=熱中症
 
+    // === 特殊能力名表示テキスト ===
+    [Header("Special Ability Name Display")]
+    public GameObject mySpecialAbilityNamePanel;
+    public TextMeshProUGUI mySpecialAbilityNameText;
+    public GameObject oppSpecialAbilityNamePanel;
+    public TextMeshProUGUI oppSpecialAbilityNameText;
+
     // === 7.1で追加: 特殊能力選択UI ===
     [Header("Special Ability Choice Panel")]
     public GameObject specialAbilityChoicePanel;
@@ -619,6 +626,29 @@ public class UIController : MonoBehaviour
 
         // 進化状態の変化に応じてデフォルト画像を更新
         UpdateUyopyonDefaultImage(player);
+
+        // 特殊能力名テキストを更新
+        string displayName = "";
+        if (hasEvolved && !string.IsNullOrEmpty(abilityName) &&
+            System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
+        {
+            displayName = GetSpecialAbilityDisplayName(abilityType);
+        }
+
+        if (IsMyPlayer(player))
+        {
+            if (mySpecialAbilityNameText != null)
+                mySpecialAbilityNameText.text = displayName;
+            if (mySpecialAbilityNamePanel != null)
+                mySpecialAbilityNamePanel.SetActive(!string.IsNullOrEmpty(displayName));
+        }
+        else
+        {
+            if (oppSpecialAbilityNameText != null)
+                oppSpecialAbilityNameText.text = displayName;
+            if (oppSpecialAbilityNamePanel != null)
+                oppSpecialAbilityNamePanel.SetActive(!string.IsNullOrEmpty(displayName));
+        }
 
         // 自分のプレイヤーの場合のみ特殊能力ボタンを制御
         if (!IsMyPlayer(player))
@@ -1772,7 +1802,7 @@ public class UIController : MonoBehaviour
         if (isMorningLocked)
         {
             // 熱中症時: 午前はつういん固定、午後から選択開始
-            _morningAction = new ActionData(ActionType.Clinic, Genre.Rock);
+            _morningAction = new ActionData(ActionType.Clinic, Genre.None);
             _afternoonAction = null;
             _isMorningSelected = true; // 午後選択中の状態にする
 
@@ -1781,7 +1811,7 @@ public class UIController : MonoBehaviour
             {
                 myTodayMorningActionText.text = "つういん";
                 myTodayMorningActionText.fontSize = _defaultTodayActionTextSize;
-                myTodayMorningJanken?.SetGenre(Genre.None);
+                myTodayMorningJanken?.SetGenre(Genre.Rock);
             }
 
             // 午後選択中のハイライト
