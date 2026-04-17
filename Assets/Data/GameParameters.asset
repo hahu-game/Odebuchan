@@ -41,9 +41,9 @@ MonoBehaviour:
   JankenBuffDebuffAmount: 10
   GaishokuEnergyChange: -20
   GaishokuWeightChange: 50
-  KintreEnergyCost: -120
+  KintreEnergyCost: -150
   KintreWeightMultiplier: 0.5
-  KintreBuffMultiplier: 2.5
+  KintreBuffMultiplier: 2
   GamushuraEnergyCost: -40
   GamushuraWeightMultiplier: 1.2
   GamushuraEnergyMultiplier: 1.2
@@ -53,9 +53,9 @@ MonoBehaviour:
   GamusharaMixEnergyMultiplier: 0.5
   GamusharaMixBuffWeightIncrement: 15
   GamusharaMixBuffEnergyIncrement: 15
-  BenkyouEnergyCost: -25
-  BenkyouBuffWeightIncrement: 15
-  BenkyouComboBuffIncrement: 15
+  BenkyouEnergyCost: -40
+  BenkyouBuffWeightIncrement: 30
+  BenkyouComboBuffIncrement: 30
   JukusuiEnergyBonus: 100
   DokaguiEnergyCost: -20
   DokaguiWeightBonus: 30

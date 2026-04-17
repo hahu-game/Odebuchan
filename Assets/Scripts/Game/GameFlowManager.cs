@@ -1033,7 +1033,7 @@ public class GameFlowManager : NetworkBehaviour
             // MorningActionLockedがtrueの場合、午前の行動を「つういん」に設定
             if (actionData.MorningActionLocked)
             {
-                actionData.MorningAction = new ActionData(ActionType.Clinic, Genre.Rock);
+                actionData.MorningAction = new ActionData(ActionType.Clinic, Genre.None);
 
                 // プレイヤー名を取得（色付き）
                 string playerName = GetColoredPlayerName(player);
