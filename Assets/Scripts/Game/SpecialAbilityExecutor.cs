@@ -22,9 +22,9 @@ public class SpecialAbilityExecutor
     /// </summary>
     public void ExecuteGaishoku(PlayerRef player, UyopyonState state, string playerName)
     {
-        // がいしょくの効果（BuffMultiplier適用）
-        int energyChange = (int)(gameParams.GaishokuEnergyChange * state.BuffMultiplier);
-        int weightChange = (int)((gameParams.GaishokuWeightChange + state.PlayBuffWeight) * state.BuffMultiplier);
+        // がいしょくの効果
+        int energyChange = gameParams.GaishokuEnergyChange;
+        int weightChange = gameParams.GaishokuWeightChange + state.PlayBuffWeight;
 
         state.Energy += energyChange;
         state.Weight += weightChange;
@@ -60,14 +60,14 @@ public class SpecialAbilityExecutor
         {
             case 0:
                 // パターン1: たべるの重さ増加 × 1.2倍
-                int weightChange1 = (int)((gameParams.EatWeightChange + state.PlayBuffWeight) * state.BuffMultiplier * 1.2f);
+                int weightChange1 = (int)((gameParams.EatWeightChange + state.PlayBuffWeight) * 1.2f);
                 state.Weight += weightChange1;
                 effectLog = $"がむしゃらにたべた！重さ{turnProcessor.FormatNumber(weightChange1)}";
                 break;
 
             case 1:
                 // パターン2: ねむるの元気増加 × 1.2倍
-                int energyChange2 = (int)((gameParams.SleepEnergyChange + state.PlayBuffEnergy) * state.BuffMultiplier * 1.2f);
+                int energyChange2 = (int)((gameParams.SleepEnergyChange + state.PlayBuffEnergy) * 1.2f);
                 state.Energy += energyChange2;
                 effectLog = $"がむしゃらにねた！元気{turnProcessor.FormatNumber(energyChange2)}";
                 break;
@@ -76,13 +76,13 @@ public class SpecialAbilityExecutor
                 // パターン3: たべる時の重さバフ +15, ねむる時の元気バフ +15
                 state.PlayBuffWeight += 25;
                 state.PlayBuffEnergy += 25;
-                effectLog = $"がむしゃらにあそんだ！たべる時の重さバフ{turnProcessor.FormatNumber(+25)}、ねむる時の元気バフ{turnProcessor.FormatNumber(+25)}";
+                effectLog = $"がむしゃらにあそんだ！重さバフ{turnProcessor.FormatNumber(+25)}、元気バフ{turnProcessor.FormatNumber(+25)}";
                 break;
 
             case 3:
                 // パターン4: MIX - 重さ増加×0.5、元気増加×0.5、バフ各+8
-                int weightChange3 = (int)((gameParams.EatWeightChange + state.PlayBuffWeight) * state.BuffMultiplier * 0.5f);
-                int energyChange4 = (int)((gameParams.SleepEnergyChange + state.PlayBuffEnergy) * state.BuffMultiplier * 0.5f);
+                int weightChange3 = (int)((gameParams.EatWeightChange + state.PlayBuffWeight) * 0.5f);
+                int energyChange4 = (int)((gameParams.SleepEnergyChange + state.PlayBuffEnergy) * 0.5f);
                 state.Weight += weightChange3;
                 state.Energy += energyChange4;
                 state.PlayBuffWeight += 8;
@@ -122,11 +122,11 @@ public class SpecialAbilityExecutor
         string log;
         if (state.StudyCombo > 1)
         {
-            log = $"{playerName}は「べんきょう」を実行！元気-40、たべる時の重さバフ+{buffIncrease}（{state.StudyCombo}回連続）";
+            log = $"{playerName}は「べんきょう」を実行！元気-40、重さバフ+{buffIncrease}（{state.StudyCombo}回連続）";
         }
         else
         {
-            log = $"{playerName}は「べんきょう」を実行！元気-40、たべる時の重さバフ+{buffIncrease}";
+            log = $"{playerName}は「べんきょう」を実行！元気-40、重さバフ+{buffIncrease}";
         }
         turnProcessor.AddLog(log);
 
@@ -144,8 +144,8 @@ public class SpecialAbilityExecutor
     /// </summary>
     public void ExecuteJukusui(PlayerRef player, UyopyonState state, string playerName)
     {
-        // ねむるの効果 +20（BuffMultiplier適用）
-        int energyChange = (int)((gameParams.SleepEnergyChange + 20 + state.PlayBuffEnergy) * state.BuffMultiplier);
+        // ねむるの効果 + JukusuiEnergyBonus
+        int energyChange = gameParams.SleepEnergyChange + gameParams.JukusuiEnergyBonus + state.PlayBuffEnergy;
 
         state.Energy += energyChange;
 
@@ -167,9 +167,9 @@ public class SpecialAbilityExecutor
     /// </summary>
     public void ExecuteDokagui(PlayerRef player, UyopyonState state, string playerName)
     {
-        // どかぐいの効果（BuffMultiplier適用）
-        int energyChange = (int)(gameParams.DokaguiEnergyCost * state.BuffMultiplier);
-        int weightChange = (int)((gameParams.EatWeightChange + gameParams.DokaguiWeightBonus + state.PlayBuffWeight) * state.BuffMultiplier);
+        // どかぐいの効果
+        int energyChange = gameParams.DokaguiEnergyCost;
+        int weightChange = gameParams.EatWeightChange + gameParams.DokaguiWeightBonus + state.PlayBuffWeight;
 
         state.Energy += energyChange;
         state.Weight += weightChange;
@@ -202,14 +202,16 @@ public class SpecialAbilityExecutor
         state.Weight = (int)(state.Weight * 0.5f);
         int weightChange = state.Weight - oldWeight;
 
-        // バフ倍率を2倍に増加（EatWeightGain・SleepEnergyGainが2倍になる）
-        state.BuffMultiplier *= 2.0f;
+        // 現在の重さバフ・元気バフを2倍化し、基本増加量を上乗せ
+        // 結果: たべる/ねむるの次回効果量が実質2倍になる
+        state.PlayBuffWeight = state.PlayBuffWeight * 2 + gameParams.EatWeightChange;
+        state.PlayBuffEnergy = state.PlayBuffEnergy * 2 + gameParams.SleepEnergyChange;
 
         // ケガ判定（あそぶと同じ判定）
         turnProcessor.CheckInjury(player, state.Weight, isMorning);
 
         // ログに追加
-        string log = $"{playerName}は「きんとれ」を実行！元気-150、重さ{turnProcessor.FormatNumber(weightChange)}、今後の元気・重さ増加が2倍に！";
+        string log = $"{playerName}は「きんとれ」を実行！元気-150、重さ{turnProcessor.FormatNumber(weightChange)}、たべる・ねむるの効果が2倍に！";
         turnProcessor.AddLog(log);
 
         Debug.Log($"[SpecialAbility] {log}");
