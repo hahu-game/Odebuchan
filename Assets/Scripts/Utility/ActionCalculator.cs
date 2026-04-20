@@ -18,7 +18,8 @@ public static class ActionCalculator
         PlayerActionData actionData,
         GameParameters gameParams,
         bool isMorning,
-        ActionData? localMorningAction = null)
+        ActionData? localMorningAction = null,
+        int pendingBuffEnergy = 0)
     {
         int energyChange = 0;
 
@@ -35,15 +36,9 @@ public static class ActionCalculator
         // バフの適用（ねむる、じゅくすいのみ）
         if (action == ActionType.Sleep || specialAbilityName == "Jukusui")
         {
-            energyChange += state.PlayBuffEnergy;
+            energyChange += state.PlayBuffEnergy + pendingBuffEnergy;
         }
 
-        // BuffMultiplierの適用（ねむる、じゅくすい、がいしょく、どかぐい用）
-        if (action == ActionType.Sleep || specialAbilityName == "Jukusui" ||
-            specialAbilityName == "Gaishoku" || specialAbilityName == "Dokagui")
-        {
-            energyChange = (int)(energyChange * state.BuffMultiplier);
-        }
 
         // 状態異常の影響（睡眠時無呼吸症候群）
         if (action == ActionType.Sleep && state.HasStatusAilment(StatusAilment.SleepApnea))
@@ -68,7 +63,8 @@ public static class ActionCalculator
         ActionType action,
         string specialAbilityName,
         UyopyonState state,
-        GameParameters gameParams)
+        GameParameters gameParams,
+        int pendingBuffWeight = 0)
     {
         int weightChange = 0;
 
@@ -85,13 +81,7 @@ public static class ActionCalculator
         // バフの適用（たべる、がいしょく、どかぐいのみ）
         if (action == ActionType.Eat || specialAbilityName == "Gaishoku" || specialAbilityName == "Dokagui")
         {
-            weightChange += state.PlayBuffWeight;
-        }
-
-        // BuffMultiplierの適用（たべる、がいしょく、どかぐい用）
-        if (action == ActionType.Eat || specialAbilityName == "Gaishoku" || specialAbilityName == "Dokagui")
-        {
-            weightChange = (int)(weightChange * state.BuffMultiplier);
+            weightChange += state.PlayBuffWeight + pendingBuffWeight;
         }
 
         return weightChange;
@@ -123,6 +113,37 @@ public static class ActionCalculator
     public static (int energyBuff, int weightBuff) GetBuffIncrement(GameParameters gameParams)
     {
         return (gameParams.PlayEnergyBuffIncrement, gameParams.PlayWeightBuffIncrement);
+    }
+
+    /// <summary>
+    /// 午前行動によって午後計算に適用される予定バフ変化量を返す（選択フェーズUI表示用）
+    /// がむしゃらはランダムのため予測不可として0を返す
+    /// </summary>
+    public static (int weightBuffDelta, int energyBuffDelta)
+        GetPendingMorningBuffDelta(ActionData? morningAction, UyopyonState state, GameParameters gameParams)
+    {
+        if (!morningAction.HasValue) return (0, 0);
+
+        var action = morningAction.Value;
+        if (action.Type == ActionType.Play)
+            return (gameParams.PlayWeightBuffIncrement, gameParams.PlayEnergyBuffIncrement);
+
+        if (action.Type == ActionType.SpecialAbility)
+        {
+            string abilityName = action.SpecialAbilityName.ToString();
+            switch (abilityName)
+            {
+                case "Kintre":
+                    // PlayBuff = PlayBuff*2 + base なので、増加分 = PlayBuff + base
+                    return (state.PlayBuffWeight + gameParams.EatWeightChange,
+                            state.PlayBuffEnergy + gameParams.SleepEnergyChange);
+                case "Benkyou":
+                    int weightBuff = 30 * (state.StudyCombo + 1);
+                    return (weightBuff, 0);
+            }
+        }
+
+        return (0, 0);
     }
 
     /// <summary>
@@ -209,13 +230,14 @@ public static class ActionCalculator
     }
 
     /// <summary>
-    /// きんとれによるバフ増減量を計算（新しい倍率での増加量）
+    /// きんとれによるバフ増減量を計算（PlayBuff = PlayBuff*2 + base による増加分）
     /// </summary>
     public static (int energyBuff, int weightBuff) CalculateKintreBuffChange(
         UyopyonState state,
         GameParameters gameParams)
     {
-        return (state.SleepEnergyGain, state.EatWeightGain);
+        return (state.PlayBuffEnergy + gameParams.SleepEnergyChange,
+                state.PlayBuffWeight + gameParams.EatWeightChange);
     }
 
 

@@ -127,8 +127,10 @@ public class UIController : MonoBehaviour
     [Header("Special Ability Name Display")]
     public GameObject mySpecialAbilityNamePanel;
     public TextMeshProUGUI mySpecialAbilityNameText;
+    public ActionPanelJankenDisplay mySpecialAbilityJanken;
     public GameObject oppSpecialAbilityNamePanel;
     public TextMeshProUGUI oppSpecialAbilityNameText;
+    public ActionPanelJankenDisplay oppSpecialAbilityJanken;
 
     // === 7.1で追加: 特殊能力選択UI ===
     [Header("Special Ability Choice Panel")]
@@ -629,10 +631,21 @@ public class UIController : MonoBehaviour
 
         // 特殊能力名テキストを更新
         string displayName = "";
+        Genre abilityGenre = Genre.None;
         if (hasEvolved && !string.IsNullOrEmpty(abilityName) &&
             System.Enum.TryParse<SpecialAbilityType>(abilityName, out SpecialAbilityType abilityType))
         {
             displayName = GetSpecialAbilityDisplayName(abilityType);
+            abilityGenre = abilityType switch
+            {
+                SpecialAbilityType.Gaishoku  => Genre.Paper,
+                SpecialAbilityType.Kintre    => Genre.Scissors,
+                SpecialAbilityType.Gamushara => Genre.None,
+                SpecialAbilityType.Benkyou   => Genre.Scissors,
+                SpecialAbilityType.Jukusui   => Genre.Paper,
+                SpecialAbilityType.Dokagui   => Genre.Rock,
+                _                            => Genre.None
+            };
         }
 
         if (IsMyPlayer(player))
@@ -641,6 +654,7 @@ public class UIController : MonoBehaviour
                 mySpecialAbilityNameText.text = displayName;
             if (mySpecialAbilityNamePanel != null)
                 mySpecialAbilityNamePanel.SetActive(!string.IsNullOrEmpty(displayName));
+            mySpecialAbilityJanken?.SetGenre(abilityGenre);
         }
         else
         {
@@ -648,6 +662,7 @@ public class UIController : MonoBehaviour
                 oppSpecialAbilityNameText.text = displayName;
             if (oppSpecialAbilityNamePanel != null)
                 oppSpecialAbilityNamePanel.SetActive(!string.IsNullOrEmpty(displayName));
+            oppSpecialAbilityJanken?.SetGenre(abilityGenre);
         }
 
         // 自分のプレイヤーの場合のみ特殊能力ボタンを制御
@@ -3354,8 +3369,15 @@ public class UIController : MonoBehaviour
         TextMeshProUGUI energyBuffText = null,
         TextMeshProUGUI weightBuffText = null)
     {
-        int energyChange = ActionCalculator.CalculateEnergyChange(action, null, state, actionData, gameParams, isMorning, localMorningAction);
-        int weightChange = ActionCalculator.CalculateWeightChange(action, null, state, gameParams);
+        int pendingWeightBuff = 0;
+        int pendingEnergyBuff = 0;
+        if (!isMorning)
+        {
+            (pendingWeightBuff, pendingEnergyBuff) =
+                ActionCalculator.GetPendingMorningBuffDelta(localMorningAction, state, gameParams);
+        }
+        int energyChange = ActionCalculator.CalculateEnergyChange(action, null, state, actionData, gameParams, isMorning, localMorningAction, pendingEnergyBuff);
+        int weightChange = ActionCalculator.CalculateWeightChange(action, null, state, gameParams, pendingWeightBuff);
 
         // 元気値テキストの更新
         if (energyValueText != null)
@@ -3483,13 +3505,21 @@ public class UIController : MonoBehaviour
         if (gaishokuButton == null) return;
         gaishokuButton.gameObject.SetActive(true);
 
+        int pendingWeightBuff = 0;
+        int pendingEnergyBuff = 0;
+        if (!isMorning)
+        {
+            (pendingWeightBuff, pendingEnergyBuff) =
+                ActionCalculator.GetPendingMorningBuffDelta(localMorningAction, state, gameParams);
+        }
+
         // 元気増減量
-        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Gaishoku", state, actionData, gameParams, isMorning, localMorningAction);
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Gaishoku", state, actionData, gameParams, isMorning, localMorningAction, pendingEnergyBuff);
         if (gaishokuEnergyValueText != null)
             gaishokuEnergyValueText.text = FormatChange(energyChange);
 
         // 重さ増減量
-        int weightChange = ActionCalculator.CalculateWeightChange(ActionType.SpecialAbility, "Gaishoku", state, gameParams);
+        int weightChange = ActionCalculator.CalculateWeightChange(ActionType.SpecialAbility, "Gaishoku", state, gameParams, pendingWeightBuff);
         if (gaishokuWeightValueText != null)
             gaishokuWeightValueText.text = FormatChange(weightChange);
 
@@ -3572,8 +3602,15 @@ public class UIController : MonoBehaviour
         if (jukusuiButton == null) return;
         jukusuiButton.gameObject.SetActive(true);
 
+        int pendingEnergyBuff = 0;
+        if (!isMorning)
+        {
+            (_, pendingEnergyBuff) =
+                ActionCalculator.GetPendingMorningBuffDelta(localMorningAction, state, gameParams);
+        }
+
         // 元気増減量のみ
-        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Jukusui", state, actionData, gameParams, isMorning, localMorningAction);
+        int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Jukusui", state, actionData, gameParams, isMorning, localMorningAction, pendingEnergyBuff);
         if (jukusuiEnergyValueText != null)
             jukusuiEnergyValueText.text = FormatChange(energyChange);
     }
@@ -3586,13 +3623,20 @@ public class UIController : MonoBehaviour
         if (dokaguiButton == null) return;
         dokaguiButton.gameObject.SetActive(true);
 
+        int pendingWeightBuff = 0;
+        if (!isMorning)
+        {
+            (pendingWeightBuff, _) =
+                ActionCalculator.GetPendingMorningBuffDelta(localMorningAction, state, gameParams);
+        }
+
         // 元気増減量
         int energyChange = ActionCalculator.CalculateEnergyChange(ActionType.SpecialAbility, "Dokagui", state, actionData, gameParams, isMorning, localMorningAction);
         if (dokaguiEnergyValueText != null)
             dokaguiEnergyValueText.text = FormatChange(energyChange);
 
         // 重さ増減量
-        int weightChange = ActionCalculator.CalculateWeightChange(ActionType.SpecialAbility, "Dokagui", state, gameParams);
+        int weightChange = ActionCalculator.CalculateWeightChange(ActionType.SpecialAbility, "Dokagui", state, gameParams, pendingWeightBuff);
         if (dokaguiWeightValueText != null)
             dokaguiWeightValueText.text = FormatChange(weightChange);
 

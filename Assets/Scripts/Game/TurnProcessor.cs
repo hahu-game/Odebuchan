@@ -321,7 +321,7 @@ public class TurnProcessor : NetworkBehaviour
             loserState.PlayBuffEnergy -= 5;
 
             effectLog = $"{winnerName}はジャンケンに勝った！！重さ{FormatNumber(10)}。" +
-                       $"{loserName}は、たべる時の重さ{FormatNumber(-5)}、ねむる時の元気{FormatNumber(-5)}";
+                       $"{loserName}は重さバフ{FormatNumber(-5)}、元気バフ{FormatNumber(-5)}";
         }
         else if (winGenre == Genre.Scissors && loseGenre == Genre.Paper)
         {
@@ -332,8 +332,8 @@ public class TurnProcessor : NetworkBehaviour
             // 敗者: 元気-10
             loserState.Energy -= 10;
 
-            effectLog = $"{winnerName}はジャンケンに勝った！！たべる時の重さ{FormatNumber(5)}、ねむる時の元気{FormatNumber(5)}。" +
-                       $"{loserName}は、元気{FormatNumber(-10)}";
+            effectLog = $"{winnerName}はジャンケンに勝った！！重さバフ{FormatNumber(5)}、元気バフ{FormatNumber(5)}。" +
+                       $"{loserName}は元気{FormatNumber(-10)}";
         }
         else if (winGenre == Genre.Paper && loseGenre == Genre.Rock)
         {
@@ -344,7 +344,7 @@ public class TurnProcessor : NetworkBehaviour
             loserState.Weight -= 10;
 
             effectLog = $"{winnerName}はジャンケンに勝った！！元気{FormatNumber(10)}。" +
-                       $"{loserName}は、重さ{FormatNumber(-10)}";
+                       $"{loserName}は重さ{FormatNumber(-10)}";
         }
 
         RPC_AddLog(effectLog);
@@ -593,7 +593,7 @@ public class TurnProcessor : NetworkBehaviour
 
         // ログに追加
         string log = $"{playerName}は「あそぶ」を実行！元気{FormatNumber(energyChange)}、" +
-                     $"たべる時の重さバフ{FormatNumber(buffWeightIncrement)}、ねむる時の元気バフ{FormatNumber(buffEnergyIncrement)}";
+                     $"重さバフ{FormatNumber(buffWeightIncrement)}、元気バフ{FormatNumber(buffEnergyIncrement)}";
         RPC_AddLog(log);
 
         Debug.Log($"[TurnProcessor] {log}");
@@ -897,7 +897,7 @@ public class TurnProcessor : NetworkBehaviour
                     playerActionData.AfternoonAction = new ActionData(ActionType.Clinic, Genre.None);
                     playerActionData.AfternoonActionLocked = true;
 
-                    RPC_AddLog($"{playerName}は熱中症で動けない！午後の行動が「つういん」に固定された");
+                    RPC_AddLog($"<size=+10>{playerName}は熱中症で動けない！午後の行動が「つういん」に固定された</size>");
                     Debug.Log($"[TurnProcessor] {playerName} の午後の行動を「つういん」に強制変更");
                 }
                 else
@@ -906,7 +906,7 @@ public class TurnProcessor : NetworkBehaviour
                     // MorningActionLockedフラグを立てておく
                     playerActionData.MorningActionLocked = true;
 
-                    RPC_AddLog($"{playerName}は熱中症で動けない！翌日午前の行動が「つういん」に固定された");
+                    RPC_AddLog($"<size=+10>{playerName}は熱中症で動けない！翌日午前の行動が「つういん」に固定された</size>");
                     Debug.Log($"[TurnProcessor] {playerName} の翌日午前の行動を「つういん」に固定（準備フェーズで設定）");
                 }
             }
@@ -946,7 +946,7 @@ public class TurnProcessor : NetworkBehaviour
                 };
 
                 string playerName = GetColoredPlayerName(player);
-                RPC_AddLog($"{playerName}は腰痛で動けない！行動ができなかった！");
+                RPC_AddLog($"<size=+10>{playerName}は腰痛で動けない！行動ができなかった！</size>");
 
                 Debug.Log($"[TurnProcessor] {playerName} の行動が腰痛によりキャンセルされました");
                 return true;

@@ -110,7 +110,7 @@ public class UyopyonState : NetworkBehaviour
                 return 0;
             }
             var gameParams = GameManager.Instance.gameParams;
-            return (int)((gameParams.EatWeightChange + PlayBuffWeight) * BuffMultiplier);
+            return gameParams.EatWeightChange + PlayBuffWeight;
         }
     }
 
@@ -126,7 +126,7 @@ public class UyopyonState : NetworkBehaviour
                 return 0;
             }
             var gameParams = GameManager.Instance.gameParams;
-            int baseGain = (int)((gameParams.SleepEnergyChange + PlayBuffEnergy) * BuffMultiplier);
+            int baseGain = gameParams.SleepEnergyChange + PlayBuffEnergy;
 
             // 睡眠時無呼吸症候群の影響を適用
             if (HasStatusAilment(StatusAilment.SleepApnea))

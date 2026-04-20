@@ -1039,7 +1039,7 @@ public class GameFlowManager : NetworkBehaviour
                 string playerName = GetColoredPlayerName(player);
 
                 // ログに追加
-                string log = $"{playerName}は熱中症の影響で午前の行動が「つういん」に固定されました";
+                string log = $"<size=+10>{playerName}は熱中症の影響で午前の行動が「つういん」に固定されました</size>";
                 RPC_AddLog(log);
 
                 Debug.Log($"[GameFlowManager] {playerName} の午前の行動を「つういん」に設定");
