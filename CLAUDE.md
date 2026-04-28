@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+## セキュリティ最優先ルール（絶対遵守）
+- .envや機密ファイル（secrets, credentials, token等）を一切読まない・出力しない
+- 危険コマンド（rm -rf, curl 外部URL, cat .env など）は実行前に必ず確認を求める
+- 機密情報はユーザー自身に確認させる
+- ホームディレクトリ（~/）への直接アクセスは禁止
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview

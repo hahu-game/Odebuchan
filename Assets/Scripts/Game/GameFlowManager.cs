@@ -307,14 +307,15 @@ public class GameFlowManager : NetworkBehaviour
                 ResetAllPlayerActions();
             }
 
+            // 進化判定（7.1で実装）
+            // 糖尿病の減量より先に評価することで、210kg→-20kgのケースでも判定が通るようにする
+            await CheckEvolution();
+
             // 糖尿病チェック
             CheckDiabetes();
 
             // 熱中症による強制つういんチェック（前日午後に熱中症が発症した場合）
             CheckHeatstrokeMorningClinic();
-
-            // 進化判定（7.1で実装）
-            await CheckEvolution();
 
             // 選択フェーズへ遷移
             Debug.Log("[GameFlowManager] 準備フェーズ終了、選択フェーズへ遷移");
