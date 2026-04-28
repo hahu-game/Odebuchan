@@ -1,0 +1,728 @@
+fileFormatVersion: 2
+guid: a5aa99fe843e2e1428f276dba6536d89
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2571637790376983687
+    second: title_backscreen_3 1_0
+  - first:
+      213: -9149307259787025750
+    second: title_backscreen_3 1_1
+  - first:
+      213: 1389946282835641355
+    second: title_backscreen_3 1_2
+  - first:
+      213: 1961019225790949950
+    second: title_backscreen_3 1_3
+  - first:
+      213: 8294176383930309315
+    second: title_backscreen_3 1_4
+  - first:
+      213: -6780014855447189067
+    second: title_backscreen_3 1_5
+  - first:
+      213: -6761240490433484412
+    second: title_backscreen_3 1_6
+  - first:
+      213: -37052140467657727
+    second: title_backscreen_3 1_7
+  - first:
+      213: -390883875795277809
+    second: title_backscreen_3 1_8
+  - first:
+      213: -4333777444842906463
+    second: title_backscreen_3 1_9
+  - first:
+      213: -7308759279552959853
+    second: title_backscreen_3 1_10
+  - first:
+      213: 8391496175457035199
+    second: title_backscreen_3 1_11
+  - first:
+      213: -2094089158843293132
+    second: title_backscreen_3 1_12
+  - first:
+      213: 5681272750819765703
+    second: title_backscreen_3 1_13
+  - first:
+      213: 4028513701261465739
+    second: title_backscreen_3 1_14
+  - first:
+      213: -1907717403945795621
+    second: title_backscreen_3 1_15
+  - first:
+      213: 4037268409732810511
+    second: title_backscreen_3 1_16
+  - first:
+      213: -6748189838561528658
+    second: title_backscreen_3 1_17
+  - first:
+      213: 6593020469588635879
+    second: title_backscreen_3 1_18
+  - first:
+      213: 398356458913382309
+    second: title_backscreen_3 1_19
+  - first:
+      213: -6686938248544957676
+    second: title_backscreen_3 1_20
+  - first:
+      213: 8714599112916987025
+    second: title_backscreen_3 1_21
+  - first:
+      213: 4663743901526167102
+    second: title_backscreen_3 1_22
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: title_backscreen_3 1_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 879
+        width: 592
+        height: 321
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9730c950e05bf4cd0800000000000000
+      internalID: -2571637790376983687
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_1
+      rect:
+        serializedVersion: 2
+        x: 999
+        y: 1191
+        width: 36
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa2ed77b581270180800000000000000
+      internalID: -9149307259787025750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_2
+      rect:
+        serializedVersion: 2
+        x: 1036
+        y: 1174
+        width: 32
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b040b4da7c41a4310800000000000000
+      internalID: 1389946282835641355
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_3
+      rect:
+        serializedVersion: 2
+        x: 1072
+        y: 1132
+        width: 73
+        height: 68
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3a2bfe8890f63b10800000000000000
+      internalID: 1961019225790949950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_4
+      rect:
+        serializedVersion: 2
+        x: 1138
+        y: 894
+        width: 462
+        height: 306
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3ca999c0a75da1370800000000000000
+      internalID: 8294176383930309315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_5
+      rect:
+        serializedVersion: 2
+        x: 1565
+        y: 880
+        width: 12
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b9e239396c88e1a0800000000000000
+      internalID: -6780014855447189067
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_6
+      rect:
+        serializedVersion: 2
+        x: 10
+        y: 833
+        width: 12
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 48969b6b89f3b22a0800000000000000
+      internalID: -6761240490433484412
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_7
+      rect:
+        serializedVersion: 2
+        x: 1440
+        y: 844
+        width: 21
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 104e149464d5c7ff0800000000000000
+      internalID: -37052140467657727
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_8
+      rect:
+        serializedVersion: 2
+        x: 126
+        y: 797
+        width: 21
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f086bca9f2d439af0800000000000000
+      internalID: -390883875795277809
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_9
+      rect:
+        serializedVersion: 2
+        x: 1578
+        y: 733
+        width: 22
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1acd98010645bd3c0800000000000000
+      internalID: -4333777444842906463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 691
+        width: 8
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39ae761a822129a90800000000000000
+      internalID: -7308759279552959853
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_11
+      rect:
+        serializedVersion: 2
+        x: 1504
+        y: 642
+        width: 25
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb36a20cf45947470800000000000000
+      internalID: 8391496175457035199
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_12
+      rect:
+        serializedVersion: 2
+        x: 58
+        y: 595
+        width: 24
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4322627410d40f2e0800000000000000
+      internalID: -2094089158843293132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_13
+      rect:
+        serializedVersion: 2
+        x: 1402
+        y: 487
+        width: 23
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7cde7b8577fe7de40800000000000000
+      internalID: 5681272750819765703
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_14
+      rect:
+        serializedVersion: 2
+        x: 162
+        y: 440
+        width: 22
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b88db780ed728e730800000000000000
+      internalID: 4028513701261465739
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_15
+      rect:
+        serializedVersion: 2
+        x: 1528
+        y: 360
+        width: 27
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bdffafde02d6685e0800000000000000
+      internalID: -1907717403945795621
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_16
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 313
+        width: 27
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f07c7017a32470830800000000000000
+      internalID: 4037268409732810511
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_17
+      rect:
+        serializedVersion: 2
+        x: 277
+        y: 281
+        width: 19
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea4b3a3681d9952a0800000000000000
+      internalID: -6748189838561528658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_18
+      rect:
+        serializedVersion: 2
+        x: 1243
+        y: 254
+        width: 20
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e0b5be8f2d1f7b50800000000000000
+      internalID: 6593020469588635879
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_19
+      rect:
+        serializedVersion: 2
+        x: 130
+        y: 214
+        width: 36
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5afb38bb61f378500800000000000000
+      internalID: 398356458913382309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1600
+        height: 197
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41b418487193333a0800000000000000
+      internalID: -6686938248544957676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_21
+      rect:
+        serializedVersion: 2
+        x: 781
+        y: 169
+        width: 38
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19ce955a8b970f870800000000000000
+      internalID: 8714599112916987025
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: title_backscreen_3 1_22
+      rect:
+        serializedVersion: 2
+        x: 1336
+        y: 178
+        width: 38
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3e8cdd6e52f8b040800000000000000
+      internalID: 4663743901526167102
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      title_backscreen_3 1_0: -2571637790376983687
+      title_backscreen_3 1_1: -9149307259787025750
+      title_backscreen_3 1_10: -7308759279552959853
+      title_backscreen_3 1_11: 8391496175457035199
+      title_backscreen_3 1_12: -2094089158843293132
+      title_backscreen_3 1_13: 5681272750819765703
+      title_backscreen_3 1_14: 4028513701261465739
+      title_backscreen_3 1_15: -1907717403945795621
+      title_backscreen_3 1_16: 4037268409732810511
+      title_backscreen_3 1_17: -6748189838561528658
+      title_backscreen_3 1_18: 6593020469588635879
+      title_backscreen_3 1_19: 398356458913382309
+      title_backscreen_3 1_2: 1389946282835641355
+      title_backscreen_3 1_20: -6686938248544957676
+      title_backscreen_3 1_21: 8714599112916987025
+      title_backscreen_3 1_22: 4663743901526167102
+      title_backscreen_3 1_3: 1961019225790949950
+      title_backscreen_3 1_4: 8294176383930309315
+      title_backscreen_3 1_5: -6780014855447189067
+      title_backscreen_3 1_6: -6761240490433484412
+      title_backscreen_3 1_7: -37052140467657727
+      title_backscreen_3 1_8: -390883875795277809
+      title_backscreen_3 1_9: -4333777444842906463
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
